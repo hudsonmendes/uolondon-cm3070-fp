@@ -101,7 +101,7 @@ class RawTo1NFTransformer:
         df = pd.read_csv(src)
         df = df.rename(
             columns={
-                "dialogue": "dialogue",
+                "Dialogue_ID": "dialogue",
                 "Utterance_ID": "sequence",
                 "Utterance": "x_text",
                 "Emotion": "label",
@@ -121,15 +121,15 @@ class RawTo1NFTransformer:
         """
         # deduce and locate the audio-video files from which
         # visual and audio features will be extracted
-        x_av_mp4_disoverer = FilepathRecursiveDiscoverer(self.src)
-        df["x_av"] = df.apply(lambda row: f"dia{row.Dialogue_ID}_utt{row.Utterance_ID}.mp4", axis=1)
-        df["x_av"] = df["x_av"].map(x_av_mp4_disoverer)
+        x_av_mp4_discoverer = FilepathRecursiveDiscoverer(self.src)
+        df["x_av"] = df.progress_apply(lambda row: f"dia{row.dialogue}_utt{row.sequence}.mp4", axis=1)
+        df["x_av"] = df["x_av"].progress_map(x_av_mp4_discoverer)
 
         # produce the mosaic of images from the video, storing the mosaic into the destination folder
         x_visual_mosaic_producer = VideoToImageMosaicTransformer(dest=dest, n=self.n_snapshots)
-        df["x_visual"] = df.apply(x_visual_mosaic_producer, axis=1)
+        df["x_visual"] = df.progress_apply(x_visual_mosaic_producer, axis=1)
 
         # produce teh audio track of the video, storing audio into the destination folder
         x_audio_track_producer = VideoToAudioTrackTransformer(dest=dest)
-        df["x_audio"] = df.apply(x_audio_track_producer, axis=1)
+        df["x_audio"] = df.progress_apply(x_audio_track_producer, axis=1)
         return df

@@ -68,7 +68,7 @@ class VideoToImageMosaicTransformer:
             mosaic.paste(screenshot, (0, i * screenshot.height))
 
         # save the mosaic image to the destination directory with the specified filename
-        filename = f"d-{row['dialogue']}-seq-{row['seq']}.png"
+        filename = f"d-{row.dialogue}-seq-{row.sequence}.png"
         filepath = self.dest / filename
         if not filepath.parent.exists():
             filepath.parent.mkdir(parents=True)

@@ -96,16 +96,15 @@ class KaggleZipDecompressor:
         :param zipfh: The zipfile handler.
         :param filename: The filename.
         """
-        filepath = dest / filename
-        if force or not filepath.exists():
+        newfilpath = oldfilepath = dest / filename
+        if self.subdir:
+            strippedfilename = filename[len(self.subdir) :].strip("/")
+            newfilpath = dest / strippedfilename
+        if force or not newfilpath.exists():
             zipfh.extract(member=filename, path=dest)
-            if self.subdir:
-                strippedname = filename[len(self.subdir) :].strip("/")
-                current = dest / filepath
-                new = dest / strippedname
-                if current != new:
-                    new.parent.mkdir(parents=True, exist_ok=True)
-                    current.rename(new)
+            if oldfilepath != newfilpath:
+                newfilpath.parent.mkdir(parents=True, exist_ok=True)
+                oldfilepath.rename(newfilpath)
 
     def _clean_empty_folders(self, dest: pathlib.Path) -> None:
         """

@@ -55,7 +55,7 @@ class VideoToAudioTrackTransformer:
         return filename
 
     def _prepare_filepath_destination(self, row):
-        filename = f"d-{row['dialogue']}-seq-{row['seq']}.wav"
+        filename = f"d-{row.dialogue}-seq-{row.sequence}.wav"
         filepath = self.dest / filename
         if not filepath.parent.exists():
             filepath.parent.mkdir(parents=True)
