@@ -1,3 +1,4 @@
+import math
 import pathlib
 from typing import Optional
 
@@ -50,6 +51,17 @@ class VideoToImageMosaicTransformer:
         for timestamp in timestamps:
             screenshot = clip.get_frame(timestamp)
             screenshots.append(Image.fromarray(screenshot))
+
+        # extract the screenshots and stack them on top of each other
+        screenshots = []
+        for timestamp in timestamps:
+            screenshot = clip.get_frame(timestamp)
+            screenshot = Image.fromarray(screenshot)
+            # resize the screenshot to 480 pixels of height and the width reduced by the same proportion as the height
+            height = 480
+            width = math.floor(screenshot.width * height / screenshot.height)
+            screenshot = screenshot.resize((width, height))
+            screenshots.append(screenshot)
 
         mosaic = Image.new("RGB", (screenshots[0].width, screenshots[0].height * n_screenshots))
         for i, screenshot in enumerate(screenshots):
