@@ -3,12 +3,10 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-from .domain.recursive_filepath_discoverer import RecursiveFilepathDiscoverer
+from .domain.filepath_recursive_discoverer import FilepathRecursiveDiscoverer
 from .domain.video_filename_deducer import VideoFileNameDeducer
-from .domain.video_to_audio_track_transformer import \
-    VideoToAudioTrackTransformer
-from .domain.video_to_image_mosaic_transformer import \
-    VideoToImageMosaicTransformer
+from .domain.video_to_audio_track_transformer import VideoToAudioTrackTransformer
+from .domain.video_to_image_mosaic_transformer import VideoToImageMosaicTransformer
 
 
 class RawTo1NFTransformer:
@@ -54,7 +52,7 @@ class RawTo1NFTransformer:
         :param dest: The destination file to save the transformed dataset to.
         """
         splis = self._get_splits()
-        discover_recursively = RecursiveFilepathDiscoverer(self.src)
+        discover_recursively = FilepathRecursiveDiscoverer(self.src)
         for split, filename in splis.items():
             filepath = discover_recursively(filename)
             self._transform_split(filepath, dest, split)
@@ -115,7 +113,7 @@ class RawTo1NFTransformer:
         # deduce and locate the audio-video files from which
         # visual and audio features will be extracted
         x_av_filename_deducer = VideoFileNameDeducer()
-        x_av_mp4_disoverer = RecursiveFilepathDiscoverer(self.src)
+        x_av_mp4_disoverer = FilepathRecursiveDiscoverer(self.src)
         df["x_av"] = df.apply(x_av_filename_deducer, axis=1)
         df["x_av"] = df["x_av"].map(x_av_mp4_disoverer)
 

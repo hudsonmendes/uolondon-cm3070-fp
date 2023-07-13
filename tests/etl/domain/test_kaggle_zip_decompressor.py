@@ -1,8 +1,9 @@
-import unittest
 import os
-import shutil
 import pathlib
+import shutil
+import unittest
 import zipfile
+
 from hlm12erc.etl.domain.kaggle_zip_decompressor import KaggleZipDecompressor
 
 

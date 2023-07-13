@@ -1,7 +1,7 @@
 import pathlib
 
 
-class RecursiveFilepathDiscoverer:
+class FilepathRecursiveDiscoverer:
     """
     Discover the filepath for the given filename.
     """
