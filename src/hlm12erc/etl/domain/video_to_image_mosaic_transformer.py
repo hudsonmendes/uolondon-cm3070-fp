@@ -18,6 +18,8 @@ class VideoToImageMosaicTransformer:
     Produce a mosaic of images from a video.
     """
 
+    DEFAULT_N_SCREENSHOTS: int = 5
+
     dest: pathlib.Path
     n: Optional[int] = None
     height: int = 480
@@ -45,41 +47,53 @@ class VideoToImageMosaicTransformer:
         # suppress warnings from moviepy
         self._suppress_warnings()
 
+        # calculates the name of the output image file
+        # so we can avoid generating it if that's already existing
+        filename = f"d-{row.dialogue}-seq-{row.sequence}.png"
+        filepath = self.dest / filename
+
+        # we don't try to reprocess images that have already been
+        # because the process takes a hell of a long time
+        if filepath.exists():
+            logger.debug(f"Skipping {filepath} because it already exists.")
+        else:
+            logger.debug(f"Extracting screenshots from {row.x_av} to {filepath}.")
+            self._extract_screen_shots(src=row.x_av, filepath=filepath)
+
+        return filename
+
+    def _extract_screen_shots(self, src: str, filepath: pathlib.Path) -> None:
+        """
+        Extracts a number of screenshots defined by `self.n` from the original
+        .mp4 video, equidistant to one another.
+
+        :param src: The filepath to the video to extract the screenshots from.
+        :param filepath: The filepath of the extracted screenshots mosaic image.
+        """
         # open the video file to extract the screenshots
-        filename = row["x_av"]
-        clip = VideoFileClip(filename)
+        clip = VideoFileClip(src)
 
         # find the duration in seconds of the video clip
         duration = clip.duration
 
         # calculate the timestamps for the screenshots
-        n_screenshots = self.n if (self.n and self.n > 0) else 3
+        n_screenshots = self.n if (self.n and self.n > 0) else DEFAULT_N_SCREENSHOTS
         timestamps = [duration * i / (n_screenshots - 1) for i in range(n_screenshots)]
 
         # extract the screenshots and stack them on top of each other
         screenshots = []
         for timestamp in timestamps:
-            screenshot = clip.get_frame(timestamp)
-            screenshots.append(Image.fromarray(screenshot))
-
-        # extract the screenshots and stack them on top of each other
-        screenshots = []
-        for timestamp in timestamps:
-            screenshots.append(self.extract_screenshot_at(clip, timestamp))
+            screenshots.append(self._extract_screenshot_at(clip, timestamp))
 
         mosaic = Image.new("RGB", (screenshots[0].width, screenshots[0].height * n_screenshots))
         for i, screenshot in enumerate(screenshots):
             mosaic.paste(screenshot, (0, i * screenshot.height))
 
         # save the mosaic image to the destination directory with the specified filename
-        filename = f"d-{row.dialogue}-seq-{row.sequence}.png"
-        filepath = self.dest / filename
-        if not filepath.parent.exists():
-            filepath.parent.mkdir(parents=True)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         mosaic.save(filepath)
-        return filename
 
-    def extract_screenshot_at(self, clip, timestamp) -> Image.Image:
+    def _extract_screenshot_at(self, clip, timestamp) -> Image.Image:
         """
         Attempts to extract a screeshot from the video clip at the specified
         timestamp. If the timestamp is invalid, the screenshot at the start of
