@@ -43,7 +43,8 @@ class TestKaggleZipDecompressor(unittest.TestCase):
 
         # check that only the valid file was extracted
         self.assertFalse((self.dest_path / "file1.txt").exists())
-        self.assertTrue((self.dest_path / "subdir/file2.txt").exists())
+        self.assertFalse((self.dest_path / "subdir/file2.txt").exists())
+        self.assertTrue((self.dest_path / "file2.txt").exists())
 
     def test_deletes_destination_folder_if_force_is_true(self):
         # create a destination folder and a file inside it

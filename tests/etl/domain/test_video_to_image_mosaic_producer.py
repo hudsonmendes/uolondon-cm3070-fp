@@ -21,10 +21,10 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
 
     def test_screenshot_extraction(self):
         # create a test row with the filepath to the test video clip
-        row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "seq": 1})
+        row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToImageMosaicTransformer(self.dest, n=3)
+        transformer = VideoToImageMosaicTransformer(self.dest, n=3, height=100)
         filename = transformer(row)
 
         # check that the mosaic image was extracted and saved to the destination directory
@@ -33,10 +33,10 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
 
     def test_screenshot_extraction_number(self):
         # create a test row with the filepath to the test video clip
-        row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "seq": 1})
+        row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToImageMosaicTransformer(self.dest, n=5)
+        transformer = VideoToImageMosaicTransformer(self.dest, n=5, height=100)
         filename = transformer(row)
 
         # check that the mosaic image was extracted and saved to the destination directory
@@ -45,10 +45,10 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
 
     def test_screenshot_extraction_filename(self):
         # create a test row with the filepath to the test video clip
-        row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "seq": 1})
+        row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToImageMosaicTransformer(self.dest, n=3)
+        transformer = VideoToImageMosaicTransformer(self.dest, n=3, height=100)
         filename = transformer(row)
 
         # check that the mosaic image was extracted and saved to the destination directory with the correct filename
@@ -57,16 +57,17 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
 
     def test_screenshot_extraction_dimensions(self):
         # create a test row with the filepath to the test video clip
-        row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "seq": 1})
+        row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "sequence": 1})
 
         # define the number of snapshots to extract from the video
         n_snapshots = 5
+        snapshot_height = 100
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToImageMosaicTransformer(self.dest, n=n_snapshots)
+        transformer = VideoToImageMosaicTransformer(self.dest, n=n_snapshots, height=snapshot_height)
         filename = transformer(row)
 
         # check that the mosaic image has the correct dimensions
         filepath = self.dest / filename
         mosaic = Image.open(filepath)
-        self.assertEqual(mosaic.size, (853, 480 * n_snapshots))
+        self.assertEqual(mosaic.size[1], snapshot_height * n_snapshots)

@@ -23,7 +23,7 @@ class TestVideoToAudioTrackTransformer(unittest.TestCase):
 
     def test_audio_extraction(self):
         # create a test row with the filepath to the test video clip
-        row = pd.Series({"x_av": str(self.mp4), "dialogue": 1, "seq": 1})
+        row = pd.Series({"x_av": str(self.mp4), "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
         transformer = VideoToAudioTrackTransformer(self.dest)
@@ -42,7 +42,7 @@ class TestVideoToAudioTrackTransformer(unittest.TestCase):
     def test_empty_wave_production(self):
         # create a test row with an invalid filepath
         noise = pathlib.Path("tests/fixtures/noise_no_audio.mp4")
-        row = pd.Series({"x_av": str(noise), "dialogue": 1, "seq": 1})
+        row = pd.Series({"x_av": str(noise), "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
         transformer = VideoToAudioTrackTransformer(self.dest)
