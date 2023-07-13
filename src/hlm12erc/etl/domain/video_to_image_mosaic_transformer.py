@@ -3,7 +3,7 @@ import logging
 import math
 import pathlib
 import warnings
-from typing import Optional
+from typing import Callable, Optional
 
 # Third-Party Libraries
 import pandas as pd
@@ -22,7 +22,7 @@ class VideoToImageMosaicTransformer:
     n: Optional[int] = None
     height: int
 
-    def __init__(self, dest: pathlib.Path, n: int, height: int) -> None:
+    def __init__(self, dest: pathlib.Path, n: int, height: int, force: bool) -> None:
         """
         Create a new mosaic producer that produces a mosaic of images
         from a video.
@@ -33,6 +33,7 @@ class VideoToImageMosaicTransformer:
         self.dest = dest
         self.n = n
         self.height = height
+        self.force = force
 
     def __call__(self, row: pd.Series) -> str:
         """
@@ -54,7 +55,7 @@ class VideoToImageMosaicTransformer:
 
         # we don't try to reprocess images that have already been
         # because the process takes a hell of a long time
-        if filepath.exists():
+        if not self.force and filepath.exists():
             logger.debug(f"Skipping {filepath} because it already exists.")
         else:
             logger.debug(f"Extracting screenshots from {row.x_av} to {filepath}.")

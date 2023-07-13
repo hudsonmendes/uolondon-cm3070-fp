@@ -54,7 +54,7 @@ class ETL:
         Cloud Storage bucket/folder (for using with Google Collab & TPUs).
 
         :param uri_or_folderpath: The local folder or Google Cloud Storage bucket/folder to save the dataset to.
-        :param force: Whether to force the extraction, transformation and loading, even if the destination already exists.
+        :param force: Whether to force the extraction, transformation and loading, if the destination already exists.
         """
 
         root = self.workspace
@@ -65,7 +65,7 @@ class ETL:
             logger.info(f"Extracting dataset into: {extracted}")
             KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted, force=force)
             logger.info(f"Transforming dataset into: {transformed}")
-            RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed)
+            RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed, force=force)
             logger.info(f"Loading dataset into: {loaded}")
             NormalisedDatasetLoader(src=transformed).load(dest=loaded)
             logger.info("ETL pipeline completed successfully.")

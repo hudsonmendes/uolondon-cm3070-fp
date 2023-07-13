@@ -24,7 +24,7 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
         row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToImageMosaicTransformer(self.dest, n=3, height=100)
+        transformer = VideoToImageMosaicTransformer(self.dest, n=3, height=100, force=True)
         filename = transformer(row)
 
         # check that the mosaic image was extracted and saved to the destination directory
@@ -36,7 +36,7 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
         row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToImageMosaicTransformer(self.dest, n=5, height=100)
+        transformer = VideoToImageMosaicTransformer(self.dest, n=5, height=100, force=True)
         filename = transformer(row)
 
         # check that the mosaic image was extracted and saved to the destination directory
@@ -48,7 +48,7 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
         row = pd.Series({"x_av": "tests/fixtures/dia1_utt0.mp4", "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToImageMosaicTransformer(self.dest, n=3, height=100)
+        transformer = VideoToImageMosaicTransformer(self.dest, n=3, height=100, force=True)
         filename = transformer(row)
 
         # check that the mosaic image was extracted and saved to the destination directory with the correct filename
@@ -64,7 +64,7 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
         snapshot_height = 100
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToImageMosaicTransformer(self.dest, n=n_snapshots, height=snapshot_height)
+        transformer = VideoToImageMosaicTransformer(self.dest, n=n_snapshots, height=snapshot_height, force=True)
         filename = transformer(row)
 
         # check that the mosaic image has the correct dimensions

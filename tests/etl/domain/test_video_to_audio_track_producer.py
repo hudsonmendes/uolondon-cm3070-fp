@@ -26,7 +26,7 @@ class TestVideoToAudioTrackTransformer(unittest.TestCase):
         row = pd.Series({"x_av": str(self.mp4), "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToAudioTrackTransformer(self.dest)
+        transformer = VideoToAudioTrackTransformer(dest=self.dest, force=True)
         filename = transformer(row)
 
         # check that the audio track was extracted and saved to the destination directory
@@ -45,7 +45,7 @@ class TestVideoToAudioTrackTransformer(unittest.TestCase):
         row = pd.Series({"x_av": str(noise), "dialogue": 1, "sequence": 1})
 
         # create a transformer instance and call it on the test row
-        transformer = VideoToAudioTrackTransformer(self.dest)
+        transformer = VideoToAudioTrackTransformer(self.dest, force=True)
         filename = transformer(row)
 
         # check that an empty wave file was produced and saved to the destination directory

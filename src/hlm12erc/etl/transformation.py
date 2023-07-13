@@ -56,7 +56,7 @@ class RawTo1NFTransformer:
         self.snapshot_h = n_snapshots or RawTo1NFTransformer.DEFAULT_SNAPSHOT_HEIGHT
         logger.info(f"Video Snapshot Height set to {self.snapshot_h}")
 
-    def transform(self, dest: pathlib.Path) -> None:
+    def transform(self, dest: pathlib.Path, force: bool) -> None:
         """
         Transform the raw dataset from the source file and save it
         to the destination file.
@@ -70,7 +70,7 @@ class RawTo1NFTransformer:
         for split, filename in splis.items():
             logger.info(f"Transformation will transform split: {split}")
             filepath = discover_recursively(filename)
-            self._transform_split(src=filepath, dest=dest, split=split)
+            self._transform_split(src=filepath, dest=dest, split=split, force=force)
             logger.info(f"Split '{split}' transformed successfully")
 
     def _get_splits(self) -> Dict[str, str]:
@@ -85,7 +85,7 @@ class RawTo1NFTransformer:
             "test": "test_sent_emo.csv",
         }
 
-    def _transform_split(self, src: pathlib.Path, dest: pathlib.Path, split: str) -> None:
+    def _transform_split(self, src: pathlib.Path, dest: pathlib.Path, split: str, force: bool) -> None:
         """
         Transform the given split of the dataset.
 
@@ -94,7 +94,7 @@ class RawTo1NFTransformer:
         :param split: The split to transform.
         """
         df_raw = self._collect_raw(src=src)
-        df_transformed = self._collect_transformed(df=df_raw, dest=dest)
+        df_transformed = self._collect_transformed(df=df_raw, dest=dest, force=force)
         df_transformed.to_csv(dest / f"{split}.csv", index=False)
 
     def _collect_raw(self, src: pathlib.Path) -> pd.DataFrame:
@@ -116,7 +116,7 @@ class RawTo1NFTransformer:
         )
         return df
 
-    def _collect_transformed(self, df: pd.DataFrame, dest: pathlib.Path) -> pd.DataFrame:
+    def _collect_transformed(self, df: pd.DataFrame, dest: pathlib.Path, force: bool) -> pd.DataFrame:
         """
         Extracts image mosaic from video to produce x_visual
         and the audio track to produce x_audio and returns
@@ -133,10 +133,22 @@ class RawTo1NFTransformer:
         df["x_av"] = df["x_av"].progress_map(x_av_mp4_discoverer)
 
         # produce the mosaic of images from the video, storing the mosaic into the destination folder
-        x_visual_mosaic_producer = VideoToImageMosaicTransformer(dest=dest, n=self.n_snapshots, height=self.snapshot_h)
-        df["x_visual"] = df.progress_apply(x_visual_mosaic_producer, axis=1)
+        df["x_visual"] = df.progress_apply(
+            VideoToImageMosaicTransformer(
+                dest=dest,
+                n=self.n_snapshots,
+                height=self.snapshot_h,
+                force=force,
+            ),
+            axis=1,
+        )
 
         # produce teh audio track of the video, storing audio into the destination folder
-        x_audio_track_producer = VideoToAudioTrackTransformer(dest=dest)
-        df["x_audio"] = df.progress_apply(x_audio_track_producer, axis=1)
+        df["x_audio"] = df.progress_apply(
+            VideoToAudioTrackTransformer(
+                dest=dest,
+                force=force,
+            ),
+            axis=1,
+        )
         return df
