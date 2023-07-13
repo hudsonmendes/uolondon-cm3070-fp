@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from hlm12erc.etl.transformation import VideoToAudioTrackProducer
+from hlm12erc.etl.transformation import VideoToAudioTrackTransformer
 
 
 class TestVideoToAudioTrackProducer(unittest.TestCase):
     def setUp(self):
-        self.producer = VideoToAudioTrackProducer(Path("test_output"))
+        self.producer = VideoToAudioTrackTransformer(Path("test_output"))
 
     def test_produces_audio_file(self):
         # create a test row with a video filepath

@@ -1,6 +1,6 @@
-from ..etl.extraction import KaggleDownloader, ZipDecompressor
+from ..etl.extraction import KaggleDatasetDownloader, ZipDecompressor
 
 __all__ = [
     "ZipDecompressor",
-    "KaggleDownloader",
+    "KaggleDatasetDownloader",
 ]

@@ -6,14 +6,14 @@ import pandas as pd
 from moviepy.editor import VideoFileClip
 from PIL import Image
 
-from hlm12erc.etl.transformation import VideoToImageMosaicProducer
+from hlm12erc.etl.transformation import VideoToImageMosaicTransformer
 
 
 class TestVideoToImageMosaicProducer(unittest.TestCase):
     def setUp(self):
         self.outdir = pathlib.Path("/tmp/hlm12erc/test_output")
-        self.producer = VideoToImageMosaicProducer(self.outdir)
-        self.row = pd.Series(dict(dialog=1, seq=0, x_av="tests/fixtures/dia1_utt0.mp4"))
+        self.producer = VideoToImageMosaicTransformer(self.outdir)
+        self.row = pd.Series(dict(dialogue=1, seq=0, x_av="tests/fixtures/dia1_utt0.mp4"))
 
     def tearDown(self):
         # remove any files created during the tests
