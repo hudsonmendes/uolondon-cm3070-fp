@@ -95,7 +95,8 @@ class RawTo1NFTransformer:
         """
         df_raw = self._collect_raw(src=src)
         df_transformed = self._collect_transformed(df=df_raw, dest=dest, force=force)
-        df_transformed.to_csv(dest / f"{split}.csv", index=False)
+        df_ready = self._collect_wrapped(df=df_transformed)
+        df_ready.to_csv(dest / f"{split}.csv", index=True)
 
     def _collect_raw(self, src: pathlib.Path) -> pd.DataFrame:
         """
@@ -151,4 +152,19 @@ class RawTo1NFTransformer:
             ),
             axis=1,
         )
+        return df
+
+    def _collect_wrapped(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.astype(
+            {
+                "dialogue": "int64",
+                "sequence": "int64",
+                "x_text": "string",
+                "x_visual": "string",
+                "x_audio": "string",
+                "label": "category",
+            }
+        )
+        df = df[["dialogue", "sequence", "x_text", "x_visual", "x_audio", "label"]]
+        df = df.sort_values(by=["dialogue", "sequence"])
         return df
