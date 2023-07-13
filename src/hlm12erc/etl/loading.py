@@ -1,11 +1,14 @@
+# Python Built-in Modules
 import logging
 import pathlib
 import shutil
 from typing import Union
 from urllib.parse import urlparse
 
+# Third-Party Libraries
 import google.cloud.storage as gcs
 
+# Local Folders
 from .utils import ensure_path
 
 logger = logging.getLogger(__name__)

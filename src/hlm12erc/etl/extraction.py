@@ -1,6 +1,8 @@
+# Python Built-in Modules
 import logging
 import pathlib
 
+# Local Folders
 from .domain.kaggle_dataset import KaggleDataset
 from .domain.kaggle_dataset_downloader import KaggleDatasetDownloader
 from .domain.kaggle_zip_decompressor import KaggleZipDecompressor

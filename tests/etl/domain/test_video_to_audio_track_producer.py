@@ -1,13 +1,14 @@
+# Python Built-in Modules
 import pathlib
 import shutil
 import unittest
 import wave
 
+# Third-Party Libraries
 import pandas as pd
 
-from hlm12erc.etl.domain.video_to_audio_track_transformer import (
-    VideoToAudioTrackTransformer,
-)
+# My Packages and Modules
+from hlm12erc.etl.domain.video_to_audio_track_transformer import VideoToAudioTrackTransformer
 
 
 class TestVideoToAudioTrackTransformer(unittest.TestCase):

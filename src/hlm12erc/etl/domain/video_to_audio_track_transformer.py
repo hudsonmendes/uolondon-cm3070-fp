@@ -1,6 +1,8 @@
+# Python Built-in Modules
 import pathlib
 import wave
 
+# Third-Party Libraries
 import pandas as pd
 from moviepy.editor import VideoFileClip
 

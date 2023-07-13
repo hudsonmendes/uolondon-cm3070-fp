@@ -1,7 +1,10 @@
+# Python Built-in Modules
 import pathlib
 
+# Third-Party Libraries
 import kaggle
 
+# Local Folders
 from .kaggle_dataset import KaggleDataset
 
 

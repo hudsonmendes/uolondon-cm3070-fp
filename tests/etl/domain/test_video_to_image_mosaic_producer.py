@@ -1,13 +1,14 @@
+# Python Built-in Modules
 import pathlib
 import shutil
 import unittest
 
+# Third-Party Libraries
 import pandas as pd
 from PIL import Image
 
-from hlm12erc.etl.domain.video_to_image_mosaic_transformer import (
-    VideoToImageMosaicTransformer,
-)
+# My Packages and Modules
+from hlm12erc.etl.domain.video_to_image_mosaic_transformer import VideoToImageMosaicTransformer
 
 
 class TestVideoToImageMosaicTransformer(unittest.TestCase):

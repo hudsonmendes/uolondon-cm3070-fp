@@ -1,11 +1,10 @@
+# Python Built-in Modules
 import pathlib
 import unittest
 from unittest.mock import patch
 
-from hlm12erc.etl.domain.kaggle_dataset_downloader import (
-    KaggleDataset,
-    KaggleDatasetDownloader,
-)
+# My Packages and Modules
+from hlm12erc.etl.domain.kaggle_dataset_downloader import KaggleDataset, KaggleDatasetDownloader
 
 
 class TestKaggleDatasetDownloader(unittest.TestCase):

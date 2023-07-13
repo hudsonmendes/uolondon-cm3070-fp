@@ -1,10 +1,16 @@
+# Python Built-in Modules
+import logging
 import math
 import pathlib
+import warnings
 from typing import Optional
 
+# Third-Party Libraries
 import pandas as pd
 from moviepy.editor import VideoFileClip
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 class VideoToImageMosaicTransformer:
@@ -14,6 +20,7 @@ class VideoToImageMosaicTransformer:
 
     dest: pathlib.Path
     n: Optional[int] = None
+    height: int = 480
 
     def __init__(self, dest: pathlib.Path, n: Optional[int] = None) -> None:
         """
@@ -35,6 +42,9 @@ class VideoToImageMosaicTransformer:
         :param utterance_id: The utterance ID to use in the mosaic filename.
         :return: The filepath of the extracted screenshots mosaic image.
         """
+        # suppress warnings from moviepy
+        self._suppress_warnings()
+
         # open the video file to extract the screenshots
         filename = row["x_av"]
         clip = VideoFileClip(filename)
@@ -55,13 +65,7 @@ class VideoToImageMosaicTransformer:
         # extract the screenshots and stack them on top of each other
         screenshots = []
         for timestamp in timestamps:
-            screenshot = clip.get_frame(timestamp)
-            screenshot = Image.fromarray(screenshot)
-            # resize the screenshot to 480 pixels of height and the width reduced by the same proportion as the height
-            height = 480
-            width = math.floor(screenshot.width * height / screenshot.height)
-            screenshot = screenshot.resize((width, height))
-            screenshots.append(screenshot)
+            screenshots.append(self.extract_screenshot_at(clip, timestamp))
 
         mosaic = Image.new("RGB", (screenshots[0].width, screenshots[0].height * n_screenshots))
         for i, screenshot in enumerate(screenshots):
@@ -74,3 +78,46 @@ class VideoToImageMosaicTransformer:
             filepath.parent.mkdir(parents=True)
         mosaic.save(filepath)
         return filename
+
+    def extract_screenshot_at(self, clip, timestamp) -> Image.Image:
+        """
+        Attempts to extract a screeshot from the video clip at the specified
+        timestamp. If the timestamp is invalid, the screenshot at the start of
+        the video clip is returned instead. And if the video clip is invalid,
+        a blank image is returned instead.
+
+        :param clip: The video clip to extract the screenshot from.
+        :param timestamp: The timestamp to extract the screenshot at.
+        :return: The screenshot at the specified timestamp.
+        """
+        height = self.height
+        try:
+            # extract and resize the screenshot
+            screenshot = clip.get_frame(timestamp)
+            screenshot = Image.fromarray(screenshot)
+            width = math.floor(screenshot.width * height / screenshot.height)
+            screenshot = screenshot.resize((width, height))
+        except Exception as e:
+            # create dummy screenshot if the video clip is invalid
+            # the mock width 853 has been chosen as it is the width of
+            # the frames extracted from some actual video clips
+            logger.warning(f"Failed to extract screenshot at {timestamp} from {clip.filename}: {e}")
+            screenshot = Image.new("RGB", (self.height, 853))
+        return screenshot
+
+    def _suppress_warnings(self) -> None:
+        """
+        Uses a custom warning filter to suppress the warnings from the moviepy
+        library which is likely to produce multiple warnings and fallback to
+        acceptable behaviour
+        """
+
+        # define a filter function to suppress warnings from the moviepy library
+        def moviepy_warning_filter(message, category, filename, lineno, file=None, line=None):
+            if category == UserWarning and "moviepy" in str(filename):
+                return None
+            else:
+                return message, category, filename, lineno, file, line
+
+        # add the filter function to the warnings registry
+        warnings.showwarning = moviepy_warning_filter

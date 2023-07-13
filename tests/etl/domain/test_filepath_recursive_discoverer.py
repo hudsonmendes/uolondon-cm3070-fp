@@ -1,10 +1,10 @@
+# Python Built-in Modules
 import pathlib
 import shutil
 import unittest
 
-from hlm12erc.etl.domain.filepath_recursive_discoverer import (
-    FilepathRecursiveDiscoverer,
-)
+# My Packages and Modules
+from hlm12erc.etl.domain.filepath_recursive_discoverer import FilepathRecursiveDiscoverer
 
 
 class TestFilepathRecursiveDiscoverer(unittest.TestCase):

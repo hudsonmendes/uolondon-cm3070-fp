@@ -1,9 +1,12 @@
+# Python Built-in Modules
 import logging
 import pathlib
 from typing import Dict, Optional
 
+# Third-Party Libraries
 import pandas as pd
 
+# Local Folders
 from .domain.filepath_recursive_discoverer import FilepathRecursiveDiscoverer
 from .domain.video_to_audio_track_transformer import VideoToAudioTrackTransformer
 from .domain.video_to_image_mosaic_transformer import VideoToImageMosaicTransformer
