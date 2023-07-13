@@ -4,10 +4,10 @@ import shutil
 import unittest
 import zipfile
 
-from hlm12erc.etl import ZipDecompressor
+from hlm12erc.etl.domain.kaggle_zip_decompressor import KaggleZipDecompressor
 
 
-class TestZipDecompressor(unittest.TestCase):
+class TestKaggleZipDecompressor(unittest.TestCase):
     def setUp(self):
         self.test_dir = pathlib.Path("/tmp/test_data")
         self.test_dir.mkdir(exist_ok=True)
@@ -23,7 +23,7 @@ class TestZipDecompressor(unittest.TestCase):
             zipfh.writestr("subdir/file2.txt", "file2 contents")
 
         # unpack the zip file
-        unpacker = ZipDecompressor(zip_path)
+        unpacker = KaggleZipDecompressor(zip_path)
         unpacker.unpack(self.test_dir / "unpacked")
 
         # check that the files were unpacked correctly
@@ -38,7 +38,7 @@ class TestZipDecompressor(unittest.TestCase):
             zipfh.writestr("subdir/file2.txt", "file2 contents")
 
         # unpack only the files from the "subdir" directory
-        unpacker = ZipDecompressor(zip_path).only_from("subdir")
+        unpacker = KaggleZipDecompressor(zip_path).only_from("subdir")
         unpacker.unpack(self.test_dir / "unpacked")
 
         # check that only the files from the "subdir" directory were unpacked
@@ -58,7 +58,7 @@ class TestZipDecompressor(unittest.TestCase):
         self.assertFalse((self.test_dir / "unpacked/file1.txt").exists())
 
         # unpack the zip file with force=True
-        unpacker = ZipDecompressor(zip_path)
+        unpacker = KaggleZipDecompressor(zip_path)
         unpacker.unpack(self.test_dir / "unpacked", force=True)
 
         # check that the destination folder was deleted and the files were unpacked correctly
@@ -78,7 +78,7 @@ class TestZipDecompressor(unittest.TestCase):
         self.assertFalse((self.test_dir / "unpacked/file1.txt").exists())
 
         # unpack the zip file with force=False
-        unpacker = ZipDecompressor(zip_path)
+        unpacker = KaggleZipDecompressor(zip_path)
         unpacker.unpack(self.test_dir / "unpacked", force=False)
 
         # check that the destination folder was not deleted and the files were unpacked correctly
@@ -93,7 +93,7 @@ class TestZipDecompressor(unittest.TestCase):
             zipfh.writestr("dir2/file1.txt", "file1 contents")
 
         # unpack the zip file with force=True
-        unpacker = ZipDecompressor(zip_path)
+        unpacker = KaggleZipDecompressor(zip_path)
         unpacker.only_from(subdir="dir2")
         unpacker.unpack(self.test_dir / "unpacked")
 
@@ -109,7 +109,7 @@ class TestZipDecompressor(unittest.TestCase):
             zipfh.writestr("dir2/file1.txt", "file1 contents")
 
         # unpack the zip file with force=True
-        unpacker = ZipDecompressor(zip_path)
+        unpacker = KaggleZipDecompressor(zip_path)
         unpacker.only_from(subdir=None)
         unpacker.unpack(self.test_dir / "unpacked")
 

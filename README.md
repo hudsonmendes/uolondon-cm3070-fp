@@ -12,7 +12,7 @@ but also all other utility code that I have used to work on the project,<br />
 including, but not limited to:
 
 - ETL (transforming the raw MELD data into 1NF)
-- Arxiv API searches (used as data to back some conclusions)
+- ERC Model Training
 - ERC Inference itself
 
 ```
