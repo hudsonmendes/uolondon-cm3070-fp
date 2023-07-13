@@ -18,21 +18,21 @@ class VideoToImageMosaicTransformer:
     Produce a mosaic of images from a video.
     """
 
-    DEFAULT_N_SCREENSHOTS: int = 5
-
     dest: pathlib.Path
     n: Optional[int] = None
-    height: int = 480
+    height: int
 
-    def __init__(self, dest: pathlib.Path, n: Optional[int] = None) -> None:
+    def __init__(self, dest: pathlib.Path, n: int, height: int) -> None:
         """
         Create a new mosaic producer that produces a mosaic of images
         from a video.
         :param dest: The destination directory to save the mosaic image to.
         :param n: The number of screenshots to extract from the video.
+        :param height: The height of the mosaic image.
         """
         self.dest = dest
         self.n = n
+        self.height = height
 
     def __call__(self, row: pd.Series) -> str:
         """
@@ -71,21 +71,21 @@ class VideoToImageMosaicTransformer:
         :param filepath: The filepath of the extracted screenshots mosaic image.
         """
         # open the video file to extract the screenshots
-        clip = VideoFileClip(src)
+        clip = VideoFileClip(str(src))
 
         # find the duration in seconds of the video clip
         duration = clip.duration
 
         # calculate the timestamps for the screenshots
-        n_screenshots = self.n if (self.n and self.n > 0) else DEFAULT_N_SCREENSHOTS
-        timestamps = [duration * i / (n_screenshots - 1) for i in range(n_screenshots)]
+        assert self.n and self.n > 0
+        timestamps = [duration * i / (self.n - 1) for i in range(self.n)]
 
         # extract the screenshots and stack them on top of each other
         screenshots = []
         for timestamp in timestamps:
             screenshots.append(self._extract_screenshot_at(clip, timestamp))
 
-        mosaic = Image.new("RGB", (screenshots[0].width, screenshots[0].height * n_screenshots))
+        mosaic = Image.new("RGB", (screenshots[0].width, screenshots[0].height * self.n))
         for i, screenshot in enumerate(screenshots):
             mosaic.paste(screenshot, (0, i * screenshot.height))
 

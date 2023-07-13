@@ -25,11 +25,13 @@ class RawTo1NFTransformer:
         >>> transformer.transform(dest="path/to/1nf/dataset")
     """
 
-    DEFAULT_N_SNAPSHOTS: int = 3
+    DEFAULT_SNAPSHOT_HEIGHT: int = 240
+    DEFAULT_SNAPSHOT_COUNT: int = 5
 
     src: pathlib.Path
-    n_snapshots: int
     workspace: pathlib.Path
+    n_snapshots: int
+    snapshot_h: int
 
     def __init__(
         self,
@@ -49,8 +51,10 @@ class RawTo1NFTransformer:
         logger.info(f"Transformation will source from: {src}")
         self.workspace = workspace / "transformer"
         logger.info(f"Transformation will use workspace: {self.workspace}")
-        self.n_snapshots = n_snapshots or RawTo1NFTransformer.DEFAULT_N_SNAPSHOTS
-        logger.info(f"Video Transformation set to n_snapshots = {self.n_snapshots}")
+        self.n_snapshots = n_snapshots or RawTo1NFTransformer.DEFAULT_SNAPSHOT_COUNT
+        logger.info(f"Video Snapshot Count set to {self.n_snapshots}")
+        self.snapshot_h = n_snapshots or RawTo1NFTransformer.DEFAULT_SNAPSHOT_HEIGHT
+        logger.info(f"Video Snapshot Height set to {self.snapshot_h}")
 
     def transform(self, dest: pathlib.Path) -> None:
         """
@@ -66,7 +70,7 @@ class RawTo1NFTransformer:
         for split, filename in splis.items():
             logger.info(f"Transformation will transform split: {split}")
             filepath = discover_recursively(filename)
-            self._transform_split(filepath, dest, split)
+            self._transform_split(src=filepath, dest=dest, split=split)
             logger.info(f"Split '{split}' transformed successfully")
 
     def _get_splits(self) -> Dict[str, str]:
@@ -129,7 +133,7 @@ class RawTo1NFTransformer:
         df["x_av"] = df["x_av"].progress_map(x_av_mp4_discoverer)
 
         # produce the mosaic of images from the video, storing the mosaic into the destination folder
-        x_visual_mosaic_producer = VideoToImageMosaicTransformer(dest=dest, n=self.n_snapshots)
+        x_visual_mosaic_producer = VideoToImageMosaicTransformer(dest=dest, n=self.n_snapshots, height=self.snapshot_h)
         df["x_visual"] = df.progress_apply(x_visual_mosaic_producer, axis=1)
 
         # produce teh audio track of the video, storing audio into the destination folder

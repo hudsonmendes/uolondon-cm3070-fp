@@ -16,12 +16,12 @@ class FilepathRecursiveDiscoverer:
         """
         self.root = root
 
-    def __call__(self, filename: str) -> str:
+    def __call__(self, filename: str) -> pathlib.Path:
         """
         Discover the filepath for the given filename.
         :param filename: The filename to discover the filepath for.
         :return: The filepath for the given filename.
         """
         for path in self.root.rglob(filename):
-            return str(path)
+            return path
         raise FileNotFoundError(f"Could not find {filename} in {self.root}")
