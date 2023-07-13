@@ -5,7 +5,6 @@ from typing import Dict, Optional
 import pandas as pd
 
 from .domain.filepath_recursive_discoverer import FilepathRecursiveDiscoverer
-from .domain.video_filename_deducer import VideoFileNameDeducer
 from .domain.video_to_audio_track_transformer import VideoToAudioTrackTransformer
 from .domain.video_to_image_mosaic_transformer import VideoToImageMosaicTransformer
 
@@ -46,7 +45,7 @@ class RawTo1NFTransformer:
         self.src = src
         logger.info(f"Transformation will source from: {src}")
         self.workspace = workspace / "transformer"
-        logger.info(f"Transformation will use workspace: {workspace}")
+        logger.info(f"Transformation will use workspace: {self.workspace}")
         self.n_snapshots = n_snapshots or RawTo1NFTransformer.DEFAULT_N_SNAPSHOTS
         logger.info(f"Video Transformation set to n_snapshots = {self.n_snapshots}")
 
@@ -122,9 +121,8 @@ class RawTo1NFTransformer:
         """
         # deduce and locate the audio-video files from which
         # visual and audio features will be extracted
-        x_av_filename_deducer = VideoFileNameDeducer()
         x_av_mp4_disoverer = FilepathRecursiveDiscoverer(self.src)
-        df["x_av"] = df.apply(x_av_filename_deducer, axis=1)
+        df["x_av"] = df.apply(lambda row: f"dia{row.Dialogue_ID}_utt{row.Utterance_ID}.mp4", axis=1)
         df["x_av"] = df["x_av"].map(x_av_mp4_disoverer)
 
         # produce the mosaic of images from the video, storing the mosaic into the destination folder
