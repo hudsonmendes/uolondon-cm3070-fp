@@ -1,10 +1,9 @@
-from typing import Union, Optional, Dict
-
-import wave
 import pathlib
+import wave
+from typing import Dict, Optional, Union
 
 import pandas as pd
-from moviepy.video.io.VideoFileClip import VideoFileClip
+from moviepy.editor import VideoFileClip
 from PIL import Image
 
 from .utils import ensure_path
@@ -196,7 +195,6 @@ class VideoToImageMosaicProducer:
         filename = f"d-{dialogue_id}-seq-{utterance_id}.png"
         mosaic.save(self.dest / filename)
         return filename
-
 
 
 class VideoToAudioTrackProducer:
