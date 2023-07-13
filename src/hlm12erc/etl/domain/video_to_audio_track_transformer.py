@@ -13,14 +13,16 @@ class VideoToAudioTrackTransformer:
     """
 
     dest: pathlib.Path
+    force: bool
 
-    def __init__(self, dest: pathlib.Path) -> None:
+    def __init__(self, dest: pathlib.Path, force: bool) -> None:
         """
         Create a new audio track producer that produces an audio file from a video.
         :param dest: The destination directory to save the audio file to.
         :param n: The number of screenshots to extract from the video.
         """
         self.dest = dest
+        self.force = force
 
     def __call__(self, row: pd.Series) -> str:
         """
@@ -37,22 +39,26 @@ class VideoToAudioTrackTransformer:
 
         # define the filename of the audio track
         filename, filepath = self._prepare_filepath_destination(row)
-        extracted = False
-        try:
-            # open the video file to extract the audio track
-            # extract the audiotrack and save the audio track
-            clip = VideoFileClip(str(row["x_av"]))
-            audio = clip.audio
-            if audio:
-                audio.write_audiofile(filepath)
-                extracted = True
-        except Exception as e:
-            print(f"Error while reading video: {e}")
 
-        # regardless of whether we received an error or simply could not
-        # extract the audio track, we produce an empty wave file
-        if not extracted:
-            self._produce_empty_wave(filepath)
+        # only writes if the force or the file does not exist
+        if self.force or not filepath.exists():
+            # we keep track of whether we managed to produce a file or not
+            extracted = False
+            try:
+                # open the video file to extract the audio track
+                # extract the audiotrack and save the audio track
+                clip = VideoFileClip(str(row["x_av"]))
+                audio = clip.audio
+                if audio:
+                    audio.write_audiofile(filepath, verbose=False)
+                    extracted = True
+            except Exception as e:
+                print(f"Error while reading video: {e}")
+
+            # regardless of whether we received an error or simply could not
+            # extract the audio track, we produce an empty wave file
+            if not extracted:
+                self._produce_empty_wave(filepath)
 
         return filename
 
