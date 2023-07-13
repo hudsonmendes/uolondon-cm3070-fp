@@ -16,7 +16,7 @@ class KaggleDataExtractor:
     Example:
         >>> from hlm12erc.etl import KaggleDataExtractor
         >>> extractor = KaggleDataExtractor(dataset=KaggleDataset("hlm12erc", "hlm12erc"), workspace="path/to/workspace")
-        >>> extractor.extract(dest="path/to/extracted/dataset")
+        >>> extractor.extract(dest="path/to/extracted/dataset/folder")
     """
 
     dataset: KaggleDataset
@@ -40,9 +40,8 @@ class KaggleDataExtractor:
         :param dest: The destination to extract the dataset into.
         :param force: Whether to force the extraction, even if the destination already exists.
         """
-        zip_filepath = self.workspace / self.dataset.to_slug()
-        logger.info(f"Downloading dataset into: {zip_filepath}")
-        KaggleDatasetDownloader(dataset=self.dataset).download(dest=zip_filepath, force=force)
-        logger.info(f"Extracting dataset into: {dest}")
-        KaggleZipDecompressor(src=zip_filepath).only_from(self.dataset.subdir).unpack(dest=dest, force=force)
+        logger.info(f"Downloading dataset into: {self.workspace}")
+        zipfilepath = KaggleDatasetDownloader(dataset=self.dataset).download(dest=self.workspace, force=force)
+        logger.info(f"Extracting dataset from {zipfilepath} into {dest}")
+        KaggleZipDecompressor(src=zipfilepath).only_from(self.dataset.subdir).unpack(dest=dest, force=force)
         logger.info("Dataset succesfully extracted")

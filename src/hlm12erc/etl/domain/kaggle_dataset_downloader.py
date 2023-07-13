@@ -25,12 +25,13 @@ class KaggleDatasetDownloader:
         """
         self.dataset = dataset
 
-    def download(self, dest: pathlib.Path, force: bool) -> None:
+    def download(self, dest: pathlib.Path, force: bool) -> pathlib.Path:
         """
         Downloads the dataset into the given destination.
 
-        :param dest: The destination to download the dataset into.
+        :param dest: The destination folder to download the dataset into.
         :param force: Whether to force the download, even if the destination already exists.
+        :return: The path to the downloaded .zip file.
         """
         kaggle.api.dataset_download_files(
             self.dataset.to_kaggle(),
@@ -39,3 +40,4 @@ class KaggleDatasetDownloader:
             quiet=False,
             force=force,
         )
+        return dest / f"{self.dataset.name}.zip"

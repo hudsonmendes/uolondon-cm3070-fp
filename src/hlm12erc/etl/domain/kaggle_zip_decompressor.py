@@ -56,8 +56,10 @@ class KaggleZipDecompressor:
             filecount = len(filenames)
             for filename in tqdm(iterable=filenames, desc="unzip", total=filecount):
                 if self._is_filename_from_valid_subdir(filename):
-                    if force or not os.path.exists(dest / filename):
-                        zipfh.extract(member=filename, path=dest)
+                    self._extract_file_to_dest(dest, force, zipfh, filename)
+
+        # clean empty folders within the destination folder
+        self._clean_empty_folders(dest)
 
     def _ensure_destination_is_clean(self, to: pathlib.Path, force: bool) -> None:
         """
@@ -83,3 +85,36 @@ class KaggleZipDecompressor:
         if self.subdir:
             valid_subdir = filename.strip("/").startswith(self.subdir)
         return valid_subdir
+
+    def _extract_file_to_dest(self, dest, force, zipfh, filename):
+        """
+        Extracts the file to the destination folder, stripping
+        the subdir from the name, if the file is from the subdir.
+
+        :param dest: The destination folder.
+        :param force: If True, the destination folder will be deleted if it already exists.
+        :param zipfh: The zipfile handler.
+        :param filename: The filename.
+        """
+        filepath = dest / filename
+        if force or not filepath.exists():
+            zipfh.extract(member=filename, path=dest)
+            if self.subdir:
+                strippedname = filename[len(self.subdir) :].strip("/")
+                current = dest / filepath
+                new = dest / strippedname
+                if current != new:
+                    new.parent.mkdir(parents=True, exist_ok=True)
+                    current.rename(new)
+
+    def _clean_empty_folders(self, dest: pathlib.Path) -> None:
+        """
+        Scans through all folders inside `dest` and removes folders that do not contain files.
+
+        :param dest: The destination folder.
+        """
+        for root, dirs, files in os.walk(dest, topdown=False):
+            for dir in dirs:
+                dirpath = os.path.join(root, dir)
+                if not os.listdir(dirpath):
+                    os.rmdir(dirpath)

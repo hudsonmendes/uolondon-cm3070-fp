@@ -43,25 +43,41 @@ class ETL:
         logger.info(f"Kaggle dataset: {dataset.to_kaggle()}")
         if workspace:
             self.workspace = ensure_path(workspace) / "etl"
-        logger.info(f"Workspace set to: {workspace}")
+        logger.info(f"Workspace set to: {self.workspace}")
 
-    def into(self, uri_or_folderpath: Union[str, pathlib.Path]) -> None:
+    def into(self, uri_or_folderpath: Union[str, pathlib.Path], force: bool = False) -> None:
         """
         Extracts, transforms and loads the dataset into the given destination,
         whereas the destination can be either a local folder, or a Google
         Cloud Storage bucket/folder (for using with Google Collab & TPUs).
 
         :param uri_or_folderpath: The local folder or Google Cloud Storage bucket/folder to save the dataset to.
+        :param force: Whether to force the extraction, transformation and loading, even if the destination already exists.
         """
 
-        root = self.workspace / self.dataset.to_slug()
+        root = self.workspace
         extracted = root / "extracted"
         transformed = root / "transformed"
-        loaded = uri_or_folderpath
-        logger.info(f"Extracting dataset into: {extracted}")
-        KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted)
-        logger.info(f"Transforming dataset into: {transformed}")
-        RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed)
-        logger.info(f"Loading dataset into: {loaded}")
-        NormalisedDatasetLoader(src=transformed).load(dest=loaded)
-        logger.info("ETL pipeline completed successfully.")
+        loaded = uri_or_folderpath if ("://" in str(uri_or_folderpath)) else ensure_path(uri_or_folderpath)
+        if force or not self._already_loaded(loaded):
+            logger.info(f"Extracting dataset into: {extracted}")
+            KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted, force=force)
+            logger.info(f"Transforming dataset into: {transformed}")
+            RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed)
+            logger.info(f"Loading dataset into: {loaded}")
+            NormalisedDatasetLoader(src=transformed).load(dest=loaded)
+            logger.info("ETL pipeline completed successfully.")
+        else:
+            logger.info(f"Dataset already loaded into {loaded}, skipping (use force=True to force re-load).")
+
+    def _already_loaded(self, to: Union[str, pathlib.Path]) -> bool:
+        """
+        Checks if the dataset has already been loaded into the given destination.
+
+        :param to: The destination folder.
+        :return: True if the dataset has already been loaded, False otherwise.
+        """
+        if isinstance(to, pathlib.Path):
+            return to.exists() and len(list(to.glob("*.csv"))) > 0
+        else:
+            raise ValueError(f"Destination {to} not yet supported")
