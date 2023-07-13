@@ -41,7 +41,7 @@ class VideoToAudioTrackTransformer:
         try:
             # open the video file to extract the audio track
             # extract the audiotrack and save the audio track
-            clip = VideoFileClip(row["x_av"])
+            clip = VideoFileClip(str(row["x_av"]))
             audio = clip.audio
             if audio:
                 audio.write_audiofile(filepath)

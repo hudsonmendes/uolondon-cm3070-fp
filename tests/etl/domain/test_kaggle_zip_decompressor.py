@@ -38,8 +38,7 @@ class TestKaggleZipDecompressor(unittest.TestCase):
 
     def test_does_not_extract_files_from_invalid_subdir(self):
         # call the unpack method with a destination path and a subdir
-        self.decompressor.only_from("subdir")
-        self.decompressor.unpack(self.dest_path)
+        self.decompressor.unpack(dest=self.dest_path, only_from="subdir")
 
         # check that only the valid file was extracted
         self.assertFalse((self.dest_path / "file1.txt").exists())
@@ -52,7 +51,7 @@ class TestKaggleZipDecompressor(unittest.TestCase):
         (self.dest_path / "dirt.txt").touch()
 
         # call the unpack method with a destination path and force=True
-        self.decompressor.unpack(self.dest_path, force=True)
+        self.decompressor.unpack(dest=self.dest_path, force=True)
 
         # check that the destination folder was deleted
         self.assertFalse((self.dest_path / "dirt.txt").exists())
@@ -63,7 +62,7 @@ class TestKaggleZipDecompressor(unittest.TestCase):
         (self.dest_path / "dirt.txt").touch()
 
         # call the unpack method with a destination path and force=False
-        self.decompressor.unpack(self.dest_path, force=False)
+        self.decompressor.unpack(dest=self.dest_path, force=False)
 
         # check that the destination folder was not deleted
         self.assertTrue((self.dest_path / "dirt.txt").exists())

@@ -45,5 +45,5 @@ class KaggleDataExtractor:
         logger.info(f"Downloading dataset into: {self.workspace}")
         zipfilepath = KaggleDatasetDownloader(dataset=self.dataset).download(dest=self.workspace, force=force)
         logger.info(f"Extracting dataset from {zipfilepath} into {dest}")
-        KaggleZipDecompressor(src=zipfilepath).only_from(self.dataset.subdir).unpack(dest=dest, force=force)
+        KaggleZipDecompressor(src=zipfilepath).unpack(only_from=self.dataset.subdir, dest=dest, force=force)
         logger.info("Dataset succesfully extracted")
