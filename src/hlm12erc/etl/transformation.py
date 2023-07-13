@@ -1,3 +1,4 @@
+import logging
 import pathlib
 from typing import Dict, Optional
 
@@ -7,6 +8,8 @@ from .domain.filepath_recursive_discoverer import FilepathRecursiveDiscoverer
 from .domain.video_filename_deducer import VideoFileNameDeducer
 from .domain.video_to_audio_track_transformer import VideoToAudioTrackTransformer
 from .domain.video_to_image_mosaic_transformer import VideoToImageMosaicTransformer
+
+logger = logging.getLogger(__name__)
 
 
 class RawTo1NFTransformer:
@@ -41,8 +44,11 @@ class RawTo1NFTransformer:
         :param n_snapshots: The number of snapshots to take from each video.
         """
         self.src = src
+        logger.info(f"Transformation will source from: {src}")
         self.workspace = workspace / "transformer"
+        logger.info(f"Transformation will use workspace: {workspace}")
         self.n_snapshots = n_snapshots or RawTo1NFTransformer.DEFAULT_N_SNAPSHOTS
+        logger.info(f"Video Transformation set to n_snapshots = {self.n_snapshots}")
 
     def transform(self, dest: pathlib.Path) -> None:
         """
@@ -51,11 +57,15 @@ class RawTo1NFTransformer:
 
         :param dest: The destination file to save the transformed dataset to.
         """
+        logger.info(f"Transformation will save to: {dest}")
         splis = self._get_splits()
+        logger.info(f"Transformation will transform splits: {splis}")
         discover_recursively = FilepathRecursiveDiscoverer(self.src)
         for split, filename in splis.items():
+            logger.info(f"Transformation will transform split: {split}")
             filepath = discover_recursively(filename)
             self._transform_split(filepath, dest, split)
+            logger.info(f"Split '{split}' transformed successfully")
 
     def _get_splits(self) -> Dict[str, str]:
         """

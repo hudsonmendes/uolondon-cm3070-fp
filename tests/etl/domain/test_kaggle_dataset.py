@@ -35,3 +35,10 @@ class TestKaggleDataset(unittest.TestCase):
         # call the to_slug method and check that the returned value is correct
         expected_slug = "hlm12erc-kaggle-dataset-downloader"
         self.assertEqual(dataset.to_slug(), expected_slug)
+
+    def test_to_kaggle_returns_kaggle_path(self):
+        # create a dataset with a name and a subdirectory
+        dataset = KaggleDataset("hlm12erc", "kaggle-dataset-downloader", "data")
+
+        # asserts that the kaggle path is correct
+        self.assertEqual(dataset.to_kaggle(), "hlm12erc/kaggle-dataset-downloader")

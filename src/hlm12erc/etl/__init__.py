@@ -1,3 +1,4 @@
+import logging
 import pathlib
 from typing import Optional, Union
 
@@ -6,6 +7,8 @@ from .extraction import KaggleDataExtractor
 from .loading import NormalisedDatasetLoader
 from .transformation import RawTo1NFTransformer
 from .utils import ensure_path
+
+logger = logging.getLogger(__name__)
 
 
 class ETL:
@@ -37,8 +40,10 @@ class ETL:
         :param workspace: The workspace that will be used for processing.
         """
         self.dataset = dataset
+        logger.info(f"Kaggle dataset: {dataset.to_kaggle()}")
         if workspace:
             self.workspace = ensure_path(workspace) / "etl"
+        logger.info(f"Workspace set to: {workspace}")
 
     def into(self, uri_or_folderpath: Union[str, pathlib.Path]) -> None:
         """
@@ -53,6 +58,10 @@ class ETL:
         extracted = root / "extracted"
         transformed = root / "transformed"
         loaded = uri_or_folderpath
+        logger.info(f"Extracting dataset into: {extracted}")
         KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted)
+        logger.info(f"Transforming dataset into: {transformed}")
         RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed)
+        logger.info(f"Loading dataset into: {loaded}")
         NormalisedDatasetLoader(src=transformed).load(dest=loaded)
+        logger.info("ETL pipeline completed successfully.")

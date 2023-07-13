@@ -13,6 +13,12 @@ class KaggleDataset:
     name: str
     subdir: Optional[str] = None
 
+    def to_kaggle(self) -> str:
+        """
+        Returns the Kaggle dataset name in the format owner/name.
+        """
+        return f"{self.owner}/{self.name}"
+
     def to_slug(self) -> str:
         """
         Returns the slugified version of the dataset name.
