@@ -1,6 +1,5 @@
-import unittest
-
 import pathlib
+import unittest
 
 import pandas as pd
 from moviepy.editor import VideoFileClip
@@ -59,4 +58,7 @@ class TestVideoToImageMosaicProducer(unittest.TestCase):
             for i, timestamp in enumerate(timestamps):
                 screenshot = clip.get_frame(timestamp)
                 expected_screenshot = Image.fromarray(screenshot)
-                self.assertEqual(mosaic.crop((0, i * 1080, 1920, (i + 1) * 1080)), expected_screenshot)
+                self.assertEqual(
+                    mosaic.crop((0, i * 1080, 1920, (i + 1) * 1080)),
+                    expected_screenshot,
+                )

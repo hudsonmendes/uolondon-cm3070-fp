@@ -1,20 +1,21 @@
-from typing import Optional
-
 import os
-import shutil
 import pathlib
+import shutil
 import zipfile
+from typing import Optional
 
 from tqdm import tqdm
 
 
-class ZipDecompressor:
+class KaggleZipDecompressor:
     """
     Unpacks a zip file containing a dataset.
 
     Example:
-        >>> from hlm12erc.data import DataUnpacker
-        >>> DataUnpacker("meld.zip").only_from("subdir").unpack("/tmp/data/meld", force=True)
+        >>> from hlm12erc.etl import KaggleZipDecompressor
+        >>> decompressor = KaggleZipDecompressor(src="path/to/dataset.zip")
+        >>> decompressor.only_from("subdir")
+        >>> decompressor.unpack(dest="path/to/extracted/dataset")
     """
 
     filepath: pathlib.Path
@@ -22,15 +23,17 @@ class ZipDecompressor:
 
     def __init__(self, src: pathlib.Path) -> None:
         """
-        Creates a new DataUnpacker.
+        Creates a new KaggleZipDecompressor.
+
         :param filepath: The path to the zip file.
         """
         self.filepath = src
         self.subdir = None
 
-    def only_from(self, subdir: Optional[str]) -> "ZipDecompressor":
+    def only_from(self, subdir: Optional[str]) -> "KaggleZipDecompressor":
         """
         Sets the subdir from which the data should be extracted.
+
         :param subdir: The subdir.
         """
         self.subdir = f"{subdir.strip('/')}/" if subdir else None
@@ -39,6 +42,7 @@ class ZipDecompressor:
     def unpack(self, dest: pathlib.Path, force: bool = False) -> None:
         """
         Unpacks the dataset to the specified destination folder.
+
         :param to: The destination folder.
         :param force: If True, the destination folder will be deleted if it already exists.
         """
@@ -58,6 +62,7 @@ class ZipDecompressor:
     def _ensure_destination_is_clean(self, to: pathlib.Path, force: bool) -> None:
         """
         Ensures that the destination folder is clean.
+
         :param to: The destination folder.
         :param force: If True, the destination folder will be deleted if it already exists.
         """
@@ -70,6 +75,7 @@ class ZipDecompressor:
     def _is_filename_from_valid_subdir(self, filename: str) -> bool:
         """
         Checks if the filename is from the specified subdir.
+
         :param filename: The filename.
         :return: True if the filename is from the specified subdir, False otherwise.
         """

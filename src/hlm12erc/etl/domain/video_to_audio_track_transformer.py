@@ -1,7 +1,6 @@
-from typing import Optional
-
 import pathlib
 import wave
+from typing import Optional
 
 import pandas as pd
 from moviepy.editor import VideoFileClip
@@ -14,7 +13,7 @@ class VideoToAudioTrackTransformer:
 
     dest: pathlib.Path
 
-    def __init__(self, dest: pathlib.Path, n: Optional[int] = None) -> None:
+    def __init__(self, dest: pathlib.Path) -> None:
         """
         Create a new audio track producer that produces an audio file from a video.
         :param dest: The destination directory to save the audio file to.

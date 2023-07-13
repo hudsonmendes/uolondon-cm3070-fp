@@ -13,7 +13,13 @@ class TestVideoToAudioTrackProducer(unittest.TestCase):
 
     def test_produces_audio_file(self):
         # create a test row with a video filepath
-        row = pd.Series({"video_filepath": "test_video.mp4", "dialogue_id": "1", "utterance_id": "1"})
+        row = pd.Series(
+            {
+                "video_filepath": "test_video.mp4",
+                "dialogue_id": "1",
+                "utterance_id": "1",
+            }
+        )
 
         # call the producer to extract the audio track
         filename = self.producer(row)
@@ -24,7 +30,13 @@ class TestVideoToAudioTrackProducer(unittest.TestCase):
 
     def test_produces_empty_wave_file_if_no_audio(self):
         # create a test row with a video filepath that has no audio
-        row = pd.Series({"video_filepath": "test_video_no_audio.mp4", "dialogue_id": "1", "utterance_id": "1"})
+        row = pd.Series(
+            {
+                "video_filepath": "test_video_no_audio.mp4",
+                "dialogue_id": "1",
+                "utterance_id": "1",
+            }
+        )
 
         # call the producer to extract the audio track
         filename = self.producer(row)
@@ -37,7 +49,13 @@ class TestVideoToAudioTrackProducer(unittest.TestCase):
 
     def test_produces_empty_wave_file_if_audio_is_none(self):
         # create a test row with a video filepath and None for the audio track
-        row = pd.Series({"video_filepath": "test_video.mp4", "dialogue_id": "1", "utterance_id": "1"})
+        row = pd.Series(
+            {
+                "video_filepath": "test_video.mp4",
+                "dialogue_id": "1",
+                "utterance_id": "1",
+            }
+        )
         row["audio"] = None
 
         # call the producer to extract the audio track
@@ -51,7 +69,13 @@ class TestVideoToAudioTrackProducer(unittest.TestCase):
 
     def test_produces_audio_file_with_correct_filename(self):
         # create a test row with a video filepath
-        row = pd.Series({"video_filepath": "test_video.mp4", "dialogue_id": "1", "utterance_id": "1"})
+        row = pd.Series(
+            {
+                "video_filepath": "test_video.mp4",
+                "dialogue_id": "1",
+                "utterance_id": "1",
+            }
+        )
 
         # call the producer to extract the audio track
         filename = self.producer(row)

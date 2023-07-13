@@ -1,6 +1,5 @@
-from typing import Optional
-
 import pathlib
+from typing import Optional
 
 import pandas as pd
 from moviepy.editor import VideoFileClip

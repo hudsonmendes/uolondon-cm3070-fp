@@ -1,35 +1,41 @@
-from typing import Optional
-
 import pathlib
 
 from .domain.kaggle_dataset import KaggleDataset
 from .domain.kaggle_dataset_downloader import KaggleDatasetDownloader
-from .domain.zip_decompressor import ZipDecompressor
+from .domain.kaggle_zip_decompressor import KaggleZipDecompressor
 
 
 class KaggleDataExtractor:
     """
     Runs the extraction process, from downloading the dataset from
     kaggle to filtering & decompressing it into a temporary directory.
+
+    Example:
+        >>> from hlm12erc.etl import KaggleDataExtractor
+        >>> extractor = KaggleDataExtractor(dataset=KaggleDataset("hlm12erc", "hlm12erc"), workspace="path/to/workspace")
+        >>> extractor.extract(dest="path/to/extracted/dataset")
     """
 
     dataset: KaggleDataset
-    workspace: pathlib.Path = pathlib.Path("/tmp/hlm12erc/etl/extraction")
+    workspace: pathlib.Path
 
-    def __init__(self, dataset: KaggleDataset, workspace: Optional[pathlib.Path]) -> None:
+    def __init__(self, dataset: KaggleDataset, workspace: pathlib.Path) -> None:
         """
         Creates a new KaggleDataExtractor.
-        :param tmpdir: The temporary directory to use.
-        :param owner: The owner of the dataset.
-        :param dataset: The name of the dataset.
+
+        :param dataset: The dataset to extract.
+        :param workspace: The workspace that will be used for processing.
         """
         self.dataset = dataset
-        if workspace:
-            self.workspace = workspace
+        self.workspace = workspace / "extractor"
 
-    def extract(self) -> pathlib.Path:
-        zip = self.workspace / f"{self.dataset.owner}-{self.dataset.name}.zip"
-        dest = self.workspace / "extracted"
-        KaggleDatasetDownloader(dataset=self.dataset).download(dest=zip)
-        ZipDecompressor(src=zip).only_from(self.dataset.subdir).unpack(dest=dest, force=True)
-        return dest
+    def extract(self, dest: pathlib.Path) -> None:
+        """
+        Extracts the dataset .zip file into the dest directory, but
+        only the files from the dataset's subdirectory.
+
+        :param dest: The destination to extract the dataset into.
+        """
+        zip_filepath = self.workspace / self.dataset.to_slug()
+        KaggleDatasetDownloader(dataset=self.dataset).download(dest=zip_filepath)
+        KaggleZipDecompressor(src=zip_filepath).only_from(self.dataset.subdir).unpack(dest=dest, force=True)

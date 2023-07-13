@@ -6,28 +6,30 @@ from .kaggle_dataset import KaggleDataset
 
 
 class KaggleDatasetDownloader:
-    dataset: KaggleDataset
-
     """
-    Downloads a dataset (.zip) from a Kaggle Source.
+    Downloads a Kaggle dataset into a destination .zip file.
 
     Example:
-        >>> from hlm12erc.data import DatasetDownloader
-        >>> DatasetDownloader("hlm12erc", "meld").download("/tmp/data/meld.zip")
+        >>> from hlm12erc.etl import KaggleDataset, KaggleDatasetDownloader
+        >>> dataset = KaggleDataset("hlm12erc", "kaggle-dataset-downloader")
+        >>> zip_filepath = KaggleDatasetDownloader(dataset).download()
     """
+
+    dataset: KaggleDataset
 
     def __init__(self, dataset: KaggleDataset) -> None:
         """
         Creates a new KaggleDatasetDownloader.
-        :param owner: The owner of the dataset.
-        :param dataset: The name of the dataset.
+
+        :param dataset: The dataset to download.
         """
         self.dataset = dataset
 
     def download(self, dest: pathlib.Path) -> None:
         """
-        Downloads the dataset to the specified destination folder.
-        :param to: The destination folder.
+        Downloads the dataset into the given destination.
+
+        :param dest: The destination to download the dataset into.
         """
         kaggle.api.dataset_download_files(
             f"{self.dataset.owner}/{self.dataset.name}",

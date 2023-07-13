@@ -13,36 +13,41 @@ class ETL:
     Extracts, transforms and loads a dataset from a Kaggle source
     into a 1st Normal Form (1NF) CSV file that can be easily
     consumed by the training process.
+
+    Example:
+        >>> from hlm12erc.etl import ETL, KaggleDataset
+        >>> dataset = KaggleDataset("hlm12erc", "kaggle-dataset-downloader")
+        >>> ETL(dataset).etl_into(dest="path/to/1nf/dataset")
     """
 
     dataset: KaggleDataset
     workspace: pathlib.Path = pathlib.Path("/tmp/hlm12erc/etl")
 
-    def __init__(self, dataset) -> None:
+    def __init__(
+        self,
+        dataset: KaggleDataset,
+        workspace: Optional[Union[str, pathlib.Path]],
+    ) -> None:
         """
         Creates a new ETL instance for the given Kaggle dataset.
-        :param owner: The owner of the Kaggle dataset.
-        :param dataset: The name of the Kaggle dataset.
+
+        :param dataset: The dataset to extract, transform and load.
+        :param workspace: The workspace that will be used for processing.
         """
         self.dataset = dataset
-
-    def use_workspace(self, workspace: pathlib.Path) -> "ETL":
-        """
-        Sets the temporary directory to use for extraction and transformation.
-        :param tmpdir: The temporary directory to use.
-        :return: The ETL instance.
-        """
         if workspace:
-            self.workspace = ensure_path(workspace)
-        return self
+            self.workspace = ensure_path(workspace) / "etl"
 
     def etl_into(self, dest: Union[str, pathlib.Path]) -> None:
         """
         Extracts, transforms and loads the dataset into the given filepath.
+
         :param dest: The filepath to load the dataset into.
         """
 
-        root = self.workspace / f"{self.owner}-{self.dataset}"
-        extracted = KaggleDataExtractor(dataset=self.dataset, workspace=root).extract()
-        tranformed = RawTo1NFTransformer(src=extracted, workspace=root).transform()
-        NormalisedDatasetLoader(src=tranformed).load(dest=dest)
+        root = self.workspace / self.dataset.to_slug()
+        extracted = root / "extracted"
+        transformed = root / "transformed"
+        KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted)
+        RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed)
+        NormalisedDatasetLoader(src=transformed).load(dest=dest)
