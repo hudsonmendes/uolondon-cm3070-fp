@@ -161,7 +161,7 @@ class VideoToImageMosaicProducer:
         self.dest = dest
         self.n = n
 
-    def __call__(self, filepath: str, dialogue_id: str, utterance_id: str) -> str:
+    def __call__(self, row: pd.Series) -> str:
         """
         Extracts a number of screenshots defined by `self.n` from the original
         .mp4 video, equidistant to one another.
@@ -172,7 +172,8 @@ class VideoToImageMosaicProducer:
         :return: The filepath of the extracted screenshots mosaic image.
         """
         # open the video file to extract the screenshots
-        clip = VideoFileClip(filepath)
+        filename = row["x_av"]
+        clip = VideoFileClip(filename)
 
         # find the duration in seconds of the video clip
         duration = clip.duration
@@ -192,8 +193,11 @@ class VideoToImageMosaicProducer:
             mosaic.paste(screenshot, (0, i * screenshot.height))
 
         # save the mosaic image to the destination directory with the specified filename
-        filename = f"d-{dialogue_id}-seq-{utterance_id}.png"
-        mosaic.save(self.dest / filename)
+        filename = f"d-{row['dialog']}-seq-{row['seq']}.png"
+        filepath = self.dest / filename
+        if not filepath.parent.exists():
+            filepath.parent.mkdir(parents=True)
+        mosaic.save(filepath)
         return filename
 
 
@@ -229,6 +233,8 @@ class VideoToAudioTrackProducer:
         # save the audio track or an empty wave to the destination directory with the specified filename
         filename = f"d-{row['dialogue_id']}-seq-{row['utterance_id']}.wav"
         filepath = self.dest / filename
+        if not filepath.parent.exists():
+            filepath.parent.mkdir(parents=True)
         audio.write_audiofile(filepath) if audio else self._produce_empty_wave(filepath)
         return filename
 
