@@ -17,4 +17,8 @@ class KaggleDataset:
         """
         Returns the slugified version of the dataset name.
         """
-        return f"{self.owner}-{self.name}"
+        slug = f"{self.owner}-{self.name}"
+        slug = slug.lower().strip()
+        slug = slug.replace(" ", "-")
+        slug = slug.replace("_", "-")
+        return slug

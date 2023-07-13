@@ -1,0 +1,36 @@
+import unittest
+from hlm12erc.etl.domain.kaggle_dataset import KaggleDataset
+
+
+class TestKaggleDataset(unittest.TestCase):
+    def test_returns_slugified_name(self):
+        # create a dataset with a name that needs to be slugified
+        dataset = KaggleDataset("hlm12erc", "kaggle-dataset-downloader")
+
+        # call the to_slug method and check that the returned value is correct
+        expected_slug = "hlm12erc-kaggle-dataset-downloader"
+        self.assertEqual(dataset.to_slug(), expected_slug)
+
+    def test_returns_slugified_name_without_subdirectory(self):
+        # create a dataset with a name that needs to be slugified and a subdirectory
+        dataset = KaggleDataset("hlm12erc", "kaggle-dataset-downloader", "data")
+
+        # call the to_slug method and check that the returned value is correct
+        expected_slug = "hlm12erc-kaggle-dataset-downloader"
+        self.assertEqual(dataset.to_slug(), expected_slug)
+
+    def test_returns_slugified_name_with_uppercase_characters(self):
+        # create a dataset with a name that contains uppercase characters
+        dataset = KaggleDataset("hlm12erc", "KaggleDatasetDownloader")
+
+        # call the to_slug method and check that the returned value is correct
+        expected_slug = "hlm12erc-kaggledatasetdownloader"
+        self.assertEqual(dataset.to_slug(), expected_slug)
+
+    def test_returns_slugified_name_with_special_characters(self):
+        # create a dataset with a name that contains special characters
+        dataset = KaggleDataset("hlm12erc", "kaggle_dataset_downloader")
+
+        # call the to_slug method and check that the returned value is correct
+        expected_slug = "hlm12erc-kaggle-dataset-downloader"
+        self.assertEqual(dataset.to_slug(), expected_slug)
