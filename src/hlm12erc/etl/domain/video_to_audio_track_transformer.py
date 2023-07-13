@@ -33,15 +33,14 @@ class VideoToAudioTrackTransformer:
         :return: The filepath of the extracted audio track.
         """
 
-        # reading videos can run into many errors, so we try to read the video
-        # but get ready for not being able to read it and then we just return
-        # an empty wave file.
-
         # define the filename of the audio track
         filename, filepath = self._prepare_filepath_destination(row)
 
         # only writes if the force or the file does not exist
         if self.force or not filepath.exists():
+            # reading videos can run into many errors, so we try to read the video
+            # but get ready for not being able to read it and then we just return
+            # an empty wave file.
             # we keep track of whether we managed to produce a file or not
             extracted = False
             try:
@@ -50,7 +49,7 @@ class VideoToAudioTrackTransformer:
                 clip = VideoFileClip(str(row["x_av"]))
                 audio = clip.audio
                 if audio:
-                    audio.write_audiofile(filepath, verbose=False)
+                    audio.write_audiofile(filepath, verbose=False, logger=None)
                     extracted = True
             except Exception as e:
                 print(f"Error while reading video: {e}")
