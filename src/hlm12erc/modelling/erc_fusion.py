@@ -38,5 +38,5 @@ class ERCStackedFusion(ERCFusion):
     def out_features(self) -> int:
         return self.stacked_embedding_dims
 
-    def forward(self, x: List[torch.Tensor]) -> torch.Tensor:
-        return torch.stack(tuple(x))
+    def forward(self, *x: List[torch.Tensor]) -> torch.Tensor:
+        return torch.stack(tuple(*x))
