@@ -12,7 +12,7 @@ from hlm12erc.modelling.erc_emb_text import ERCTextEmbeddings
 
 class TestERCGloveTextEmbeddings(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig(text_out_features=10)
+        self.config = ERCConfig(text_in_features=50, text_out_features=50)
         self.embeddings = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GLOVE)(config=self.config)
 
     def tearDown(self):

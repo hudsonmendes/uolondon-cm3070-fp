@@ -9,6 +9,7 @@
             "type": "python",
             "request": "launch",
             "module": "hlm12erc",
+            "console": "integratedTerminal",
             "args": [
                 "etl",
                 "kaggle",
