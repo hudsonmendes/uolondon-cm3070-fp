@@ -13,7 +13,7 @@ from hlm12erc.etl.domain.video_to_image_mosaic_transformer import VideoToImageMo
 
 class TestVideoToImageMosaicTransformer(unittest.TestCase):
     def setUp(self):
-        self.dest = pathlib.Path("test_output")
+        self.dest = pathlib.Path("/tmp/hlm12erc/tests/test_output")
         self.dest.mkdir(exist_ok=True)
 
     def tearDown(self):

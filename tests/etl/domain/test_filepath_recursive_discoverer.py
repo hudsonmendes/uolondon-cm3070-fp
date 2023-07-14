@@ -9,7 +9,7 @@ from hlm12erc.etl.domain.filepath_recursive_discoverer import FilepathRecursiveD
 
 class TestFilepathRecursiveDiscoverer(unittest.TestCase):
     def setUp(self):
-        self.root = pathlib.Path("/tmp/hlm12erc/test_data")
+        self.root = pathlib.Path("/tmp/hlm12erc/tests/test_data/")
         self.discoverer = FilepathRecursiveDiscoverer(self.root)
         (self.root / "subdir1").mkdir(parents=True, exist_ok=True)
         (self.root / "file.txt").touch(exist_ok=True)

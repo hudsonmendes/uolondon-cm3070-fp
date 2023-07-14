@@ -11,8 +11,8 @@ from hlm12erc.etl.domain.kaggle_zip_decompressor import KaggleZipDecompressor
 
 class TestKaggleZipDecompressor(unittest.TestCase):
     def setUp(self):
-        self.src_path = pathlib.Path("/tmp/hlm12erc/test_data")
-        self.dest_path = pathlib.Path("/tmp/hlm12erc/test_output/")
+        self.src_path = pathlib.Path("/tmp/hlm12erc/tests/test_data/")
+        self.dest_path = pathlib.Path("/tmp/hlm12erc/tests/test_output/")
         self.zipfile_path = self.src_path / "test_dataset.zip"
         self.zipfile_path.parent.mkdir(parents=True, exist_ok=True)
         self.decompressor = KaggleZipDecompressor(self.zipfile_path)

@@ -70,6 +70,6 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         """
         y = [word_tokenize(text) for text in x]
         y = [[self.glove.get_vecs_by_tokens(t) for t in seq] for seq in y]
-        y = torch.tensor(y, dtype=torch.float)
+        y = torch.stack(tuple(y), dim=1)
         y = torch.mean(y, dim=2)
         return y
