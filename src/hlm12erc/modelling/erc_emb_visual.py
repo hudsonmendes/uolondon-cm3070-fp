@@ -1,22 +1,12 @@
-# Python Built-in Modules
-from abc import ABC
-
 # Third-Party Libraries
 import torch
 
 # Local Folders
-from .erc_config import ERCConfig
+from .erc_config import ERCConfig, ERCVisualEmbeddingType
+from .erc_emb import ERCEmbeddings
 
 
-class ERCVisualEmbeddingType:
-    """
-    Enumerates the available implementations for the visual embedding layer.
-    """
-
-    RESNET_50 = "resnet50"
-
-
-class ERCVisualEmbeddings(ABC, torch.nn.Module):
+class ERCVisualEmbeddings(ERCEmbeddings):
     """
     ERCVisualEmbeddings is an abstract class that defines the interface for visual embedding layers.
 
@@ -25,17 +15,11 @@ class ERCVisualEmbeddings(ABC, torch.nn.Module):
         >>> ERCVisualEmbeddings.resolve_type_from(ERCVisualEmbeddingType.RESNET_50)
     """
 
-    config: ERCConfig
-
-    def __init__(self, config: ERCConfig, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.config = config
-
     @staticmethod
     def resolve_type_from(expression: str) -> type["ERCVisualEmbeddings"]:
         if expression == ERCVisualEmbeddingType.RESNET_50:
             return ERCResNet50VisualEmbeddings
-        raise ValueError(f"Unknown visual embedding type: {expression}")
+        raise ValueError(f"The visual embedding '{expression}' is not supported.")
 
 
 class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
@@ -61,6 +45,10 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         self.resnet50 = torch.hub.load("pytorch/vision:v0.6.0", "resnet50", pretrained=True)
         self.resnet50.eval()
         self.resnet50.fc = torch.nn.Identity()
+
+    @property
+    def out_features(self) -> int:
+        return self.resnet50.out_features
 
     def forward(self, x):
         """

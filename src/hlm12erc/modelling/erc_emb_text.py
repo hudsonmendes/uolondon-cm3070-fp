@@ -1,5 +1,4 @@
 # Python Built-in Modules
-from abc import ABC
 from typing import Type
 
 # Third-Party Libraries
@@ -8,18 +7,11 @@ import torchtext
 from nltk import word_tokenize
 
 # Local Folders
-from .erc_config import ERCConfig
+from .erc_config import ERCConfig, ERCTextEmbeddingType
+from .erc_emb import ERCEmbeddings
 
 
-class ERCTextEmbeddingType:
-    """
-    Enumerates the available implementations for the text embedding layer.
-    """
-
-    GLOVE = "glove"
-
-
-class ERCTextEmbeddings(ABC, torch.nn.Module):
+class ERCTextEmbeddings(ERCEmbeddings):
     """
     ERCTextEmbeddings is an abstract class that defines the interface for text embedding layers.
 
@@ -28,17 +20,11 @@ class ERCTextEmbeddings(ABC, torch.nn.Module):
         >>> ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GLOVE)
     """
 
-    config: ERCConfig
-
-    def __init__(self, config: ERCConfig, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.config = config
-
     @staticmethod
     def resolve_type_from(expression: str) -> Type["ERCTextEmbeddings"]:
         if expression == ERCTextEmbeddingType.GLOVE:
             return ERCGloveTextEmbeddings
-        raise ValueError(f"Unknown text embedding type: {expression}")
+        raise ValueError(f"The text embeddings '{expression}' is not supported.")
 
 
 class ERCGloveTextEmbeddings(ERCTextEmbeddings):
@@ -54,6 +40,8 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         >>> embeddings(["This is a sentence.", "This is another sentence."])
     """
 
+    hidden_size: int
+
     def __init__(self, config: ERCConfig) -> None:
         """
         Initializes the ERCGloveTextEmbeddings class.
@@ -61,7 +49,12 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         :param config: The configuration for the ERC model.
         """
         super().__init__(config)
+        self.hidden_size = config.text_hidden_size
         self.glove = torchtext.vocab.GloVe(name="6B", dim=config.text_hidden_size)
+
+    @property
+    def out_features(self) -> int:
+        return self.hidden_size
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
