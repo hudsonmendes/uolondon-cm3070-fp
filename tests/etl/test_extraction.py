@@ -1,9 +1,8 @@
 # Python Built-in Modules
-import logging
 import pathlib
 import tempfile
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # My Packages and Modules
 from hlm12erc.etl import KaggleDataExtractor, KaggleDataset

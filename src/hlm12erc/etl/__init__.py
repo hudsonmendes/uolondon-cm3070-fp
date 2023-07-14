@@ -56,21 +56,30 @@ class ETL:
         :param uri_or_folderpath: The local folder or Google Cloud Storage bucket/folder to save the dataset to.
         :param force: Whether to force the extraction, transformation and loading, if the destination already exists.
         """
+        dest = uri_or_folderpath if ("://" in str(uri_or_folderpath)) else ensure_path(uri_or_folderpath)
+        if force or not self._already_loaded(dest):
+            logger.info("Starting ETL process, this may take a while...")
+            self._perform_etl(force, root=self.workspace, dest=dest)
+        else:
+            logger.info(f"Dataset already loaded into {dest}, skipping (use force=True to force re-load).")
 
-        root = self.workspace
+    def _perform_etl(self, force: bool, root: pathlib.Path, dest: Union[str, pathlib.Path]):
+        """
+        Executes the Extraction, Transformation and Loading Process
+
+        :param force: whether we must force the ETL or not
+        :param root: the root workspace directory
+        :param dest: final  destination oft eh ETL
+        """
         extracted = root / "extracted"
         transformed = root / "transformed"
-        loaded = uri_or_folderpath if ("://" in str(uri_or_folderpath)) else ensure_path(uri_or_folderpath)
-        if force or not self._already_loaded(loaded):
-            logger.info(f"Extracting dataset into: {extracted}")
-            KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted, force=force)
-            logger.info(f"Transforming dataset into: {transformed}")
-            RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed, force=force)
-            logger.info(f"Loading dataset into: {loaded}")
-            NormalisedDatasetLoader(src=transformed).load(dest=loaded)
-            logger.info("ETL pipeline completed successfully.")
-        else:
-            logger.info(f"Dataset already loaded into {loaded}, skipping (use force=True to force re-load).")
+        logger.info(f"Extracting dataset into: {extracted}")
+        # KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted, force=force)
+        logger.info(f"Transforming dataset into: {transformed}")
+        # RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed, force=force)
+        logger.info(f"Loading dataset into: {dest}")
+        NormalisedDatasetLoader(src=transformed).load(dest=dest, force=force)
+        logger.info("ETL pipeline completed successfully.")
 
     def _already_loaded(self, to: Union[str, pathlib.Path]) -> bool:
         """
