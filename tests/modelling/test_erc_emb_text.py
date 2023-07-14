@@ -20,18 +20,26 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         mock.patch.stopall()
 
     def test_forward_shape(self):
-        input_list = ["this is a test sentence", "this is another test sentence"]
+        input_list = ["here a test sentence", "this is another test sentence"]
         output_tensor = self.embeddings(input_list)
         self.assertEqual(output_tensor.shape, (len(input_list), self.config.text_out_features))
 
-    def test_forward_oov(self):
-        input_list = ["this is a test oov"]
-        output_tensor = self.embeddings(input_list)
-        self.assertEqual(output_tensor.shape, (len(input_list), self.config.text_out_features))
+    @mock.patch("hlm12erc.modelling.erc_emb_text.torchtext.vocab.GloVe.get_vecs_by_tokens")
+    def test_forward_oov_are_not_counted(self, get_vecs_by_tokens_mock: mock.MagicMock):
+        def get_vecs_by_tokens_fn(x, lower_case_backup: bool = False):
+            return torch.ones((3,)) if x == "term" else torch.zeros((3,))
 
-    @mock.patch("hlm12erc.modelling.erc_emb_text.torchtext.vocab.Glove.get_vecs_by_tokens")
-    def test_forward_mean(self, get_vecs_by_tokens_mock):
-        get_vecs_by_tokens_mock.behave = lambda x: torch.ones((3,)) if x == "one" else torch.zeros((3,))
-        input_list = ["ones zeros"]
+        get_vecs_by_tokens_mock.side_effect = get_vecs_by_tokens_fn
+        input_list = ["term oov term"]
         output_tensor = self.embeddings(input_list)
-        self.assertEqual(output_tensor.tolist(), [[0.5, 0.5, 0.5]])
+        self.assertEqual(output_tensor.tolist(), [[1.0, 1.0, 1.0]])
+
+    @mock.patch("hlm12erc.modelling.erc_emb_text.torchtext.vocab.GloVe.get_vecs_by_tokens")
+    def test_forward_mean(self, get_vecs_by_tokens_mock: mock.MagicMock):
+        def get_vecs_by_tokens_fn(x, lower_case_backup: bool = False):
+            return torch.ones((3,)) if x == "ones" else (torch.ones((3,)) / 2)
+
+        get_vecs_by_tokens_mock.side_effect = get_vecs_by_tokens_fn
+        input_list = ["ones halves"]
+        output_tensor = self.embeddings(input_list)
+        self.assertEqual(output_tensor.tolist(), [[0.75, 0.75, 0.75]])

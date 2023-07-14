@@ -5,6 +5,7 @@ from typing import Type
 import torch
 import torchtext
 from nltk import word_tokenize
+from torch.nn.utils.rnn import pad_sequence
 
 # Local Folders
 from .erc_config import ERCConfig, ERCTextEmbeddingType
@@ -68,8 +69,9 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         :param x: The input tensor of shape (batch_size,).
         :return: The output tensor of shape (batch_size, hidden_size).
         """
-        y = [word_tokenize(text) for text in x]
-        y = [[self.glove.get_vecs_by_tokens(t) for t in seq] for seq in y]
-        y = torch.stack(tuple(y), dim=1)
-        y = torch.mean(y, dim=2)
+        t = [word_tokenize(text) for text in x]
+        v = [[self.glove.get_vecs_by_tokens(t, lower_case_backup=True) for t in seq] for seq in t]
+        v = [[vii for vii in vi if torch.any(vii != 0)] for vi in v]
+        y = pad_sequence([torch.stack(seq) for seq in v], batch_first=True)
+        y = torch.mean(y, dim=1)
         return y
