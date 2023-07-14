@@ -1,0 +1,2 @@
+class ERCFusion:
+    pass
