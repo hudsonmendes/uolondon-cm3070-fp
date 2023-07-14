@@ -3,22 +3,32 @@ from .erc_feedforward import ERCFeedForwardActivation
 
 
 class ERCTextEmbeddingType:
+    """Enumerates all available text embedding types for the model."""
+
     GLOVE = "glove"
 
 
 class ERCVisualEmbeddingType:
-    RESNET_50 = "resnet50"
+    """Enumerates all available visual embedding types for the model."""
+
+    RESNET50 = "resnet50"
 
 
 class ERCAudioEmbeddingType:
+    """Enumerates all available audio embedding types for the model."""
+
     WAVEFORM = "waveform"
 
 
 class ERCFusionTechnique:
+    """Enumerates all available fusion techniques for the model."""
+
     STACKED = "stacked"
 
 
 class ERCLossFunctions:
+    """Enumerates all available loss functions for the model."""
+
     CATEGORICAL_CROSS_ENTROPY = "categorical_cross_entropy"
 
 
@@ -41,7 +51,7 @@ class ERCConfig:
     """
 
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
-    modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET_50
+    modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET50
     modules_audio_encoder: str = ERCAudioEmbeddingType.WAVEFORM
     modules_fusion: str = ERCFusionTechnique.STACKED
 

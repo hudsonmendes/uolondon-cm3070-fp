@@ -13,11 +13,12 @@ from .erc_emb import ERCEmbeddings
 
 class ERCTextEmbeddings(ERCEmbeddings):
     """
-    ERCTextEmbeddings is an abstract class that defines the interface for text embedding layers.
+    ERCTextEmbeddings is an abstract class that defines the interface for text
+    embedding layers.
 
     Examples:
-        >>> from hlm12erc.modelling.erc_emb_text import ERCTextEmbeddingType, ERCTextEmbeddings
-        >>> ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GLOVE)
+        >>> from hlm12erc.modelling.erc_emb_text import ERCTextEmbeddings
+        >>> class ERCMyCustomTextEmbeddings(ERCTextEmbeddings):
     """
 
     @staticmethod
@@ -32,12 +33,11 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
     ERCGloveTextEmbeddings is a class that implements the text embedding layer using GloVe embeddings
     and then the mean of the embeddings for each token in the text.
 
-    Examples:
-        >>> from hlm12erc.modelling.erc_config import ERCConfig
+    Example:
+        >>> from hlm12erc.modelling import ERCConfig, ERCTextEmbeddingType
         >>> from hlm12erc.modelling.erc_emb_text import ERCGloveTextEmbeddings
         >>> config = ERCConfig()
-        >>> embeddings = ERCGloveTextEmbeddings(config)
-        >>> embeddings(["This is a sentence.", "This is another sentence."])
+        >>> ERCGloveTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GLOVE)(config)
     """
 
     hidden_size: int
@@ -54,6 +54,11 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
 
     @property
     def out_features(self) -> int:
+        """
+        Returns the number of output features of the text embedding layer.
+
+        :return: The number of output features of the text embedding layer.
+        """
         return self.hidden_size
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
