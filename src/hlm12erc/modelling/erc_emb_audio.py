@@ -61,11 +61,11 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         :param config: configuration for the model
         """
         super().__init__(config)
-        self.hidden_size = config.audio_hidden_size
+        self.hidden_size = config.audio_out_features
         self.ff = ERCFeedForwardModel(
             in_features=config.audio_in_features,
             config=ERCFeedForwardConfig(
-                hidden_size=config.audio_hidden_size,
+                hidden_size=config.audio_out_features,
                 num_layers=config.audio_num_layers,
                 dropout=config.audio_dropout,
                 activation=config.audio_activation,

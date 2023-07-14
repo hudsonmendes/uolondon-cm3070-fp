@@ -49,8 +49,8 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         :param config: The configuration for the ERC model.
         """
         super().__init__(config)
-        self.hidden_size = config.text_hidden_size
-        self.glove = torchtext.vocab.GloVe(name="6B", dim=config.text_hidden_size)
+        self.hidden_size = config.text_out_features
+        self.glove = torchtext.vocab.GloVe(name="6B", dim=config.text_out_features)
 
     @property
     def out_features(self) -> int:

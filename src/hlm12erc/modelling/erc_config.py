@@ -1,3 +1,6 @@
+# Python Built-in Modules
+from dataclasses import dataclass
+
 # Local Folders
 from .erc_feedforward import ERCFeedForwardActivation
 
@@ -32,6 +35,7 @@ class ERCLossFunctions:
     CATEGORICAL_CROSS_ENTROPY = "categorical_cross_entropy"
 
 
+@dataclass(frozen=True)
 class ERCConfig:
     """
     ERCConfig is a class that defines the configuration for ERC model.
@@ -55,10 +59,12 @@ class ERCConfig:
     modules_audio_encoder: str = ERCAudioEmbeddingType.WAVEFORM
     modules_fusion: str = ERCFusionTechnique.STACKED
 
-    text_hidden_size: int = 300
+    text_in_features: int = 300
+    text_out_features: int = 300
 
     audio_in_features: int = 1
     audio_hidden_size: int = 64
+    audio_out_features: int = 300
     audio_num_layers: int = 3
     audio_dropout: float = 0.1
     audio_activation: str = ERCFeedForwardActivation.RELU

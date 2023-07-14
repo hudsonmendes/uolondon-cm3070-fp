@@ -1,45 +1,37 @@
 # Python Built-in Modules
 import unittest
+from unittest import mock
 
 # Third-Party Libraries
 import torch
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_emb_text import ERCGloveTextEmbeddings
+from hlm12erc.modelling.erc_config import ERCConfig, ERCTextEmbeddingType
+from hlm12erc.modelling.erc_emb_text import ERCTextEmbeddings
 
 
 class TestERCGloveTextEmbeddings(unittest.TestCase):
     def setUp(self):
-        self.vocab_size = 100
-        self.embedding_dim = 50
-        self.padding_idx = 0
-        self.embeddings = ERCGloveTextEmbeddings(self.vocab_size, self.embedding_dim, self.padding_idx)
+        self.config = ERCConfig(text_out_features=10)
+        self.embeddings = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GLOVE)(config=self.config)
 
     def tearDown(self):
         del self.embeddings
+        mock.patch.stopall()
 
     def test_forward_shape(self):
         input_list = ["this is a test sentence", "this is another test sentence"]
         output_tensor = self.embeddings(input_list)
-        self.assertEqual(output_tensor.shape, (2, len(input_list[0].split()), self.embedding_dim))
+        self.assertEqual(output_tensor.shape, (len(input_list), self.config.text_out_features))
 
-    def test_forward_padding(self):
-        input_list = ["this is a test sentence", "this is another test sentence"]
+    def test_forward_oov(self):
+        input_list = ["this is a test oov"]
         output_tensor = self.embeddings(input_list)
-        self.assertTrue(torch.all(torch.eq(output_tensor[0, -2:], torch.zeros((2, self.embedding_dim)))))
+        self.assertEqual(output_tensor.shape, (len(input_list), self.config.text_out_features))
 
-    def test_forward_out_of_vocab(self):
-        input_list = [
-            "this is a test sentence",
-            "this is another test sentence",
-            "this is a sentence with out-of-vocab words",
-        ]
+    @mock.patch("hlm12erc.modelling.erc_emb_text.torchtext.vocab.Glove.get_vecs_by_tokens")
+    def test_forward_mean(self, get_vecs_by_tokens_mock):
+        get_vecs_by_tokens_mock.behave = lambda x: torch.ones((3,)) if x == "one" else torch.zeros((3,))
+        input_list = ["ones zeros"]
         output_tensor = self.embeddings(input_list)
-        self.assertTrue(torch.all(torch.eq(output_tensor[2, -2:], torch.zeros((2, self.embedding_dim)))))
-
-    def test_forward_grad(self):
-        input_list = ["this is a test sentence", "this is another test sentence"]
-        output_tensor = self.embeddings(input_list)
-        loss = output_tensor.sum()
-        loss.backward()
-        self.assertIsNotNone(input_tensor.grad)
+        self.assertEqual(output_tensor.tolist(), [[0.5, 0.5, 0.5]])
