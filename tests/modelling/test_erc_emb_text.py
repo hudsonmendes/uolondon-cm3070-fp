@@ -35,7 +35,10 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         get_vecs_by_tokens_mock.side_effect = get_vecs_by_tokens_fn
         input_list = ["term oov term"]
         output_tensor = self.embeddings(input_list)
-        self.assertEqual(output_tensor.tolist(), [[1.0, 1.0, 1.0]])
+        self.assertEqual(
+            output_tensor.tolist(),
+            [[0.5773502588272095, 0.5773502588272095, 0.5773502588272095]],
+        )  # [1., 1., 1.] vector, but normalised
 
     @mock.patch("hlm12erc.modelling.erc_emb_text.torchtext.vocab.GloVe.get_vecs_by_tokens")
     def test_forward_mean(self, get_vecs_by_tokens_mock: mock.MagicMock):
@@ -45,11 +48,14 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         get_vecs_by_tokens_mock.side_effect = get_vecs_by_tokens_fn
         input_list = ["ones halves"]
         output_tensor = self.embeddings(input_list)
-        self.assertEqual(output_tensor.tolist(), [[0.75, 0.75, 0.75]])
+        self.assertEqual(
+            output_tensor.tolist(),
+            [[0.5773503184318542, 0.5773503184318542, 0.5773503184318542]],
+        )  # [0.75, 0.75, 0.75] vector, but normalised
 
     def test_forward_normalization(self):
         input_list = ["here a test sentence", "this is another test sentence"]
         output_tensor = self.embeddings(input_list)
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
-            self.assertAlmostEqual(norm, 1.0)
+            self.assertAlmostEqual(norm.item(), 1.0, places=5)

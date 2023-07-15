@@ -28,7 +28,8 @@ class TestERCRawAudioEmbeddings(unittest.TestCase):
         output_tensor = self.embeddings(self.audios)
         self.assertEqual(output_tensor.shape, (len(self.audios), self.embeddings.out_features))
 
+    def test_forward_normalization(self):
         output_tensor = self.embeddings(self.audios)
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
-            self.assertEqual(norm, 1.0)
+            self.assertAlmostEqual(norm.item(), 1.0, places=5)

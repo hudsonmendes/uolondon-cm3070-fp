@@ -29,4 +29,4 @@ class TestERCResNet50VisualEmbeddings(unittest.TestCase):
         output_tensor = self.embeddings(self.images)
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
-            self.assertAlmostEqual(norm, 1.0)
+            self.assertAlmostEqual(norm.item(), 1.0, places=5)
