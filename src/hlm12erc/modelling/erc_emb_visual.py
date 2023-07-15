@@ -4,8 +4,8 @@ from typing import List
 
 # Third-Party Libraries
 import torch
+import torchvision
 from PIL.Image import Image
-from transformers import AutoImageProcessor, ResNetModel
 
 # Local Folders
 from .erc_config import ERCConfig, ERCVisualEmbeddingType
@@ -52,13 +52,31 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
 
     def __init__(self, config: ERCConfig):
         """
-        Initializes the ERCResNet50VisualEmbeddings class.
+        Initializes the ERCResNet50VisualEmbeddings class, loading the preprocessing
+        transformation routine and the ResNet50 model.
+
+        The preprocessing transformation routine normalises the input images using
+        the meand and standard deviation calculated on the images of the training
+        set, calculated as part of the mlops notebook, in the "Measures of Spread"
+        section, by the function `calculate_measures_of_spread` .
+
+        The resnet50 model is loaded from the torchvision library, and the final
+        fully connected layer is replaced by an identity layer, so that the output
+        of the model is the output of the final convolutional layer.
 
         :param config: The configuration for the ERC model.
         """
         super().__init__(config)
-        self.processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
-        self.resnet50 = ResNetModel.from_pretrained("microsoft/resnet-50")
+        self.preprocessor = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.Resize(256),
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(mean=[0.2706, 0.2010, 0.1914], std=[0.1857, 0.1608, 0.1667]),
+            ]
+        )
+        self.resnet50 = torch.hub.load("pytorch/vision:v0.6.0", "resnet50", pretrained=True)
+        self.resnet50.eval()
+        self.resnet50.fc = torch.nn.Identity()
 
     @property
     def out_features(self) -> int:
@@ -67,7 +85,7 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
 
         :return: The number of output features of the visual embedding layer.
         """
-        return 1024
+        return 2048
 
     def forward(self, x: List[Image]) -> torch.Tensor:
         """
@@ -76,6 +94,6 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         :param x: The input tensor.
         :return: The output tensor with the restnet50 embedded representation.
         """
-        y = self.processor(x, return_tensors="pt")
-        y = self.resnet50(**y).last_hidden_state
+        y = torch.stack([self.preprocessor(xi) for xi in x], dim=0)
+        y = self.resnet50(y)
         return y

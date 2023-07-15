@@ -17,9 +17,9 @@ class TestERCResNet50VisualEmbeddings(unittest.TestCase):
     def tearDown(self):
         del self.embeddings
 
+    def test_out_features(self):
+        self.assertEqual(self.embeddings.out_features, 2048)
+
     def test_forward_shape(self):
         output_tensor = self.embeddings(self.images)
         self.assertEqual(output_tensor.shape, (len(self.images), self.embeddings.out_features))
-
-    def test_out_features(self):
-        self.assertEqual(self.embeddings.out_features, 2048)
