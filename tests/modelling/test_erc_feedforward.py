@@ -15,7 +15,7 @@ class TestERCFeedForwardModel(unittest.TestCase):
             feedforward_layers=[
                 ERCConfigFeedForwardLayer(out_features=32, dropout=0.2),
                 ERCConfigFeedForwardLayer(out_features=16, dropout=0.2),
-                ERCConfigFeedForwardLayer(out_features=8, dropout=0.2),
+                ERCConfigFeedForwardLayer(out_features=8),
                 ERCConfigFeedForwardLayer(dropout=0.1),
             ]
         )
@@ -36,4 +36,4 @@ class TestERCFeedForwardModel(unittest.TestCase):
 
     def test_num_layers(self):
         assert self.config.feedforward_layers
-        self.assertEqual(len(self.model.sequence), len(self.config.feedforward_layers) * 2 - 1)
+        self.assertEqual(len(self.model.sequence), len(self.config.feedforward_layers) * 3 - 1)

@@ -11,7 +11,7 @@ from hlm12erc.modelling.erc_emb_audio import ERCAudioEmbeddings, ERCAudioEmbeddi
 
 class TestERCRawAudioEmbeddings(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig(audio_in_features=325458, audio_out_features=512)
+        self.config = ERCConfig(audio_in_features=325458, audio_out_features=256)
         self.embeddings = ERCAudioEmbeddings.resolve_type_from(ERCAudioEmbeddingType.WAVEFORM)(self.config)
         self.audios = [
             wave.open("tests/fixtures/d-1038-seq-17.wav"),
@@ -22,7 +22,7 @@ class TestERCRawAudioEmbeddings(unittest.TestCase):
         del self.embeddings
 
     def test_out_features(self):
-        self.assertEqual(self.embeddings.out_features, 512)
+        self.assertEqual(self.embeddings.out_features, self.config.audio_out_features)
 
     def test_forward_shape(self):
         output_tensor = self.embeddings(self.audios)

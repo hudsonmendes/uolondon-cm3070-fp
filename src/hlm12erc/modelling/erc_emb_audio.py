@@ -75,9 +75,11 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
             in_features=config.audio_in_features,
             out_features=config.audio_out_features,
             layers=[
-                ERCConfigFeedForwardLayer(out_features=config.audio_in_features, dropout=0.1),
-                ERCConfigFeedForwardLayer(out_features=config.audio_in_features, dropout=0.1),
                 ERCConfigFeedForwardLayer(out_features=config.audio_out_features, dropout=0.1),
+                ERCConfigFeedForwardLayer(dropout=0.1),
+                ERCConfigFeedForwardLayer(dropout=0.1),
+                ERCConfigFeedForwardLayer(dropout=0.1),
+                ERCConfigFeedForwardLayer(dropout=0.1),
             ],
         )
 
