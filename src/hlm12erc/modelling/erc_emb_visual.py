@@ -6,6 +6,7 @@ from typing import List
 import torch
 import torchvision
 from PIL.Image import Image
+from torch.nn.functional import normalize as l2_norm
 
 # Local Folders
 from .erc_config import ERCConfig, ERCVisualEmbeddingType
@@ -96,5 +97,5 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         """
         y = torch.stack([self.preprocessor(xi) for xi in x], dim=0)
         y = self.resnet50(y)
-        y = y / torch.norm(y, dim=0)
+        y = l2_norm(y, p=2, dim=1)
         return y

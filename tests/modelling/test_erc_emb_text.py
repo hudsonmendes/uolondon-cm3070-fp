@@ -51,4 +51,5 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         input_list = ["here a test sentence", "this is another test sentence"]
         output_tensor = self.embeddings(input_list)
         norms = torch.norm(output_tensor, dim=1)
-        self.assertTrue(torch.allclose(norms, torch.ones_like(norms)))
+        for norm in norms:
+            self.assertAlmostEqual(norm, 1.0)

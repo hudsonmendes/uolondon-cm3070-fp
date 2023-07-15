@@ -5,6 +5,7 @@ from wave import Wave_read as Wave
 
 # Third-Party Libraries
 import torch
+from torch.nn.functional import normalize as l2_norm
 from torch.nn.utils.rnn import pad_sequence
 
 # Local Folders
@@ -99,7 +100,7 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         """
         y = self._preprocess(x)
         y = self.ff(y)
-        y = y / torch.norm(y, dim=0)
+        y = l2_norm(y, p=2, dim=1)
         return y
 
     def _preprocess(self, x: List[Wave]) -> torch.Tensor:

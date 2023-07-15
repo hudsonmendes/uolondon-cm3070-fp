@@ -28,4 +28,5 @@ class TestERCResNet50VisualEmbeddings(unittest.TestCase):
     def test_forward_normalization(self):
         output_tensor = self.embeddings(self.images)
         norms = torch.norm(output_tensor, dim=1)
-        self.assertTrue(torch.allclose(norms, torch.ones_like(norms)))
+        for norm in norms:
+            self.assertAlmostEqual(norm, 1.0)

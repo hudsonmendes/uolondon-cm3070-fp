@@ -6,6 +6,7 @@ from typing import List, Type
 import torch
 import torchtext
 from nltk import word_tokenize
+from torch.nn.functional import normalize as l2_norm
 from torch.nn.utils.rnn import pad_sequence
 
 # Local Folders
@@ -83,4 +84,5 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         v = [[vii for vii in vi if torch.any(vii != 0)] for vi in v]
         y = pad_sequence([torch.stack(seq) for seq in v], batch_first=True)
         y = torch.mean(y, dim=1)
+        y = l2_norm(y, p=2, dim=1)
         return y
