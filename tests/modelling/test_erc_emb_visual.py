@@ -2,6 +2,7 @@
 import unittest
 
 # Third-Party Libraries
+import torch
 from PIL import Image
 
 # My Packages and Modules
@@ -23,3 +24,8 @@ class TestERCResNet50VisualEmbeddings(unittest.TestCase):
     def test_forward_shape(self):
         output_tensor = self.embeddings(self.images)
         self.assertEqual(output_tensor.shape, (len(self.images), self.embeddings.out_features))
+
+    def test_forward_normalization(self):
+        output_tensor = self.embeddings(self.images)
+        norms = torch.norm(output_tensor, dim=1)
+        self.assertTrue(torch.allclose(norms, torch.ones_like(norms)))

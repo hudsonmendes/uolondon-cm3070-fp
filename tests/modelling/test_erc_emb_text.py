@@ -46,3 +46,9 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         input_list = ["ones halves"]
         output_tensor = self.embeddings(input_list)
         self.assertEqual(output_tensor.tolist(), [[0.75, 0.75, 0.75]])
+
+    def test_forward_normalization(self):
+        input_list = ["here a test sentence", "this is another test sentence"]
+        output_tensor = self.embeddings(input_list)
+        norms = torch.norm(output_tensor, dim=1)
+        self.assertTrue(torch.allclose(norms, torch.ones_like(norms)))

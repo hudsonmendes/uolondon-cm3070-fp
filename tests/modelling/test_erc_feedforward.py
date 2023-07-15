@@ -37,7 +37,7 @@ class TestERCFeedForwardModel(unittest.TestCase):
         self.assertEqual(len(self.model.ff), self.num_layers * 2 - 1)
 
     def test_activation(self):
-        activation_type = ERCFeedForwardModel.resolve_activation_from(self.activation)
+        activation_type = ERCFeedForwardModel._resolve_activation_from(self.activation)
         self.assertIsInstance(self.model.ff[1], activation_type)
 
     def test_dropout(self):

@@ -96,4 +96,5 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         """
         y = torch.stack([self.preprocessor(xi) for xi in x], dim=0)
         y = self.resnet50(y)
+        y = y / torch.norm(y, dim=0)
         return y

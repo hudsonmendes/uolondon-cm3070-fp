@@ -1,6 +1,6 @@
 # Python Built-in Modules
 from dataclasses import dataclass
-from typing import List
+from typing import List, Type
 
 # Third-Party Libraries
 import torch
@@ -39,6 +39,15 @@ class ERCFeedForwardModel(torch.nn.Module):
         super().__init__()
         self.ff = ERCFeedForwardModel._create_feedforward_based_on(in_features, config)
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the feedforward network.
+
+        :param x: input tensor
+        :return: output tensor
+        """
+        return self.ff(x)
+
     @staticmethod
     def _create_feedforward_based_on(in_features: int, config: ERCFeedForwardConfig) -> torch.nn.Module:
         """
@@ -54,7 +63,7 @@ class ERCFeedForwardModel(torch.nn.Module):
             layer_in_features = in_features if i == 0 else config.hidden_size
             layers.append(torch.nn.Linear(layer_in_features, config.hidden_size))
             # activation
-            activation_type = ERCFeedForwardModel.resolve_activation_from(config.activation)
+            activation_type = ERCFeedForwardModel._resolve_activation_from(config.activation)
             layers.append(activation_type())
             # dropout
             if config.dropout > 0:
@@ -62,16 +71,7 @@ class ERCFeedForwardModel(torch.nn.Module):
         return torch.nn.Sequential(*layers)
 
     @staticmethod
-    def resolve_activation_from(expression: str) -> torch.nn.Module:
+    def _resolve_activation_from(expression: str) -> Type[torch.nn.Module]:
         if expression == ERCFeedForwardActivation.RELU:
-            return torch.nn.ReLU()
+            return torch.nn.ReLU
         raise ValueError(f"The activation {expression} is not supported")
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass of the feedforward network.
-
-        :param x: input tensor
-        :return: output tensor
-        """
-        return self.ff(x)
