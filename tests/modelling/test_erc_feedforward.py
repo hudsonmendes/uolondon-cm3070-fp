@@ -5,7 +5,7 @@ import unittest
 import torch
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_feedforward import ERCFeedForwardActivation, ERCFeedForwardConfig, ERCFeedForwardModel
+from hlm12erc.modelling.erc_feedforward import ERCFeedForward, ERCFeedForwardActivation, ERCFeedForwardConfig
 
 
 class TestERCFeedForwardModel(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestERCFeedForwardModel(unittest.TestCase):
         self.dropout = 0.1
         self.activation = ERCFeedForwardActivation.RELU
         self.config = ERCFeedForwardConfig(self.hidden_size, self.num_layers, self.dropout, self.activation)
-        self.model = ERCFeedForwardModel(self.in_features, self.config)
+        self.model = ERCFeedForward(self.in_features, self.config)
 
     def tearDown(self):
         del self.model
@@ -37,7 +37,7 @@ class TestERCFeedForwardModel(unittest.TestCase):
         self.assertEqual(len(self.model.ff), self.num_layers * 2 - 1)
 
     def test_activation(self):
-        activation_type = ERCFeedForwardModel._resolve_activation_from(self.activation)
+        activation_type = ERCFeedForward._resolve_activation_from(self.activation)
         self.assertIsInstance(self.model.ff[1], activation_type)
 
     def test_dropout(self):

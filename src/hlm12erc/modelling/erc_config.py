@@ -1,8 +1,6 @@
 # Python Built-in Modules
 from dataclasses import dataclass
-
-# Local Folders
-from .erc_feedforward import ERCFeedForwardActivation
+from typing import List, Optional
 
 
 class ERCTextEmbeddingType:
@@ -63,16 +61,15 @@ class ERCConfig:
     text_out_features: int = 300
 
     audio_in_features: int = 1
-    audio_hidden_size: int = 64
     audio_out_features: int = 512
-    audio_num_layers: int = 3
-    audio_dropout: float = 0.1
-    audio_activation: str = ERCFeedForwardActivation.RELU
 
-    feedforward_hidden_size: int = 768
-    feedforward_num_layers: int = 3
-    feedforward_dropout: float = 0.1
-    feedforward_activation: str = ERCFeedForwardActivation.RELU
+    feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
 
     classifier_n_classes: int = 7
     classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
+
+
+@dataclass(frozen=True)
+class ERCConfigFeedForwardLayer:
+    out_features: int
+    dropout: Optional[float] = None

@@ -9,7 +9,7 @@ from .erc_config import ERCConfig
 from .erc_emb_audio import ERCAudioEmbeddings
 from .erc_emb_text import ERCTextEmbeddings
 from .erc_emb_visual import ERCVisualEmbeddings
-from .erc_feedforward import ERCFeedForwardConfig, ERCFeedForwardModel
+from .erc_feedforward import ERCFeedForward
 from .erc_fusion import ERCFusion
 from .erc_loss import ERCLoss
 from .erc_output import ERCOutput
@@ -33,14 +33,10 @@ class ERCModel(torch.nn.Module):
             config=config,
         )
         # Feed Forward Transformation
-        self.feedforward = ERCFeedForwardModel(
+        self.feedforward = ERCFeedForward(
             in_features=self.fusion_network.out_features,
-            config=ERCFeedForwardConfig(
-                hidden_size=config.feedforward_hidden_size,
-                num_layers=config.feedforward_num_layers,
-                dropout=config.feedforward_dropout,
-                activation=config.feedforward_activation,
-            ),
+            out_features=config.classifier_n_classes,
+            layers=config.feedforward_layers,
         )
         # Softmax Activation
         self.softmax = torch.nn.Softmax(config.classifier_n_classes)

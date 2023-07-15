@@ -9,9 +9,9 @@ from torch.nn.functional import normalize as l2_norm
 from torch.nn.utils.rnn import pad_sequence
 
 # Local Folders
-from .erc_config import ERCAudioEmbeddingType, ERCConfig
+from .erc_config import ERCAudioEmbeddingType, ERCConfig, ERCConfigFeedForwardLayer
 from .erc_emb import ERCEmbeddings
-from .erc_feedforward import ERCFeedForwardConfig, ERCFeedForwardModel
+from .erc_feedforward import ERCFeedForward
 
 
 class ERCAudioEmbeddings(ERCEmbeddings):
@@ -71,14 +71,14 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         """
         super().__init__(config)
         self.hidden_size = config.audio_out_features
-        self.ff = ERCFeedForwardModel(
+        self.ff = ERCFeedForward(
             in_features=config.audio_in_features,
-            config=ERCFeedForwardConfig(
-                hidden_size=config.audio_out_features,
-                num_layers=config.audio_num_layers,
-                dropout=config.audio_dropout,
-                activation=config.audio_activation,
-            ),
+            out_features=config.audio_out_features,
+            layers=[
+                ERCConfigFeedForwardLayer(out_features=config.audio_in_features, dropout=0.1),
+                ERCConfigFeedForwardLayer(out_features=config.audio_in_features, dropout=0.1),
+                ERCConfigFeedForwardLayer(out_features=config.audio_out_features, dropout=0.1),
+            ],
         )
 
     @property
