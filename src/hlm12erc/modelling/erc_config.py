@@ -24,7 +24,7 @@ class ERCAudioEmbeddingType:
 class ERCFusionTechnique:
     """Enumerates all available fusion techniques for the model."""
 
-    STACKED = "stacked"
+    CONCATENATION = "concatenation"
 
 
 class ERCLossFunctions:
@@ -55,7 +55,7 @@ class ERCConfig:
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
     modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET50
     modules_audio_encoder: str = ERCAudioEmbeddingType.WAVEFORM
-    modules_fusion: str = ERCFusionTechnique.STACKED
+    modules_fusion: str = ERCFusionTechnique.CONCATENATION
 
     text_in_features: int = 300
     text_out_features: int = 300

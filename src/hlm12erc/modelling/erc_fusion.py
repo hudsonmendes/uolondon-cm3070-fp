@@ -4,6 +4,7 @@ from typing import List, Type
 
 # Third-Party Libraries
 import torch
+from torch.nn.functional import normalize as l2_norm
 
 # Local Folders
 from .erc_config import ERCConfig, ERCFusionTechnique
@@ -11,32 +12,77 @@ from .erc_emb import ERCEmbeddings
 
 
 class ERCFusion(ERCEmbeddings):
+    """
+    Contract for feature fusion networks.
+
+    Example:
+        >>> from hlm12erc.modelling.erc_fusion import ERCFusion, ERCFusionTechnique, ERCConfig
+        >>> from hlm12erc.modelling.erc_emb import ERCEmbeddings
+        >>> class ERCMyCustomFusion(ERCFusion):
+        ...     pass
+    """
+
     def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig, *args, **kwargs) -> None:
+        """
+        Defines the constructor contract for fusion networks.
+
+        :param embeddings: List of embeddings to be fused.
+        :param config: Configuration object.
+        """
         super().__init__(config, *args, **kwargs)
         assert embeddings is not None
         assert config is not None
 
     @abstractmethod
-    def forward(self, *x: List[torch.Tensor]) -> torch.Tensor:
+    def forward(self, *x: torch.Tensor) -> torch.Tensor:
+        """
+        Defines the contract for the forward pass of the fusion network.
+
+        :param x: List of tensors to be fused.
+        :return: Fused tensor.
+        """
         raise NotImplementedError("Abstract method not implemented")
 
     @staticmethod
     def resolve_type_from(expression: str) -> Type["ERCFusion"]:
-        if expression == ERCFusionTechnique.STACKED:
-            return ERCStackedFusion
+        if expression == ERCFusionTechnique.CONCATENATION:
+            return ERCConcatFusion
         raise ValueError(f"The fusion '{expression}' is not supported.")
 
 
-class ERCStackedFusion(ERCFusion):
-    stacked_embedding_dims: int
+class ERCConcatFusion(ERCFusion):
+    """
+    Simple implementation of feature fusion based on concatenation of vectors.
+    """
+
+    concatenated_embedding_dims: int
 
     def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig) -> None:
+        """
+        Constructs a feature fusion network based on concatenation of vectors.
+
+        :param embeddings: List of embeddings to be fused.
+        :param config: Configuration object.
+        """
         super().__init__(embeddings=embeddings, config=config)
-        self.stacked_embedding_dims = sum([e.out_features for e in embeddings])
+        self.concatenated_embedding_dims = sum([e.out_features for e in embeddings])
 
     @property
     def out_features(self) -> int:
-        return self.stacked_embedding_dims
+        """
+        Returns the number of output features of the fusion network, which is
+        the sum of the `out_features` of the underlying embeddings to be fused.
 
-    def forward(self, *x: List[torch.Tensor]) -> torch.Tensor:
-        return torch.stack(tuple(*x))
+        :return: Number of output features."""
+        return self.concatenated_embedding_dims
+
+    def forward(self, *x: torch.Tensor) -> torch.Tensor:
+        """
+        Concatenates the input tensors along the feature dimension.
+
+        :param x: List of tensors to be fused.
+        :return: Fused tensor.
+        """
+        y = torch.concat(x, dim=1)
+        y = l2_norm(y, p=2, dim=1)
+        return y

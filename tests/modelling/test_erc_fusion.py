@@ -1,36 +1,43 @@
 # Python Built-in Modules
 import unittest
+import unittest.mock
 
 # Third-Party Libraries
 import torch
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_config import ERCConfig, ERCFusionTechnique
-from hlm12erc.modelling.erc_fusion import ERCEmbeddings, ERCStackedFusion
+from hlm12erc.modelling.erc_emb import ERCEmbeddings
+from hlm12erc.modelling.erc_fusion import ERCConfig, ERCFusion, ERCFusionTechnique
 
 
 class TestERCStackedFusion(unittest.TestCase):
     def setUp(self):
+        self.config = ERCConfig()
         self.embedding_dims = [100, 200, 300]
-        self.embeddings = [ERCEmbeddings(ERCConfig(d), d) for d in self.embedding_dims]
-        self.config = ERCConfig(modules_fusion=ERCFusionTechnique.STACKED)
-        self.fusion = ERCStackedFusion(self.embeddings, self.config)
+        self.embeddings = [unittest.mock.create_autospec(ERCEmbeddings, out_features=f) for f in self.embedding_dims]
+        self.fusion = ERCFusion.resolve_type_from(ERCFusionTechnique.CONCATENATION)(
+            embeddings=self.embeddings,
+            config=self.config,
+        )
 
     def tearDown(self):
         del self.fusion
 
     def test_forward_shape(self):
-        input_tensors = [torch.randn((32, d)) for d in self.embedding_dims]
+        batch_size = 3
+        input_tensors = [torch.randn((batch_size, d)) for d in self.embedding_dims]
         output_tensor = self.fusion.forward(*input_tensors)
-        expected_shape = (32, sum(self.embedding_dims))
+        expected_shape = (batch_size, sum(self.embedding_dims))
         self.assertEqual(output_tensor.shape, expected_shape)
-
-    def test_forward_output(self):
-        input_tensors = [torch.randn((32, d)) for d in self.embedding_dims]
-        output_tensor = self.fusion.forward(*input_tensors)
-        expected_output = torch.cat(input_tensors, dim=1)
-        self.assertTrue(torch.allclose(output_tensor, expected_output))
 
     def test_out_features(self):
         expected_out_features = sum(self.embedding_dims)
         self.assertEqual(self.fusion.out_features, expected_out_features)
+
+    def test_forward_normalization(self):
+        batch_size = 3
+        input_tensors = [torch.randn((batch_size, d)) for d in self.embedding_dims]
+        output_tensor = self.fusion.forward(*input_tensors)
+        norms = torch.norm(output_tensor, dim=1)
+        for norm in norms:
+            self.assertAlmostEqual(norm.item(), 1.0, places=5)
