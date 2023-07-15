@@ -1,5 +1,11 @@
+# Python Built-in Modules
+from abc import abstractmethod
+from typing import List
+
 # Third-Party Libraries
 import torch
+from PIL.Image import Image
+from transformers import AutoImageProcessor, ResNetModel
 
 # Local Folders
 from .erc_config import ERCConfig, ERCVisualEmbeddingType
@@ -15,6 +21,14 @@ class ERCVisualEmbeddings(ERCEmbeddings):
         >>> class ERCMyCustomTextEmbeddings(ERCTextEmbeddings):
     """
 
+    @abstractmethod
+    def forward(self, x: List[str]) -> torch.Tensor:
+        """
+        When implemented, this method should receive a list of images and
+        return a matrix of tensors (batch_size, out_features).
+        """
+        raise NotImplementedError("The method 'forward' must be implemented.")
+
     @staticmethod
     def resolve_type_from(expression: str) -> type["ERCVisualEmbeddings"]:
         if expression == ERCVisualEmbeddingType.RESNET50:
@@ -25,7 +39,9 @@ class ERCVisualEmbeddings(ERCEmbeddings):
 class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
     """
     ERCResNet50VisualEmbeddings is a class that implements the visual embedding
-    layer using ResNet50 and simply returning the output of the final layer.
+    layer using ResNet50 and simply returning the output of the final layer. The
+    embeddings transformation is based on the paper:
+    "Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016. Deep residual learning for image recognition. In Proceedings of the IEEE conference on computer vision and pattern recognition, 770–778."
 
     Example:
         >>> from hlm12erc.modelling import ERCConfig, ERCVisualEmbeddingType
@@ -41,9 +57,8 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         :param config: The configuration for the ERC model.
         """
         super().__init__(config)
-        self.resnet50 = torch.hub.load("pytorch/vision:v0.6.0", "resnet50", pretrained=True)
-        self.resnet50.eval()
-        self.resnet50.fc = torch.nn.Identity()
+        self.processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
+        self.resnet50 = ResNetModel.from_pretrained("microsoft/resnet-50")
 
     @property
     def out_features(self) -> int:
@@ -52,13 +67,15 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
 
         :return: The number of output features of the visual embedding layer.
         """
-        return self.resnet50.output_dim
+        return 1024
 
-    def forward(self, x):
+    def forward(self, x: List[Image]) -> torch.Tensor:
         """
         Performs a forward pass through the ResNet50 visual embedding layer.
 
         :param x: The input tensor.
         :return: The output tensor with the restnet50 embedded representation.
         """
-        return self.resnet50(x)
+        y = self.processor(x, return_tensors="pt")
+        y = self.resnet50(**y).last_hidden_state
+        return y

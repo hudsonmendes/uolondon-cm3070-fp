@@ -1,5 +1,6 @@
 # Python Built-in Modules
-from typing import Type
+from abc import abstractmethod
+from typing import List, Type
 
 # Third-Party Libraries
 import torch
@@ -21,6 +22,14 @@ class ERCTextEmbeddings(ERCEmbeddings):
         >>> from hlm12erc.modelling.erc_emb_text import ERCTextEmbeddings
         >>> class ERCMyCustomTextEmbeddings(ERCTextEmbeddings):
     """
+
+    @abstractmethod
+    def forward(self, x: List[str]) -> torch.Tensor:
+        """
+        When implemented, this method should receive a list of text and
+        return a matrix of tensors (batch_size, out_features).
+        """
+        raise NotImplementedError("The method 'forward' must be implemented.")
 
     @staticmethod
     def resolve_type_from(expression: str) -> Type["ERCTextEmbeddings"]:
@@ -62,7 +71,7 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         """
         return self.hidden_size
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: List[str]) -> torch.Tensor:
         """
         Performs a forward pass through the text embedding layer.
 

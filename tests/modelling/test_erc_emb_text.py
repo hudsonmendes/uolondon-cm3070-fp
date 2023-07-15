@@ -24,6 +24,9 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         output_tensor = self.embeddings(input_list)
         self.assertEqual(output_tensor.shape, (len(input_list), self.config.text_out_features))
 
+    def test_out_features(self):
+        self.assertEqual(self.embeddings.out_features, self.config.text_out_features)
+
     @mock.patch("hlm12erc.modelling.erc_emb_text.torchtext.vocab.GloVe.get_vecs_by_tokens")
     def test_forward_oov_are_not_counted(self, get_vecs_by_tokens_mock: mock.MagicMock):
         def get_vecs_by_tokens_fn(x, lower_case_backup: bool = False):
