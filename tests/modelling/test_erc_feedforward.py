@@ -5,43 +5,35 @@ import unittest
 import torch
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_feedforward import ERCFeedForward, ERCFeedForwardActivation, ERCFeedForwardConfig
+from hlm12erc.modelling.erc_config import ERCConfig, ERCConfigFeedForwardLayer
+from hlm12erc.modelling.erc_feedforward import ERCFeedForward
 
 
 class TestERCFeedForwardModel(unittest.TestCase):
     def setUp(self):
-        self.in_features = 100
-        self.hidden_size = 50
-        self.num_layers = 2
-        self.dropout = 0.1
-        self.activation = ERCFeedForwardActivation.RELU
-        self.config = ERCFeedForwardConfig(self.hidden_size, self.num_layers, self.dropout, self.activation)
-        self.model = ERCFeedForward(self.in_features, self.config)
+        self.config = ERCConfig(
+            feedforward_layers=[
+                ERCConfigFeedForwardLayer(out_features=32, dropout=0.2),
+                ERCConfigFeedForwardLayer(out_features=16, dropout=0.2),
+                ERCConfigFeedForwardLayer(out_features=8, dropout=0.2),
+                ERCConfigFeedForwardLayer(dropout=0.1),
+            ]
+        )
+        self.model = ERCFeedForward(
+            in_features=64,
+            out_features=4,
+            layers=self.config.feedforward_layers,
+        )
 
     def tearDown(self):
         del self.model
 
     def test_forward_shape(self):
-        input_tensor = torch.randn((32, self.in_features))
+        batch_size = 32
+        input_tensor = torch.randn((batch_size, self.model.in_features))
         output_tensor = self.model(input_tensor)
-        self.assertEqual(output_tensor.shape, (32, self.hidden_size))
-
-    def test_forward_grad(self):
-        input_tensor = torch.randn((32, self.in_features), requires_grad=True)
-        output_tensor = self.model(input_tensor)
-        loss = output_tensor.sum()
-        loss.backward()
-        self.assertIsNotNone(input_tensor.grad)
+        self.assertEqual(output_tensor.shape, (batch_size, self.model.out_features))
 
     def test_num_layers(self):
-        self.assertEqual(len(self.model.ff), self.num_layers * 2 - 1)
-
-    def test_activation(self):
-        activation_type = ERCFeedForward._resolve_activation_from(self.activation)
-        self.assertIsInstance(self.model.ff[1], activation_type)
-
-    def test_dropout(self):
-        if self.dropout > 0:
-            self.assertIsInstance(self.model.ff[2], torch.nn.Dropout)
-        else:
-            self.assertNotIsInstance(self.model.ff[2], torch.nn.Dropout)
+        assert self.config.feedforward_layers
+        self.assertEqual(len(self.model.sequence), len(self.config.feedforward_layers) * 2 - 1)

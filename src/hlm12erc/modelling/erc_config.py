@@ -71,5 +71,9 @@ class ERCConfig:
 
 @dataclass(frozen=True)
 class ERCConfigFeedForwardLayer:
-    out_features: int
+    """
+    Represents a layer in the feedforward network
+    """
+
+    out_features: Optional[int] = None
     dropout: Optional[float] = None
