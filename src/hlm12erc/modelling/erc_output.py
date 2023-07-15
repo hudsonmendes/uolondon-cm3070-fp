@@ -1,4 +1,8 @@
+# Python Built-in Modules
+from typing import Optional
+
 # Third-Party Libraries
+import torch
 from transformers.modeling_outputs import ModelOutput
 
 
@@ -7,20 +11,24 @@ class ERCOutput(ModelOutput):
     ERCOutput is a class containing the outputs of the ERC model.
     """
 
+    emotions: Optional[torch.Tensor] = None
+
     def __init__(
         self,
-        loss=None,
-        logits=None,
-        hidden_states=None,
-        attentions=None,
+        labels: Optional[torch.Tensor] = None,
+        loss: Optional[torch.Tensor] = None,
+        logits: Optional[torch.Tensor] = None,
+        hidden_states: Optional[torch.Tensor] = None,
+        attentions: Optional[torch.Tensor] = None,
     ):
         """
         Constructor for ERCOutput class.
 
-        :param loss: Optional loss value
-        :param logits: Optional logits
-        :param hidden_states: Optional hidden states
-        :param attentions: Optional attentions
+        :param labels: Softmax Probability Distribution of Emotion labels
+        :param loss: Loss calculated between the labels predicted and expected
+        :param logits: The fused embeddings transformed by the feedforward network
+        :param hidden_states: The fused embeddings before transformation
+        :param attentions: Attention weights, if available for the fusion layer implementation
         """
         super().__init__(
             loss=loss,
@@ -28,3 +36,4 @@ class ERCOutput(ModelOutput):
             hidden_states=hidden_states,
             attentions=attentions,
         )
+        self.labels = labels

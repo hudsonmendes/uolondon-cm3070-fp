@@ -1,8 +1,10 @@
 # Python Built-in Modules
 from typing import List, Optional, Tuple, Union
+from wave import Wave_read as Wave
 
 # Third-Party Libraries
 import torch
+from PIL.Image import Image
 
 # Local Folders
 from .erc_config import ERCConfig
@@ -22,6 +24,13 @@ class ERCModel(torch.nn.Module):
     """
 
     def __init__(self, config: ERCConfig) -> None:
+        """
+        Constructs the ERC model by initializing the different modules based on hyperparameter
+        configuration for the text, visual and audio encoders, as well as for the fusion network,
+        the shape of the feedforward network and the loss function.
+
+        :param config: ERCConfig object containing the hyperparameters for the ERC model
+        """
         super().__init__()
         # Embedding Modules
         self.text_embeddings = ERCTextEmbeddings.resolve_type_from(config.modules_text_encoder)(config)
@@ -39,15 +48,15 @@ class ERCModel(torch.nn.Module):
             layers=config.feedforward_layers,
         )
         # Softmax Activation
-        self.softmax = torch.nn.Softmax(config.classifier_n_classes)
+        self.softmax = torch.nn.Softmax(dim=1)
         # Loss Function
         self.loss = ERCLoss.resolve_type_from(config.classifier_loss_fn)()
 
     def forward(
         self,
         x_text: List[str],
-        x_visual: torch.Tensor,
-        x_audio: torch.Tensor,
+        x_visual: List[Image],
+        x_audio: List[Wave],
         y_true: Optional[torch.Tensor] = None,
         return_dict: bool = True,
     ) -> Union[ERCOutput, tuple]:
@@ -57,50 +66,21 @@ class ERCModel(torch.nn.Module):
         them before transforming and collapsing representations
         into the output softmax probability distribution of
         the different emotion labels.
+
+        :param x_text: List of strings containing the text input
+        :param x_visual: List of PIL.Image objects containing the visual input
+        :param x_audio: List of wave.Wave_read objects containing the audio input
+        :param y_true: Optional tensor containing the true labels
+        :param return_dict: Whether to return the output as a dictionary or tuple
+        :return: ERCOutput object containing the loss, predicted labels, logits, hidden states and attentions
         """
 
-        y_transformed, y_pred = self._calculate_y_pred(x_text, x_visual, x_audio)
-        output = ERCOutput(
-            loss=self._calculate_loss(y_true, y_pred),
-            logits=y_pred,
-            hidden_states=y_transformed,
-            attentions=None,
-        )
-        return output.to_tuple() if not return_dict else output
-
-    def _calculate_y_pred(
-        self,
-        x_text: List[str],
-        x_visual: torch.Tensor,
-        x_audio: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Goes through the transformation graph and produces
-        the final output of the model.
-
-        :param x_text: Input text tensor
-        :param x_visual: Input visual tensor
-        :param x_audio: Input audio tensor
-        :return: Tuple of (y_transformed, y_pred)
-        """
         y_text = self.text_embeddings(x_text)
         y_visual = self.visual_embeddings(x_visual)
         y_audio = self.audio_embeddings(x_audio)
         y_fusion = self.fusion_network(y_text, y_visual, y_audio)
         y_transformed = self.feedforward(y_fusion)
         y_pred = self.softmax(y_transformed)
-        return y_transformed, y_pred
-
-    def _calculate_loss(self, y_true, y_pred):
-        """
-        Calculates the loss given the true and predicted labels,
-        if the true labels are provided.
-
-        :param y_true: True labels
-        :param y_pred: Predicted labels
-        :return: Loss tensor
-        """
-        loss = None
-        if y_true is not None:
-            loss = torch.nn.CrossEntropyLoss()(y_pred, y_true)
-        return loss
+        loss = self.loss(y_pred, y_true) if y_true is not None else None
+        output = ERCOutput(loss=loss, labels=y_pred, logits=y_transformed, hidden_states=y_fusion, attentions=None)
+        return output if return_dict else output.to_tuple()

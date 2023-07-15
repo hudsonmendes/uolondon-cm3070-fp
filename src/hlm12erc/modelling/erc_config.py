@@ -60,7 +60,7 @@ class ERCConfig:
     text_in_features: int = 300
     text_out_features: int = 300
 
-    audio_in_features: int = 1
+    audio_in_features: int = 325458
     audio_out_features: int = 512
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None

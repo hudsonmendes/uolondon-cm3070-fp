@@ -5,6 +5,9 @@ from typing import Optional, Type
 # Third-Party Libraries
 import torch
 
+# Local Folders
+from .erc_config import ERCLossFunctions
+
 
 class ERCLoss(ABC):
     """
@@ -32,7 +35,7 @@ class ERCLoss(ABC):
         """
         Resolve a ERC Loss class from a string expression
         """
-        if expression == "cross_entropy":
+        if expression == ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY:
             return torch.nn.CrossEntropyLoss
         else:
             raise ValueError(f"Unknown ERC Loss type {expression}")
