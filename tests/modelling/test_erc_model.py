@@ -24,9 +24,17 @@ class TestERCModel(unittest.TestCase):
     def tearDown(self):
         del self.model
 
-    def test_forward_output_shape(self):
+    def test_forward_output_labels_shape(self):
         out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true)
         self.assertEqual(out.labels.shape, (len(self.x_text), self.config.classifier_n_classes))
+
+    def test_forward_output_logits_shape(self):
+        out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true)
+        self.assertEqual(out.logits.shape, (len(self.x_text), self.config.classifier_n_classes))
+
+    def test_forward_output_hidden_state_shape(self):
+        out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true)
+        self.assertEqual(out.hidden_states.shape, (len(self.x_text), self.config.feedforward_out_features))
 
     def test_forward_output_type_dict(self):
         out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true, return_dict=True)

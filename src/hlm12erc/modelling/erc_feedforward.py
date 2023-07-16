@@ -78,7 +78,7 @@ class ERCFeedForwardLayersFactory:
             last_out_features = effective_out_features = in_features
             for i, layer in enumerate(self.layers):
                 # the `out_feature` of intermediate layers (hidden dims) is either:
-                # - the `out_features` of the model, if it's the last layer
+                # - the `out_features` of the feedforward, if it's the last layer
                 # - the `out_features` of the layer, if it's not the last layer and the layer has an `out_features`
                 # - the `out_features` of the previous layer, if it's not the last layer and the layer has no
                 if i == len(self.layers) - 1:

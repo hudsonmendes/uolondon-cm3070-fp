@@ -64,6 +64,7 @@ class ERCConfig:
     audio_out_features: int = 512
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
+    feedforward_out_features: int = 1024
 
     classifier_n_classes: int = 7
     classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY

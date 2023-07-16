@@ -44,10 +44,14 @@ class ERCModel(torch.nn.Module):
         # Feed Forward Transformation
         self.feedforward = ERCFeedForward(
             in_features=self.fusion_network.out_features,
-            out_features=config.classifier_n_classes,
+            out_features=config.feedforward_out_features,
             layers=config.feedforward_layers,
         )
         # Softmax Activation
+        self.logits = torch.nn.Linear(
+            in_features=config.feedforward_out_features,
+            out_features=config.classifier_n_classes,
+        )
         self.softmax = torch.nn.Softmax(dim=1)
         # Loss Function
         self.loss = ERCLoss.resolve_type_from(config.classifier_loss_fn)()
@@ -80,7 +84,8 @@ class ERCModel(torch.nn.Module):
         y_audio = self.audio_embeddings(x_audio)
         y_fusion = self.fusion_network(y_text, y_visual, y_audio)
         y_transformed = self.feedforward(y_fusion)
-        y_pred = self.softmax(y_transformed)
+        y_logits = self.logits(y_transformed)
+        y_pred = self.softmax(y_logits)
         loss = self.loss(y_pred, y_true) if y_true is not None else None
-        output = ERCOutput(loss=loss, labels=y_pred, logits=y_transformed, hidden_states=y_fusion, attentions=None)
+        output = ERCOutput(loss=loss, labels=y_pred, logits=y_logits, hidden_states=y_transformed, attentions=None)
         return output if return_dict else output.to_tuple()
