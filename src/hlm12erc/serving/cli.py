@@ -60,7 +60,7 @@ class ERCCommands:
     The CLI commands for Emotion Recognition in Conversation (or "ERC").
     """
 
-    def train_classifier(
+    def train(
         self,
         train_dataset: pathlib.Path,
         valid_dataset: pathlib.Path,
@@ -87,7 +87,7 @@ class ERCCommands:
             save_to=(out or pathlib.Path("./target")),
         )
 
-    def classify_emotion(
+    def classify(
         self,
         audio: pathlib.Path,
         video: pathlib.Path,

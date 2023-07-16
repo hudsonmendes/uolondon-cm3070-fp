@@ -20,6 +20,24 @@
                 "--force", "False"
             ],
             "justMyCode": true
-        }
+        },
+        {
+            "name": "train",
+            "type": "python",
+            "request": "launch",
+            "module": "hlm12erc",
+            "console": "integratedTerminal",
+            "args": [
+                "erc",
+                "train",
+                "--train_dataset", "./data/sample.csv",
+                "--train_dataset", "./data/sample.csv",
+                "--n_epochs", "3",
+                "--batch_size", "4",
+                "--config", "./dev/configs/baseline.yml",
+                "--out", "./target",
+            ],
+            "justMyCode": true
+        },
     ]
 }

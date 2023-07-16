@@ -32,6 +32,6 @@ class ERCConfigLoader:
         with open(self.filepath, mode="r", encoding="utf-8") as fh:
             if self.filepath.suffix == ".json":
                 config_dict = json.load(fh)
-            elif self.filepath.suffix == ".yaml":
+            elif self.filepath.suffix in [".yml", ".yaml"]:
                 config_dict = yaml.safe_load(fh)
         return config_dict
