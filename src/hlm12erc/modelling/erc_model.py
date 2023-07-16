@@ -65,7 +65,7 @@ class ERCModel(torch.nn.Module):
         x_text: List[str],
         x_visual: List[Image],
         x_audio: List[Wave],
-        y_true: Optional[List[str]] = None,
+        y_true: Optional[torch.Tensor] = None,
         return_dict: bool = True,
     ) -> Union[ERCOutput, tuple]:
         """
@@ -78,7 +78,7 @@ class ERCModel(torch.nn.Module):
         :param x_text: List of strings containing the text input
         :param x_visual: List of PIL.Image objects containing the visual input
         :param x_audio: List of wave.Wave_read objects containing the audio input
-        :param y_true: Optional tensor containing the true labels
+        :param y_true: Optional tensor containing the true labels, one-hot encoded
         :param return_dict: Whether to return the output as a dictionary or tuple
         :return: ERCOutput object containing the loss, predicted labels, logits, hidden states and attentions
         """
@@ -90,6 +90,6 @@ class ERCModel(torch.nn.Module):
         y_transformed = self.feedforward(y_fusion)
         y_logits = self.logits(y_transformed)
         y_pred = self.softmax(y_logits)
-        loss = self.loss(y_pred, self.one_hot.transform([lbl] for lbl in y_true)) if y_true is not None else None
+        loss = self.loss(y_pred, y_true) if y_true is not None else None
         output = ERCOutput(loss=loss, labels=y_pred, logits=y_logits, hidden_states=y_transformed, attentions=None)
         return output if return_dict else output.to_tuple()

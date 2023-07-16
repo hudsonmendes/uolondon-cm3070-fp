@@ -1,5 +1,6 @@
 # Python Built-in Modules
 import json
+import logging
 import pathlib
 import time
 from typing import Optional, Tuple
@@ -14,6 +15,8 @@ from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel
 from .erc_config_formatter import ERCConfigFormatter
 from .erc_data_collator import ERCDataCollator
 from .meld_dataset import MeldDataset
+
+logger = logging.getLogger(__name__)
 
 
 class ERCTrainer:
@@ -58,16 +61,27 @@ class ERCTrainer:
         :param save_to: Path to the directory to save the model and logs to.
         :return: ERCModel object containing the best trained model.
         """
+        logger.info("Training the model...")
         train_dataset, eval_dataset = data
+        logger.info("Training & Validation datasets unpacked")
         label_encoder = ERCLabelEncoder(classes=train_dataset.classes)
+        logger.info(f"Label Encoder loaded with classes: {', '.join(label_encoder.classes)}")
         config = self.config or ERCConfig()
+        logger.info("Training with config {'passed to trainer' if self.config else 'default'}")
         model = ERCModel(config=config, label_encoder=label_encoder)
         model_name = ERCConfigFormatter(config).represent()
+        logger.info(f"Model created for training, with identifier {model_name}")
         workspace = save_to / model_name
+        logger.info(f"Training workspace set to: {workspace}")
         training_args = self._create_training_args(n_epochs, batch_size, model_name, workspace)
+        logger.info(f"TrainingArgs created with {n_epochs} epochs and batch size {batch_size}")
         trainer = self._create_trainer(train_dataset, eval_dataset, model, training_args, label_encoder)
+        logger.info(f"Trainer instantiated with samples train={len(train_dataset)}, valid={len(eval_dataset)}")
         self._store_settings_and_hyperparams(workspace, training_args, config)
+        logger.info("Training settings and hyperparameters stored in workspace")
+        logger.info("Training starting, don't wait standing up...")
         trainer.train()
+        logger.info("Training complete.")
         return model
 
     def _create_training_args(
