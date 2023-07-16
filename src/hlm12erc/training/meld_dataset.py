@@ -24,15 +24,15 @@ class MeldDataset(Dataset):
         >>> record = dataset[0]
     """
 
-    def __init__(self, df_or_filepath: Union[pd.DataFrame, pathlib.Path]):
+    def __init__(self, filepath: pathlib.Path):
         """
         Creates a new instance of the MeldDataset for a split
 
         :param df: The dataframe containing the data for the split
         """
-        df_or_filepath = pd.read_csv(df_or_filepath) if isinstance(df_or_filepath, pathlib.Path) else df_or_filepath
-        df_or_filepath = df_or_filepath.sort_values(by=["dialogue", "sequence"], ascending=[True, True])
-        self.df = df_or_filepath
+        self.filepath = filepath
+        self.filedir = filepath.parent
+        self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
 
     def __len__(self) -> int:
         """
@@ -61,8 +61,8 @@ class MeldDataset(Dataset):
         previous_utterances = df_prev.x_text.tolist()
 
         return MeldRecord(
-            visual=Image.open(row.x_visual),
-            audio=wave.open(row.x_audio),
+            visual=Image.open(str(self.filedir / row.x_visual)),
+            audio=wave.open(str(self.filedir / row.x_audio)),
             dialogue=previous_utterances,
             utterance=row.x_text,
         )
