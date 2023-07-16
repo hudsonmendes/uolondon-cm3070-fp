@@ -111,6 +111,7 @@ class RawTo1NFTransformer:
             columns={
                 "Dialogue_ID": "dialogue",
                 "Utterance_ID": "sequence",
+                "Speaker": "speaker",
                 "Utterance": "x_text",
                 "Emotion": "label",
             }
@@ -159,6 +160,7 @@ class RawTo1NFTransformer:
             {
                 "dialogue": "int64",
                 "sequence": "int64",
+                "speaker": "category",
                 "x_text": "string",
                 "x_visual": "string",
                 "x_audio": "string",

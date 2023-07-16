@@ -3,7 +3,7 @@ import logging
 import math
 import pathlib
 import warnings
-from typing import Callable, Optional
+from typing import Optional, Tuple
 
 # Third-Party Libraries
 import pandas as pd
@@ -47,21 +47,33 @@ class VideoToImageMosaicTransformer:
         """
         # suppress warnings from moviepy
         self._suppress_warnings()
+        filename, filepath = self._prepare_filename_and_path(row)
+        self._perform_extraction(row, filepath)
+        return filename
 
-        # calculates the name of the output image file
-        # so we can avoid generating it if that's already existing
+    def _prepare_filename_and_path(self, row) -> Tuple[str, pathlib.Path]:
+        """Using the available information, prepares the filename
+        and concatenates the basedir to generate the filepath for row.
+
+        :param row: The row containing the filepath to the video to extract the screenshots from.
+        :return: The filename and filepath of the extracted screenshots mosaic image."""
         filename = f"d-{row.dialogue}-seq-{row.sequence}.png"
         filepath = self.dest / filename
+        return filename, filepath
 
-        # we don't try to reprocess images that have already been
-        # because the process takes a hell of a long time
+    def _perform_extraction(self, row, filepath) -> None:
+        """
+        Takes the force flag in consideration and extracts the screenshots
+        from the video file.
+
+        :param row: The row containing the filepath to the video to extract the screenshots from.
+        :param filepath: The filepath to save the screenshots to.
+        """
         if not self.force and filepath.exists():
             logger.debug(f"Skipping {filepath} because it already exists.")
         else:
             logger.debug(f"Extracting screenshots from {row.x_av} to {filepath}.")
             self._extract_screen_shots(src=row.x_av, filepath=filepath)
-
-        return filename
 
     def _extract_screen_shots(self, src: str, filepath: pathlib.Path) -> None:
         """

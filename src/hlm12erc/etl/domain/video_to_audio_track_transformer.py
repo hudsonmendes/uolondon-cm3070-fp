@@ -33,8 +33,18 @@ class VideoToAudioTrackTransformer:
         :return: The filepath of the extracted audio track.
         """
 
-        # define the filename of the audio track
         filename, filepath = self._prepare_filepath_destination(row)
+        self._perform_extraction(row, filepath)
+        return filename
+
+    def _perform_extraction(self, row, filepath) -> None:
+        """
+        Takes the force flag in consideration and extracts the audio track
+        from the video file.
+
+        :param row: The row containing the filepath to the video to extract the audio track from.
+        :param filepath: The filepath to save the audio track to.
+        """
 
         # only writes if the force or the file does not exist
         if self.force or not filepath.exists():
@@ -58,8 +68,6 @@ class VideoToAudioTrackTransformer:
             # extract the audio track, we produce an empty wave file
             if not extracted:
                 self._produce_empty_wave(filepath)
-
-        return filename
 
     def _prepare_filepath_destination(self, row):
         filename = f"d-{row.dialogue}-seq-{row.sequence}.wav"

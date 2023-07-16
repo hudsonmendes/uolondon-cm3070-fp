@@ -1,7 +1,8 @@
 # Python Built-in Modules
 import pathlib
 import wave
-from typing import Union
+from collections import namedtuple
+from typing import NamedTuple
 
 # Third-Party Libraries
 import pandas as pd
@@ -9,7 +10,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 # Local Folders
-from .meld_record import MeldRecord
+from .meld_record import MeldDialogueEntry, MeldRecord
 
 
 class MeldDataset(Dataset):
@@ -54,15 +55,29 @@ class MeldDataset(Dataset):
         :return: A `MeldRecord` object containing the sample
         """
         row = self.df.iloc[index]
-
         dialogue = row["dialogue"]
-        df_prev = self.df[self.df.dialogue == dialogue]
-        df_prev = df_prev[df_prev.sequence < row.sequence]
-        previous_utterances = df_prev.x_text.tolist()
-
+        sequence = row["sequence"]
+        previous_dialogue = self._extract_previous_dialogue(
+            dialogue=dialogue,
+            before=sequence,
+        )
         return MeldRecord(
+            speaker=row.speaker,
             visual=Image.open(str(self.filedir / row.x_visual)),
             audio=wave.open(str(self.filedir / row.x_audio)),
-            dialogue=previous_utterances,
+            previous_dialogue=previous_dialogue,
             utterance=row.x_text,
+            label=row.label,
         )
+
+    def _extract_previous_dialogue(self, dialogue: int, before: int) -> List[MeldDialogueEntry]:
+        """
+        Extracts the dialogue that happened before the current one, based on
+        the dialogue number and the sequence number of the current dialogue.
+
+        :param dialogue: The dialogue number of the current dialogue
+        :param before: The sequence number of the current dialogue
+        :return: The previous dialogue as a list of `MeldDialogueEntry`
+        """
+        previous_dialogue = self.df[(self.df.dialogue == dialogue) & (self.df.sequence < before)]
+        return [MeldDialogueEntry(speaker=row.speaker, utterance=row.x_text) for _, row in previous_dialogue.iterrows()]

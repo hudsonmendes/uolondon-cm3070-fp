@@ -5,7 +5,9 @@ from typing import Optional, Union
 
 # Local Folders
 from .domain.kaggle_dataset import KaggleDataset
+from .extraction import KaggleDataExtractor
 from .loading import NormalisedDatasetLoader
+from .transformation import RawTo1NFTransformer
 from .utils import ensure_path
 
 logger = logging.getLogger(__name__)
@@ -72,9 +74,9 @@ class ETL:
         extracted = root / "extracted"
         transformed = root / "transformed"
         logger.info(f"Extracting dataset into: {extracted}")
-        # KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted, force=force)
+        KaggleDataExtractor(dataset=self.dataset, workspace=root).extract(dest=extracted, force=force)
         logger.info(f"Transforming dataset into: {transformed}")
-        # RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed, force=force)
+        RawTo1NFTransformer(src=extracted, workspace=root).transform(dest=transformed, force=force)
         logger.info(f"Loading dataset into: {dest}")
         NormalisedDatasetLoader(src=transformed).load(dest=dest, force=force)
         logger.info("ETL pipeline completed successfully.")
