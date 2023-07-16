@@ -117,6 +117,7 @@ class ERCTrainer:
             logging_dir=str(workspace / "logs"),
             logging_strategy="steps",
             logging_steps=10,
+            disable_tqdm=False,
         )
 
     def _create_trainer(
