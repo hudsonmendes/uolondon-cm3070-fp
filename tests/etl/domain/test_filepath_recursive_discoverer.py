@@ -4,7 +4,9 @@ import shutil
 import unittest
 
 # My Packages and Modules
-from hlm12erc.etl.domain.filepath_recursive_discoverer import FilepathRecursiveDiscoverer
+from hlm12erc.etl.domain.filepath_recursive_discoverer import (
+    FilepathRecursiveDiscoverer,
+)
 
 
 class TestFilepathRecursiveDiscoverer(unittest.TestCase):

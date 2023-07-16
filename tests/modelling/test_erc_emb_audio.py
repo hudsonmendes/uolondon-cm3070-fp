@@ -6,7 +6,11 @@ import wave
 import torch
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_emb_audio import ERCAudioEmbeddings, ERCAudioEmbeddingType, ERCConfig
+from hlm12erc.modelling.erc_emb_audio import (
+    ERCAudioEmbeddings,
+    ERCAudioEmbeddingType,
+    ERCConfig,
+)
 
 
 class TestERCRawAudioEmbeddings(unittest.TestCase):

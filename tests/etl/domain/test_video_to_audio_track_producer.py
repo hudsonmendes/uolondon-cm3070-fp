@@ -8,7 +8,9 @@ import wave
 import pandas as pd
 
 # My Packages and Modules
-from hlm12erc.etl.domain.video_to_audio_track_transformer import VideoToAudioTrackTransformer
+from hlm12erc.etl.domain.video_to_audio_track_transformer import (
+    VideoToAudioTrackTransformer,
+)
 
 
 class TestVideoToAudioTrackTransformer(unittest.TestCase):

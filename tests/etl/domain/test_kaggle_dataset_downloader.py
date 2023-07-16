@@ -4,7 +4,10 @@ import unittest
 from unittest.mock import patch
 
 # My Packages and Modules
-from hlm12erc.etl.domain.kaggle_dataset_downloader import KaggleDataset, KaggleDatasetDownloader
+from hlm12erc.etl.domain.kaggle_dataset_downloader import (
+    KaggleDataset,
+    KaggleDatasetDownloader,
+)
 
 
 class TestKaggleDatasetDownloader(unittest.TestCase):

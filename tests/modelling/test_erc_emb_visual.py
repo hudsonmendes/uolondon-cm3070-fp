@@ -6,7 +6,11 @@ import torch
 from PIL import Image
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_emb_visual import ERCConfig, ERCVisualEmbeddings, ERCVisualEmbeddingType
+from hlm12erc.modelling.erc_emb_visual import (
+    ERCConfig,
+    ERCVisualEmbeddings,
+    ERCVisualEmbeddingType,
+)
 
 
 class TestERCResNet50VisualEmbeddings(unittest.TestCase):
