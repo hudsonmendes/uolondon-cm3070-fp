@@ -1,0 +1,22 @@
+classifier_n_classes: 7
+classifier_loss_fn: cce
+
+modules_text_encoder: glove
+modules_visual_encoder: resnet50
+modules_audio_encoder: waveform
+modules_fusion: concat
+
+text_in_features: 300
+text_out_features: 300
+
+audio_in_features: 325458
+audio_out_features: 256
+
+visual_in_features: -1 # defined automatically by resnet50
+visual_out_features: -1 # defined automatically by resnet50
+
+feedforward_layers:
+  - out_features: 2048
+    dropout: 0.2
+  - out_features: 256
+    dropout: 0

@@ -18,16 +18,11 @@ class ERCFeedForward(torch.nn.Module):
     in_features: int
     out_features: int
 
-    def __init__(self, in_features: int, out_features: int, layers: Optional[List[ERCConfigFeedForwardLayer]]) -> None:
+    def __init__(self, in_features: int, layers: Optional[List[ERCConfigFeedForwardLayer]]) -> None:
         super().__init__()
+        self.sequence = torch.nn.Sequential(*ERCFeedForwardLayersFactory(layers=layers).create(in_features=in_features))
         self.in_features = in_features
-        self.out_features = out_features
-        self.sequence = torch.nn.Sequential(
-            *ERCFeedForwardLayersFactory(layers=layers).create(
-                in_features=in_features,
-                out_features=out_features,
-            )
-        )
+        self.out_features = [layer for layer in self.sequence if isinstance(layer, torch.nn.Linear)][-1].out_features
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -58,7 +53,7 @@ class ERCFeedForwardLayersFactory:
     def __init__(self, layers: Optional[List[ERCConfigFeedForwardLayer]]) -> None:
         self.layers = layers
 
-    def create(self, in_features: int, out_features: int) -> List[torch.nn.Module]:
+    def create(self, in_features: int) -> List[torch.nn.Module]:
         """
         Creates a list of layers corresponding to the configuration passed in the constructor,
         and to the `in_features` and `out_features` passed as arguments. In the absence of a
@@ -71,9 +66,6 @@ class ERCFeedForwardLayersFactory:
         """
         sequence: List[torch.nn.Module] = []
         if self.layers:
-            # ensure that the last layer has no out_features
-            assert self.layers[-1].out_features is None, "The `out_features` of the last layer must be `None`"
-
             # the number of input features of the first layer is the number of input features of the model
             last_out_features = effective_out_features = in_features
             for i, layer in enumerate(self.layers):
@@ -81,9 +73,7 @@ class ERCFeedForwardLayersFactory:
                 # - the `out_features` of the feedforward, if it's the last layer
                 # - the `out_features` of the layer, if it's not the last layer and the layer has an `out_features`
                 # - the `out_features` of the previous layer, if it's not the last layer and the layer has no
-                if i == len(self.layers) - 1:
-                    effective_out_features = out_features
-                elif layer.out_features:
+                if layer.out_features:
                     effective_out_features = layer.out_features
                 sequence.append(torch.nn.Linear(in_features=last_out_features, out_features=effective_out_features))
                 # in this implementation, we default the activation to ReLU
@@ -95,8 +85,8 @@ class ERCFeedForwardLayersFactory:
                 if layer.out_features:
                     last_out_features = layer.out_features
         else:
-            # if no layers are provided, we default to a single layer with the same `in_features` and `out_features`
+            # if no layers are provided, we default to a single layer with the same number of units as `in_features`
             # so we still generate a representation, but through a shallow network.
-            sequence.append(torch.nn.Linear(in_features=in_features, out_features=out_features))
+            sequence.append(torch.nn.Linear(in_features=in_features, out_features=in_features))
             sequence.append(torch.nn.ReLU())
         return sequence

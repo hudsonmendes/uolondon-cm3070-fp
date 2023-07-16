@@ -15,13 +15,12 @@ class TestERCFeedForwardModel(unittest.TestCase):
             feedforward_layers=[
                 ERCConfigFeedForwardLayer(out_features=32, dropout=0.2),
                 ERCConfigFeedForwardLayer(out_features=16, dropout=0.2),
-                ERCConfigFeedForwardLayer(out_features=8),
-                ERCConfigFeedForwardLayer(dropout=0.1),
+                ERCConfigFeedForwardLayer(out_features=8, dropout=0.1),
+                ERCConfigFeedForwardLayer(out_features=4),
             ]
         )
         self.model = ERCFeedForward(
             in_features=64,
-            out_features=4,
             layers=self.config.feedforward_layers,
         )
 

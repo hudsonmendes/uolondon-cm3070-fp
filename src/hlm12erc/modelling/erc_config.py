@@ -1,4 +1,5 @@
 # Python Built-in Modules
+import pathlib
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -64,34 +65,9 @@ class ERCConfig:
     audio_out_features: int = 512
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
-    feedforward_out_features: int = 1024
 
     classifier_n_classes: int = 7
     classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
-
-    def __str__(self) -> str:
-        ff_layerspec = (
-            "+".join([str(layer.out_features) for layer in self.feedforward_layers])
-            if self.feedforward_layers
-            else "default"
-        )
-        return "-".join(
-            [
-                "hlm12erc",
-                self.modules_text_encoder.lower(),
-                self.modules_visual_encoder.lower(),
-                self.modules_audio_encoder.lower(),
-                self.modules_fusion.lower(),
-                f"t{self.text_in_features}x{self.text_out_features}",
-                f"a{self.audio_in_features}x{self.audio_out_features}",
-                f"ff{self.feedforward_out_features}",
-                f"ffl{ff_layerspec}",
-                f"{self.classifier_loss_fn}",
-            ]
-        )
-
-    def __repr__(self) -> str:
-        return str(self)
 
 
 @dataclass(frozen=True)

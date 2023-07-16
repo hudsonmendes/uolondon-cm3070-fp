@@ -4,6 +4,8 @@ from typing import Optional
 
 # My Packages and Modules
 from hlm12erc.etl import ETL, KaggleDataset
+from hlm12erc.modelling import ERCConfig
+from hlm12erc.training import ERCConfigLoader, ERCTrainer, MeldDataset
 
 
 class CLI:
@@ -57,6 +59,33 @@ class ERCCommands:
     """
     The CLI commands for Emotion Recognition in Conversation (or "ERC").
     """
+
+    def train_classifier(
+        self,
+        train_dataset: pathlib.Path,
+        valid_dataset: pathlib.Path,
+        n_epochs: int,
+        batch_size: int = 16,
+        config: Optional[pathlib.Path] = None,
+        out: Optional[pathlib.Path] = None,
+    ) -> None:
+        """
+        Trains the emotion recognition classifier on the train and validation datasets.
+
+        :param train_dataset: The path to the train dataset.
+        :param valid_dataset: The path to the validation dataset.
+        :param n_epochs: The number of epochs to train for.
+        :param batch_size: The batch size to use for training, defaults to 16.
+        :param config: The path to the config file, defaults to the default settings
+        :param out: The path to save the model to, defaults to './target'
+        """
+        effective_config = ERCConfigLoader(config).load() if config else ERCConfig()
+        ERCTrainer(effective_config).train(
+            data=(MeldDataset(train_dataset), MeldDataset(valid_dataset)),
+            batch_size=batch_size,
+            n_epochs=n_epochs,
+            save_to=(out or pathlib.Path("./target")),
+        )
 
     def classify_emotion(
         self,

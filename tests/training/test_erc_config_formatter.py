@@ -11,6 +11,7 @@ from hlm12erc.modelling.erc_config import (
     ERCTextEmbeddingType,
     ERCVisualEmbeddingType,
 )
+from hlm12erc.training.erc_config_formatter import ERCConfigFormatter
 
 
 class TestERCConfig(unittest.TestCase):
@@ -34,7 +35,7 @@ class TestERCConfig(unittest.TestCase):
             classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
         )
         self.assertEqual(
-            str(config_with_ffl),
+            ERCConfigFormatter(config_with_ffl).represent(),
             "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ff1024-ffl512+256-cce",
         )
 
@@ -55,23 +56,6 @@ class TestERCConfig(unittest.TestCase):
             classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
         )
         self.assertEqual(
-            str(config_with_ff_out),
+            ERCConfigFormatter(config_with_ff_out).represent(),
             "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ff2048-ffldefault-cce",
         )
-
-    def test_repr(self):
-        config = ERCConfig(
-            modules_text_encoder=ERCTextEmbeddingType.GLOVE,
-            modules_visual_encoder=ERCVisualEmbeddingType.RESNET50,
-            modules_audio_encoder=ERCAudioEmbeddingType.WAVEFORM,
-            modules_fusion=ERCFusionTechnique.CONCATENATION,
-            text_in_features=300,
-            text_out_features=300,
-            audio_in_features=325458,
-            audio_out_features=512,
-            feedforward_layers=None,
-            feedforward_out_features=1024,
-            classifier_n_classes=7,
-            classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
-        )
-        self.assertEqual(repr(config), str(config))

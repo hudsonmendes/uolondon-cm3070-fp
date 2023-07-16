@@ -11,6 +11,7 @@ import transformers
 from hlm12erc.modelling import ERCConfig, ERCModel
 
 # Local Folders
+from .erc_config_formatter import ERCConfigFormatter
 from .meld_dataset import MeldDataset
 
 
@@ -44,20 +45,24 @@ class ERCTrainer:
         self,
         data: Tuple[MeldDataset, MeldDataset],
         n_epochs: int,
-        batch_size: int = 16,
-        save_to: Optional[pathlib.Path] = None,
+        batch_size: int,
+        save_to: pathlib.Path,
     ) -> ERCModel:
         """
         Train the model using the given training and validation datasets.
 
         :param data: Tuple containing the training and validation datasets.
+        :param n_epochs: Number of epochs to train the model for.
+        :param batch_size: Batch size to use for training.
+        :param save_to: Path to the directory to save the model and logs to.
         :return: ERCModel object containing the best trained model.
         """
         config = self.config or ERCConfig()
         train_dataset, eval_dataset = data
         model = ERCModel(config)
-        workspace = (save_to or pathlib.Path("./target")) / f"{config}"
-        training_args = self._create_training_args(n_epochs, batch_size, config, workspace)
+        model_name = ERCConfigFormatter(config).represent()
+        workspace = save_to / model_name
+        training_args = self._create_training_args(n_epochs, batch_size, model_name, workspace)
         trainer = self._create_trainer(train_dataset, eval_dataset, model, training_args)
         self._store_settings_and_hyperparams(workspace, training_args, config)
         trainer.train()
@@ -67,7 +72,7 @@ class ERCTrainer:
         self,
         n_epochs: int,
         batch_size: int,
-        config: ERCConfig,
+        model_name: str,
         workspace: pathlib.Path,
     ) -> transformers.TrainingArguments:
         """
@@ -75,12 +80,12 @@ class ERCTrainer:
 
         :param n_epochs: Number of epochs to train the model for.
         :param batch_size: Batch size to use for training.
-        :param config: ERCConfig object containing the model hyperparameters.
+        :param model_name: A representative model name that distiguishes its architecture.
         :param workspace: Path to the workspace to store the model and logs.
         :return: transformers.TrainingArguments object containing the training
         """
         return transformers.TrainingArguments(
-            run_name=f"run-{int(time.time())}-model-{config}",
+            run_name=f"run-{int(time.time())}-model-{model_name}",
             do_train=True,
             do_eval=True,
             num_train_epochs=n_epochs,

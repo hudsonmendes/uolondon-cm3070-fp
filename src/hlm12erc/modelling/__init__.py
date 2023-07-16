@@ -2,6 +2,7 @@
 from .erc_config import (
     ERCAudioEmbeddingType,
     ERCConfig,
+    ERCConfigFeedForwardLayer,
     ERCFusionTechnique,
     ERCLossFunctions,
     ERCTextEmbeddingType,
@@ -22,5 +23,6 @@ __all__ = [
     "ERCVisualEmbeddings",
     "ERCRawAudioEmbeddings",
     "ERCConfig",
+    "ERCConfigFeedForwardLayer",
     "ERCModel",
 ]

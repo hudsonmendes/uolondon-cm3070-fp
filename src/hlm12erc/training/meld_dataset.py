@@ -1,5 +1,7 @@
 # Python Built-in Modules
+import pathlib
 import wave
+from typing import Union
 
 # Third-Party Libraries
 import pandas as pd
@@ -22,14 +24,15 @@ class MeldDataset(Dataset):
         >>> record = dataset[0]
     """
 
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df_or_filepath: Union[pd.DataFrame, pathlib.Path]):
         """
         Creates a new instance of the MeldDataset for a split
 
         :param df: The dataframe containing the data for the split
         """
-        df = df.sort_values(by=["dialogue", "sequence"], ascending=[True, True])
-        self.df = df
+        df_or_filepath = pd.read_csv(df_or_filepath) if isinstance(df_or_filepath, pathlib.Path) else df_or_filepath
+        df_or_filepath = df_or_filepath.sort_values(by=["dialogue", "sequence"], ascending=[True, True])
+        self.df = df_or_filepath
 
     def __len__(self) -> int:
         """
