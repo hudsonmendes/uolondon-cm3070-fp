@@ -167,6 +167,6 @@ class RawTo1NFTransformer:
                 "label": "category",
             }
         )
-        df = df[["dialogue", "sequence", "x_text", "x_visual", "x_audio", "label"]]
+        df = df[["dialogue", "sequence", "speaker", "x_text", "x_visual", "x_audio", "label"]]
         df = df.sort_values(by=["dialogue", "sequence"])
         return df

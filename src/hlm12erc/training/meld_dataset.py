@@ -1,8 +1,7 @@
 # Python Built-in Modules
 import pathlib
 import wave
-from collections import namedtuple
-from typing import NamedTuple
+from typing import List
 
 # Third-Party Libraries
 import pandas as pd
@@ -69,6 +68,16 @@ class MeldDataset(Dataset):
             utterance=row.x_text,
             label=row.label,
         )
+
+    @property
+    def classes(self) -> List[str]:
+        """
+        Returns a list of the classes in the dataset, based on the unique
+        labels in the dataframe.
+
+        :return: A list of the classes in the dataset
+        """
+        return sorted(self.df.label.unique().tolist())
 
     def _extract_previous_dialogue(self, dialogue: int, before: int) -> List[MeldDialogueEntry]:
         """

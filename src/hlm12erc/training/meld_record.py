@@ -9,7 +9,7 @@ from PIL.Image import Image
 
 
 @dataclass(frozen=True)
-class MeldDialogueEntry:
+class MeldDialogueEntry(ABC):
     """
     Represents each record of the MELD datset.
     """

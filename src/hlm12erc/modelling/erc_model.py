@@ -1,10 +1,11 @@
 # Python Built-in Modules
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 from wave import Wave_read as Wave
 
 # Third-Party Libraries
 import torch
 from PIL.Image import Image
+from sklearn.preprocessing import OneHotEncoder
 
 # Local Folders
 from .erc_config import ERCConfig
@@ -13,6 +14,7 @@ from .erc_emb_text import ERCTextEmbeddings
 from .erc_emb_visual import ERCVisualEmbeddings
 from .erc_feedforward import ERCFeedForward
 from .erc_fusion import ERCFusion
+from .erc_label_encoder import ERCLabelEncoder
 from .erc_loss import ERCLoss
 from .erc_output import ERCOutput
 
@@ -23,13 +25,14 @@ class ERCModel(torch.nn.Module):
     Emotion Recognition in Converations (or "ERC")
     """
 
-    def __init__(self, config: ERCConfig) -> None:
+    def __init__(self, config: ERCConfig, label_encoder: ERCLabelEncoder) -> None:
         """
         Constructs the ERC model by initializing the different modules based on hyperparameter
         configuration for the text, visual and audio encoders, as well as for the fusion network,
         the shape of the feedforward network and the loss function.
 
         :param config: ERCConfig object containing the hyperparameters for the ERC model
+        :param classes: List of strings containing the different emotion classes
         """
         super().__init__()
         # Embedding Modules
@@ -49,18 +52,20 @@ class ERCModel(torch.nn.Module):
         # Softmax Activation
         self.logits = torch.nn.Linear(
             in_features=self.feedforward.out_features,
-            out_features=config.classifier_n_classes,
+            out_features=len(label_encoder.classes),
         )
         self.softmax = torch.nn.Softmax(dim=1)
         # Loss Function
         self.loss = ERCLoss.resolve_type_from(config.classifier_loss_fn)()
+        # One-Hot Encoder (for labels)
+        self.label_encoder = label_encoder
 
     def forward(
         self,
         x_text: List[str],
         x_visual: List[Image],
         x_audio: List[Wave],
-        y_true: Optional[torch.Tensor] = None,
+        y_true: Optional[List[str]] = None,
         return_dict: bool = True,
     ) -> Union[ERCOutput, tuple]:
         """
@@ -85,6 +90,6 @@ class ERCModel(torch.nn.Module):
         y_transformed = self.feedforward(y_fusion)
         y_logits = self.logits(y_transformed)
         y_pred = self.softmax(y_logits)
-        loss = self.loss(y_pred, y_true) if y_true is not None else None
+        loss = self.loss(y_pred, self.one_hot.transform([lbl] for lbl in y_true)) if y_true is not None else None
         output = ERCOutput(loss=loss, labels=y_pred, logits=y_logits, hidden_states=y_transformed, attentions=None)
         return output if return_dict else output.to_tuple()

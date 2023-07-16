@@ -8,10 +8,11 @@ from typing import Optional, Tuple
 import transformers
 
 # My Packages and Modules
-from hlm12erc.modelling import ERCConfig, ERCModel
+from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel
 
 # Local Folders
 from .erc_config_formatter import ERCConfigFormatter
+from .erc_data_collator import ERCDataCollator
 from .meld_dataset import MeldDataset
 
 
@@ -57,13 +58,14 @@ class ERCTrainer:
         :param save_to: Path to the directory to save the model and logs to.
         :return: ERCModel object containing the best trained model.
         """
-        config = self.config or ERCConfig()
         train_dataset, eval_dataset = data
-        model = ERCModel(config)
+        label_encoder = ERCLabelEncoder(classes=train_dataset.classes)
+        config = self.config or ERCConfig()
+        model = ERCModel(config=config, label_encoder=label_encoder)
         model_name = ERCConfigFormatter(config).represent()
         workspace = save_to / model_name
         training_args = self._create_training_args(n_epochs, batch_size, model_name, workspace)
-        trainer = self._create_trainer(train_dataset, eval_dataset, model, training_args)
+        trainer = self._create_trainer(train_dataset, eval_dataset, model, training_args, label_encoder)
         self._store_settings_and_hyperparams(workspace, training_args, config)
         trainer.train()
         return model
@@ -109,6 +111,7 @@ class ERCTrainer:
         eval_dataset: MeldDataset,
         model: ERCModel,
         training_args: transformers.TrainingArguments,
+        label_encoder: ERCLabelEncoder,
     ) -> transformers.Trainer:
         """
         Create the transformers.Trainer object to train the model.
@@ -117,6 +120,7 @@ class ERCTrainer:
         :param eval_dataset: Validation dataset to use for evaluation.
         :param model: ERCModel object containing the model to train.
         :param training_args: transformers.TrainingArguments object containing the training arguments.
+        :param label_encoder: ERCLabelEncoder object containing the label encoder to use for training.
         :return: transformers.Trainer object to train the model.
         """
         return transformers.Trainer(
@@ -124,6 +128,7 @@ class ERCTrainer:
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
+            data_collator=ERCDataCollator(label_encoder=label_encoder),
         )
 
     def _store_settings_and_hyperparams(

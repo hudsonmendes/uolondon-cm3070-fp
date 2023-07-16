@@ -53,6 +53,8 @@ class ERCConfig:
     - surprise
     """
 
+    classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
+
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
     modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET50
     modules_audio_encoder: str = ERCAudioEmbeddingType.WAVEFORM
@@ -61,16 +63,13 @@ class ERCConfig:
     text_in_features: int = 300
     text_out_features: int = 300
 
-    audio_in_features: int = 325458
+    audio_in_features: int = 300_000
     audio_out_features: int = 512
 
     visual_in_features: int = -1  # defined by resnet50
     visual_out_features: int = -1  # defined by resnet50
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
-
-    classifier_n_classes: int = 7
-    classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
 
 
 @dataclass(frozen=True)

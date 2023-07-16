@@ -6,7 +6,6 @@ from wave import Wave_read as Wave
 # Third-Party Libraries
 import torch
 from torch.nn.functional import normalize as l2_norm
-from torch.nn.utils.rnn import pad_sequence
 
 # Local Folders
 from .erc_config import ERCAudioEmbeddingType, ERCConfig, ERCConfigFeedForwardLayer
@@ -61,7 +60,7 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         >>> ERCAudioEmbeddings.resolve_type_from(ERCAudioEmbeddingType.WAVEFORM)(config)
     """
 
-    hidden_size: int
+    in_features: int
 
     def __init__(self, config: ERCConfig) -> None:
         """
@@ -70,24 +69,26 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         :param config: configuration for the model
         """
         super().__init__(config)
-        self.hidden_size = config.audio_out_features
+        self.in_features = config.audio_in_features
         self.ff = ERCFeedForward(
             in_features=config.audio_in_features,
             layers=[
                 ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 3, dropout=0.1),
                 ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 2, dropout=0.1),
-                ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 1, dropout=0.1),
+                ERCConfigFeedForwardLayer(out_features=config.audio_out_features, dropout=0.1),
             ],
         )
 
     @property
     def out_features(self) -> int:
         """
-        Returns the number of output features of the audio embedding module.
+        Returns the number of features that the audio embedding will return,
+        after the transformations that projec the original raw audio into
+        a fixed size vector.
 
-        :return: number of output features
+        :return: number of features
         """
-        return self.hidden_size
+        return self.ff.out_features
 
     def forward(self, x: List[Wave]) -> torch.Tensor:
         """
@@ -118,5 +119,12 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
             samples = torch.frombuffer(data, dtype=dtype).float()
             samples = samples.reshape(-1, wave_file.getnchannels())
             vec = samples.flatten()
+            vec_len = vec.shape[0]
+            if vec_len < self.in_features:
+                padding_len = self.in_features - vec_len
+                padding = torch.zeros(padding_len)
+                vec = torch.cat([vec, padding])
+            elif vec_len > self.in_features:
+                vec = vec[: self.in_features]
             vecs.append(vec)
-        return pad_sequence(vecs, batch_first=True)
+        return torch.stack(vecs)
