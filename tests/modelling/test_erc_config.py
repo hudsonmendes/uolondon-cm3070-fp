@@ -1,0 +1,77 @@
+# Python Built-in Modules
+import unittest
+
+# My Packages and Modules
+from hlm12erc.modelling.erc_config import (
+    ERCAudioEmbeddingType,
+    ERCConfig,
+    ERCConfigFeedForwardLayer,
+    ERCFusionTechnique,
+    ERCLossFunctions,
+    ERCTextEmbeddingType,
+    ERCVisualEmbeddingType,
+)
+
+
+class TestERCConfig(unittest.TestCase):
+    def test_str_feedforward_layers(self):
+        # Test that __str__ includes feedforward layers if present
+        config_with_ffl = ERCConfig(
+            modules_text_encoder=ERCTextEmbeddingType.GLOVE,
+            modules_visual_encoder=ERCVisualEmbeddingType.RESNET50,
+            modules_audio_encoder=ERCAudioEmbeddingType.WAVEFORM,
+            modules_fusion=ERCFusionTechnique.CONCATENATION,
+            text_in_features=300,
+            text_out_features=300,
+            audio_in_features=325458,
+            audio_out_features=512,
+            feedforward_layers=[
+                ERCConfigFeedForwardLayer(out_features=512),
+                ERCConfigFeedForwardLayer(out_features=256),
+            ],
+            feedforward_out_features=1024,
+            classifier_n_classes=7,
+            classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
+        )
+        self.assertEqual(
+            str(config_with_ffl),
+            "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ff1024-ffl512+256-cce",
+        )
+
+    def test_str_feedforward_out_features(self):
+        # Test that __str__ includes feedforward out features if present
+        config_with_ff_out = ERCConfig(
+            modules_text_encoder=ERCTextEmbeddingType.GLOVE,
+            modules_visual_encoder=ERCVisualEmbeddingType.RESNET50,
+            modules_audio_encoder=ERCAudioEmbeddingType.WAVEFORM,
+            modules_fusion=ERCFusionTechnique.CONCATENATION,
+            text_in_features=300,
+            text_out_features=300,
+            audio_in_features=325458,
+            audio_out_features=512,
+            feedforward_layers=None,
+            feedforward_out_features=2048,
+            classifier_n_classes=7,
+            classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
+        )
+        self.assertEqual(
+            str(config_with_ff_out),
+            "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ff2048-ffldefault-cce",
+        )
+
+    def test_repr(self):
+        config = ERCConfig(
+            modules_text_encoder=ERCTextEmbeddingType.GLOVE,
+            modules_visual_encoder=ERCVisualEmbeddingType.RESNET50,
+            modules_audio_encoder=ERCAudioEmbeddingType.WAVEFORM,
+            modules_fusion=ERCFusionTechnique.CONCATENATION,
+            text_in_features=300,
+            text_out_features=300,
+            audio_in_features=325458,
+            audio_out_features=512,
+            feedforward_layers=None,
+            feedforward_out_features=1024,
+            classifier_n_classes=7,
+            classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
+        )
+        self.assertEqual(repr(config), str(config))

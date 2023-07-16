@@ -10,9 +10,9 @@ from .erc_config import (
 from .erc_emb_audio import ERCRawAudioEmbeddings
 from .erc_emb_text import ERCTextEmbeddings
 from .erc_emb_visual import ERCVisualEmbeddings
+from .erc_model import ERCModel
 
 __all__ = [
-    "ERCConfig",
     "ERCTextEmbeddingType",
     "ERCVisualEmbeddingType",
     "ERCAudioEmbeddingType",
@@ -21,4 +21,6 @@ __all__ = [
     "ERCTextEmbeddings",
     "ERCVisualEmbeddings",
     "ERCRawAudioEmbeddings",
+    "ERCConfig",
+    "ERCModel",
 ]
