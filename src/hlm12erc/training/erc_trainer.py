@@ -140,8 +140,26 @@ class ERCTrainer:
         :param training_args: transformers.TrainingArguments object containing the training arguments.
         :param config: ERCConfig object containing the model hyperparameters.
         """
-        with open(workspace / "training_args.json", "w") as file:
-            file.write(json.dumps(training_args.__dict__))
+        self._write_training_args(workspace, training_args)
+        self._write_config(workspace, config)
 
+    def _write_training_args(self, workspace: pathlib.Path, training_args: transformers.TrainingArguments) -> None:
+        """
+        Write the `training_args.json` file to the workspace, to store the training arguments.
+
+        :param workspace: Path to the workspace to store the model and logs.
+        """
+        with open(workspace / "training_args.json", "w") as file:
+            file.write(json.dumps(training_args.to_dict(), indent=4))
+
+    def _write_config(self, workspace: pathlib.Path, config: ERCConfig) -> None:
+        """
+        Write the `config.json` file to the workspace, to store the model hyperparameters.
+
+        :param workspace: Path to the workspace to store the model and logs.
+        :param config: ERCConfig object containing the model hyperparameters.
+        """
         with open(workspace / "config.json", "w") as file:
-            file.write(json.dumps(config.__dict__))
+            doc = config.__dict__
+            doc["feedforward_layers"] = [layer.__dict__ for layer in doc["feedforward_layers"]]
+            file.write(json.dumps(doc, indent=4))

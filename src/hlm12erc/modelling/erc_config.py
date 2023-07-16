@@ -64,6 +64,9 @@ class ERCConfig:
     audio_in_features: int = 325458
     audio_out_features: int = 512
 
+    visual_in_features: int = -1  # defined by resnet50
+    visual_out_features: int = -1  # defined by resnet50
+
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
 
     classifier_n_classes: int = 7

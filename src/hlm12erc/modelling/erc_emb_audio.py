@@ -73,13 +73,10 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         self.hidden_size = config.audio_out_features
         self.ff = ERCFeedForward(
             in_features=config.audio_in_features,
-            out_features=config.audio_out_features,
             layers=[
-                ERCConfigFeedForwardLayer(out_features=config.audio_out_features, dropout=0.1),
-                ERCConfigFeedForwardLayer(dropout=0.1),
-                ERCConfigFeedForwardLayer(dropout=0.1),
-                ERCConfigFeedForwardLayer(dropout=0.1),
-                ERCConfigFeedForwardLayer(dropout=0.1),
+                ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 3, dropout=0.1),
+                ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 2, dropout=0.1),
+                ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 1, dropout=0.1),
             ],
         )
 

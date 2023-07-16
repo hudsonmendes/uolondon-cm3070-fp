@@ -44,12 +44,11 @@ class ERCModel(torch.nn.Module):
         # Feed Forward Transformation
         self.feedforward = ERCFeedForward(
             in_features=self.fusion_network.out_features,
-            out_features=config.feedforward_out_features,
             layers=config.feedforward_layers,
         )
         # Softmax Activation
         self.logits = torch.nn.Linear(
-            in_features=config.feedforward_out_features,
+            in_features=self.feedforward.out_features,
             out_features=config.classifier_n_classes,
         )
         self.softmax = torch.nn.Softmax(dim=1)

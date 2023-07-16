@@ -34,7 +34,6 @@ class ERCConfigFormatter:
                 self.config.modules_fusion.lower(),
                 f"t{self.config.text_in_features}x{self.config.text_out_features}",
                 f"a{self.config.audio_in_features}x{self.config.audio_out_features}",
-                f"ff{self.config.feedforward_out_features}",
                 f"ffl{ff_layerspec}",
                 f"{self.config.classifier_loss_fn}",
             ]

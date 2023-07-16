@@ -79,6 +79,10 @@ class ERCCommands:
         :param config: The path to the config file, defaults to the default settings
         :param out: The path to save the model to, defaults to './target'
         """
+        train_dataset = pathlib.Path(train_dataset) if not isinstance(train_dataset, pathlib.Path) else train_dataset
+        valid_dataset = pathlib.Path(valid_dataset) if not isinstance(valid_dataset, pathlib.Path) else valid_dataset
+        out = pathlib.Path(out) if out is not None and not isinstance(out, pathlib.Path) else out
+        config = pathlib.Path(config) if config is not None and not isinstance(config, pathlib.Path) else config
         effective_config = ERCConfigLoader(config).load() if config else ERCConfig()
         ERCTrainer(effective_config).train(
             data=(MeldDataset(train_dataset), MeldDataset(valid_dataset)),

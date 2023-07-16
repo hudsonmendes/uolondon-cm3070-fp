@@ -6,7 +6,7 @@ import pathlib
 import yaml
 
 # My Packages and Modules
-from hlm12erc.modelling import ERCConfig
+from hlm12erc.modelling import ERCConfig, ERCConfigFeedForwardLayer
 
 
 class ERCConfigLoader:
@@ -24,8 +24,9 @@ class ERCConfigLoader:
         """
         Loads the ERCConfig from the json file.
         """
-        config_dict = self._read_as_dict()
-        return ERCConfig(**config_dict)
+        raw = self._read_as_dict()
+        raw["feedforward_layers"] = self._convert_ff_layers_dict(raw["feedforward_layers"])
+        return ERCConfig(**raw)
 
     def _read_as_dict(self):
         config_dict = {}
@@ -35,3 +36,9 @@ class ERCConfigLoader:
             elif self.filepath.suffix in [".yml", ".yaml"]:
                 config_dict = yaml.safe_load(fh)
         return config_dict
+
+    def _convert_ff_layers_dict(self, ff_layers_dict):
+        ff_layers = []
+        for layer in ff_layers_dict:
+            ff_layers.append(ERCConfigFeedForwardLayer(**layer))
+        return ff_layers

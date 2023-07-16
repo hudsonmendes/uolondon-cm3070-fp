@@ -58,11 +58,11 @@ class MeldDataset(Dataset):
         dialogue = row["dialogue"]
         df_prev = self.df[self.df.dialogue == dialogue]
         df_prev = df_prev[df_prev.sequence < row.sequence]
-        previous_utterances = df_prev.utterance.tolist()
+        previous_utterances = df_prev.x_text.tolist()
 
         return MeldRecord(
             visual=Image.open(row.x_visual),
             audio=wave.open(row.x_audio),
             dialogue=previous_utterances,
-            utterance=row.utterance,
+            utterance=row.x_text,
         )
