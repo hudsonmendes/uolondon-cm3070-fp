@@ -67,7 +67,7 @@ class ERCTrainer:
         label_encoder = ERCLabelEncoder(classes=train_dataset.classes)
         logger.info(f"Label Encoder loaded with classes: {', '.join(label_encoder.classes)}")
         config = self.config or ERCConfig()
-        logger.info("Training with config {'passed to trainer' if self.config else 'default'}")
+        logger.info(f"Training with config {'passed to trainer' if self.config else 'default'}")
         model = ERCModel(config=config, label_encoder=label_encoder)
         model_name = ERCConfigFormatter(config).represent()
         logger.info(f"Model created for training, with identifier {model_name}")

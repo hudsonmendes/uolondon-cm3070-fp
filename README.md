@@ -11,14 +11,23 @@ most if not all functionality required to run emotion recognition in<br />
 conversations, including (a) **Model Training**, (b) **ERC Inference**<br />
 and (c) **Model Evaluation**.
 
-## Training a new ERC Model
+## ETL
 
-This library is capable of
+```bash
+python -m hlm12erc etl kaggle \
+    --owner "zaber666" \
+    --dataset "meld-dataset" \
+    --subdir "MELD-RAW/MELD.Raw" \
+    --dest "./data" \
+    --force "False"
+```
+
+## Training a new ERC Model
 
 ```bash
 python -m hlm12erc erc train \
-    --train_dataset "./data/train.csv" \
-    --valid_dataset "./data/valid.csv" \
+    --train_dataset "./data/sample.csv" \
+    --valid_dataset "./data/sample.csv" \
     --n_epochs 3 \
     --batch_size 4 \
     --config "./dev/configs/baseline.yml" \
@@ -32,7 +41,6 @@ python -m hlm12erc erc evaluate \
     --test_dataset "./data/test.csv" \
     --out ./target
 ```
-
 
 ## Running ERC Inference
 
