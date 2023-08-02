@@ -164,6 +164,9 @@ cython_debug/
 .vector_cache/
 .vector_cache/*
 
+# Logs
+wandb/
+
 # Data folder
 .data/*
 !.data/.keep
