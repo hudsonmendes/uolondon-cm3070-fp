@@ -36,6 +36,25 @@ class ERCLoss(ABC):
         Resolve a ERC Loss class from a string expression
         """
         if expression == ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY:
-            return torch.nn.CrossEntropyLoss
+            return CategoricalCrossEntropyLoss
         else:
             raise ValueError(f"Unknown ERC Loss type {expression}")
+
+
+class CategoricalCrossEntropyLoss(ERCLoss):
+    """
+    Categorical Cross Entropy Loss function for ERC models.
+    """
+
+    def __init__(self):
+        self.loss = torch.nn.CrossEntropyLoss()
+
+    def __call__(
+        self,
+        y_pred: torch.Tensor,
+        y_true: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """
+        Calculate and return the loss given the predicted and true labels.
+        """
+        return self.loss(y_pred, y_true)

@@ -2,11 +2,6 @@
 import pathlib
 from typing import Optional
 
-# My Packages and Modules
-from hlm12erc.etl import ETL, KaggleDataset
-from hlm12erc.modelling import ERCConfig
-from hlm12erc.training import ERCConfigLoader, ERCTrainer, MeldDataset
-
 
 class CLI:
     """
@@ -51,6 +46,9 @@ class ETLCommands:
         :param dest: The destination to extract the dataset into.
         :param force: Whether to force the extraction, even if the destination already exists.
         """
+        # My Packages and Modules
+        from hlm12erc.etl import ETL, KaggleDataset
+
         ds = KaggleDataset(owner=owner, name=dataset, subdir=subdir)
         ETL(ds, workspace=workspace).into(uri_or_folderpath=dest, force=force)
 
@@ -79,6 +77,11 @@ class ERCCommands:
         :param config: The path to the config file, defaults to the default settings
         :param out: The path to save the model to, defaults to './target'
         """
+
+        # My Packages and Modules
+        from hlm12erc.modelling import ERCConfig
+        from hlm12erc.training import ERCConfigLoader, ERCTrainer, MeldDataset
+
         train_dataset = pathlib.Path(train_dataset) if not isinstance(train_dataset, pathlib.Path) else train_dataset
         valid_dataset = pathlib.Path(valid_dataset) if not isinstance(valid_dataset, pathlib.Path) else valid_dataset
         out = pathlib.Path(out) if out is not None and not isinstance(out, pathlib.Path) else out

@@ -102,6 +102,7 @@ class ERCTrainer:
         """
         return transformers.TrainingArguments(
             run_name=f"run-{int(time.time())}-model-{model_name}",
+            label_names=[ERCDataCollator.LABEL_NAME],
             do_train=True,
             do_eval=True,
             num_train_epochs=n_epochs,
@@ -118,6 +119,7 @@ class ERCTrainer:
             logging_strategy="steps",
             logging_steps=10,
             disable_tqdm=False,
+            report_to=["wandb", "tensorboard"],
         )
 
     def _create_trainer(

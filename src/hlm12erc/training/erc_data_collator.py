@@ -15,6 +15,8 @@ class ERCDataCollator:
     datapoints.
     """
 
+    LABEL_NAME: str = "y_true"
+
     def __init__(self, label_encoder: ERCLabelEncoder) -> None:
         """
         Initialise the ERCDataCollator class with the given ERCLabelEncoder object.
@@ -36,5 +38,5 @@ class ERCDataCollator:
             "x_text": [r.to_dialogue_prompt() for r in record],
             "x_visual": [r.visual for r in record],
             "x_audio": [r.audio for r in record],
-            "y_true": self.label_encoder([r.label for r in record]),
+            ERCDataCollator.LABEL_NAME: self.label_encoder([r.label for r in record]),
         }

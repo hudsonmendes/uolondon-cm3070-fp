@@ -87,9 +87,10 @@ class ERCModel(torch.nn.Module):
         y_visual = self.visual_embeddings(x_visual)
         y_audio = self.audio_embeddings(x_audio)
         y_fusion = self.fusion_network(y_text, y_visual, y_audio)
+        y_attn = None
         y_transformed = self.feedforward(y_fusion)
         y_logits = self.logits(y_transformed)
         y_pred = self.softmax(y_logits)
         loss = self.loss(y_pred, y_true) if y_true is not None else None
-        output = ERCOutput(loss=loss, labels=y_pred, logits=y_logits, hidden_states=y_transformed, attentions=None)
+        output = ERCOutput(loss=loss, labels=y_pred, logits=y_logits, hidden_states=y_transformed, attentions=y_attn)
         return output if return_dict else output.to_tuple()

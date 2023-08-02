@@ -11,8 +11,6 @@ class ERCOutput(ModelOutput):
     ERCOutput is a class containing the outputs of the ERC model.
     """
 
-    emotions: Optional[torch.Tensor] = None
-
     def __init__(
         self,
         labels: Optional[torch.Tensor] = None,
@@ -34,6 +32,6 @@ class ERCOutput(ModelOutput):
             loss=loss,
             logits=logits,
             hidden_states=hidden_states,
-            attentions=attentions,
+            attentions=attentions if attentions else (),
         )
         self.labels = labels

@@ -12,6 +12,7 @@ from .erc_emb_audio import ERCRawAudioEmbeddings
 from .erc_emb_text import ERCTextEmbeddings
 from .erc_emb_visual import ERCVisualEmbeddings
 from .erc_label_encoder import ERCLabelEncoder
+from .erc_loss import ERCLoss
 from .erc_model import ERCModel
 
 __all__ = [
@@ -27,4 +28,5 @@ __all__ = [
     "ERCConfigFeedForwardLayer",
     "ERCModel",
     "ERCLabelEncoder",
+    "ERCLoss",
 ]

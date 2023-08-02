@@ -34,10 +34,10 @@
                 "--valid_dataset", "./data/sample.csv",
                 "--n_epochs", "3",
                 "--batch_size", "4",
-                "--config", "./dev/configs/baseline.yml",
+                "--config", "./configs/baseline.yml",
                 "--out", "./target",
             ],
-            "justMyCode": true
+            "justMyCode": false
         },
     ]
 }
