@@ -51,7 +51,7 @@ class ERCTrainer:
         n_epochs: int,
         batch_size: int,
         save_to: pathlib.Path,
-    ) -> ERCModel:
+    ) -> Tuple[str, ERCModel]:
         """
         Train the model using the given training and validation datasets.
 
@@ -59,7 +59,7 @@ class ERCTrainer:
         :param n_epochs: Number of epochs to train the model for.
         :param batch_size: Batch size to use for training.
         :param save_to: Path to the directory to save the model and logs to.
-        :return: ERCModel object containing the best trained model.
+        :return: The name of the model and the ERCModel object containing the best trained model.
         """
         logger.info("Training the model...")
         train_dataset, eval_dataset = data
@@ -82,7 +82,7 @@ class ERCTrainer:
         logger.info("Training starting, don't wait standing up...")
         trainer.train()
         logger.info("Training complete.")
-        return model
+        return model_name, model
 
     def _create_training_args(
         self,
