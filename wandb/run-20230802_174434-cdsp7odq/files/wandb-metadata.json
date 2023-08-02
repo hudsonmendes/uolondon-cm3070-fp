@@ -1,0 +1,56 @@
+{
+    "os": "macOS-12.6.8-x86_64-i386-64bit",
+    "python": "3.10.11",
+    "heartbeatAt": "2023-08-02T16:44:34.965555",
+    "startedAt": "2023-08-02T16:44:34.016607",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "erc",
+        "train",
+        "--train_dataset",
+        "./data/sample.csv",
+        "--valid_dataset",
+        "./data/sample.csv",
+        "--n_epochs",
+        "3",
+        "--batch_size",
+        "4",
+        "--config",
+        "./configs/baseline.yml",
+        "--out",
+        "./target"
+    ],
+    "state": "running",
+    "program": "-m hlm12erc.__main__",
+    "git": {
+        "remote": "git@github.com:hudsonmendes/cm3070-fp.git",
+        "commit": "dc52e95f5864d757beae6d3fce6ad3d13cfe3123"
+    },
+    "email": "hudsonmendes@gmail.com",
+    "root": "/Users/hudsonmendes/Workspaces/universityoflondon/cm3070-fp",
+    "host": "Hudsons-MacBook-Pro.local",
+    "username": "hudsonmendes",
+    "executable": "/Users/hudsonmendes/Workspaces/universityoflondon/cm3070-fp/venv/bin/python",
+    "cpu_count": 2,
+    "cpu_count_logical": 4,
+    "cpu_freq": {
+        "current": 2900,
+        "min": 2900,
+        "max": 2900
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2900,
+            "min": 2900,
+            "max": 2900
+        }
+    ],
+    "disk": {
+        "total": 465.62699127197266,
+        "used": 14.358299255371094
+    },
+    "memory": {
+        "total": 8.0
+    }
+}

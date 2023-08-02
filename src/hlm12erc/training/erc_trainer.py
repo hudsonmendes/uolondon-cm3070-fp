@@ -119,7 +119,7 @@ class ERCTrainer:
             logging_strategy="steps",
             logging_steps=10,
             disable_tqdm=False,
-            report_to=["wandb", "tensorboard"],
+            report_to=["wandb"],
         )
 
     def _create_trainer(
