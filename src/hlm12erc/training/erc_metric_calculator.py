@@ -19,7 +19,7 @@ class ERCMetricCalculator:
 
     loss_fn: Optional[ERCLoss]
 
-    def __init__(self, classifier_loss_fn: str) -> None:
+    def __init__(self, classifier_loss_fn: Optional[str] = None) -> None:
         """
         Contructs a new ERCMetricCalculator.
 

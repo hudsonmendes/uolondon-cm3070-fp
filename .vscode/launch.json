@@ -32,7 +32,7 @@
                 "train",
                 "--train_dataset", "./data/sample.csv",
                 "--valid_dataset", "./data/sample.csv",
-                "--n_epochs", "3",
+                "--n_epochs", "15",
                 "--batch_size", "4",
                 "--config", "./configs/baseline.yml",
                 "--out", "./target",
