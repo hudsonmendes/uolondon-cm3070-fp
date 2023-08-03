@@ -40,7 +40,7 @@ class ERCMetricCalculator:
         pred, labels = self._extract_pred_loss(eval_pred)
         return self._build_output(
             loss=self._determine_loss(pred=pred, labels=labels),
-            y_true=pred.argmax(dim=0),
+            y_true=labels.argmax(dim=0),
             y_pred=pred.argmax(dim=0),
         )
 

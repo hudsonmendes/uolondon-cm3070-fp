@@ -71,6 +71,7 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         self.preprocessor = torchvision.transforms.Compose(
             [
                 torchvision.transforms.Resize(256),
+                torchvision.transforms.Lambda(lambda x: torchvision.transforms.functional.crop(x, 0, 0, 256, 721)),
                 torchvision.transforms.ToTensor(),
                 torchvision.transforms.Normalize(mean=[0.2706, 0.2010, 0.1914], std=[0.1857, 0.1608, 0.1667]),
             ]
