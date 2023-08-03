@@ -30,8 +30,8 @@ class ERCOutput(ModelOutput):
         """
         super().__init__(
             loss=loss,
+            labels=labels,
             logits=logits,
             hidden_states=hidden_states,
             attentions=attentions if attentions else (),
         )
-        self.labels = labels

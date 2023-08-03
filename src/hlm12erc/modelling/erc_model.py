@@ -5,7 +5,6 @@ from wave import Wave_read as Wave
 # Third-Party Libraries
 import torch
 from PIL.Image import Image
-from sklearn.preprocessing import OneHotEncoder
 
 # Local Folders
 from .erc_config import ERCConfig

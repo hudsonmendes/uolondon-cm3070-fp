@@ -14,7 +14,7 @@ class ERCLoss(ABC):
     Defines the contract of loss functions for ERC models.
 
     Example:
-        >>> loss = ERCLoss.resolve_type_from("cross_entropy")()
+        >>> loss = ERCLoss.resolve_type_from("cce")()
         >>> loss(y_true=y_true, y_pred=y_pred)
     """
 
@@ -31,7 +31,7 @@ class ERCLoss(ABC):
         raise NotImplementedError("ERCLoss is an abstract class.")
 
     @staticmethod
-    def resolve_type_from(expression: str) -> Type[torch.nn.Module]:
+    def resolve_type_from(expression: str) -> Type["ERCLoss"]:
         """
         Resolve a ERC Loss class from a string expression
         """

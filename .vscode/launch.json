@@ -37,6 +37,9 @@
                 "--config", "./configs/baseline.yml",
                 "--out", "./target",
             ],
+            "env": {
+                "WANDB_PROJECT": "hlm12erc",
+            },
             "justMyCode": false
         },
     ]

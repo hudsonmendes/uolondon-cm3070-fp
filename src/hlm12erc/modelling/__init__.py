@@ -14,6 +14,7 @@ from .erc_emb_visual import ERCVisualEmbeddings
 from .erc_label_encoder import ERCLabelEncoder
 from .erc_loss import ERCLoss
 from .erc_model import ERCModel
+from .erc_output import ERCOutput
 
 __all__ = [
     "ERCTextEmbeddingType",
@@ -29,4 +30,5 @@ __all__ = [
     "ERCModel",
     "ERCLabelEncoder",
     "ERCLoss",
+    "ERCOutput",
 ]
