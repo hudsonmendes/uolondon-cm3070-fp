@@ -42,7 +42,7 @@ class TestKaggleDataset(unittest.TestCase):
         # asserts that the kaggle path is correct
         self.assertEqual(dataset.to_kaggle(), "hlm12erc/kaggle-dataset-downloader")
 
-    def _new_subject(owner: str, name: str, subdir: str):
+    def _new_subject(self, owner: str, name: str, subdir: str = None):
         # local import to avoid etl dependencies becoming global requirements
         # My Packages and Modules
         from hlm12erc.etl.domain.kaggle_dataset import KaggleDataset
