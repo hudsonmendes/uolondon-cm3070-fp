@@ -3,7 +3,6 @@ import unittest
 from unittest import mock
 
 # Third-Party Libraries
-import nltk
 import torch
 
 # My Packages and Modules
@@ -13,8 +12,7 @@ from hlm12erc.modelling.erc_emb_text import ERCTextEmbeddings
 
 class TestERCGloveTextEmbeddings(unittest.TestCase):
     def setUp(self):
-        nltk.download("punkt")
-        self.config = ERCConfig(text_in_features=50, text_out_features=50)
+        self.config = ERCConfig(text_in_features=50, text_out_features=50, classifier_classes=["a", "b"])
         self.embeddings = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GLOVE)(config=self.config)
 
     def tearDown(self):

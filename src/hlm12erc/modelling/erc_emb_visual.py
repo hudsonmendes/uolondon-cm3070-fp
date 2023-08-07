@@ -68,7 +68,7 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
 
         :param config: The configuration for the ERC model.
         """
-        super().__init__(config)
+        super().__init__(config=config)
         self.preprocessor = torchvision.transforms.Compose(
             [
                 torchvision.transforms.Resize(256),
@@ -81,15 +81,6 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         self.resnet50.eval()
         self.resnet50.fc = torch.nn.Identity()
 
-    @property
-    def out_features(self) -> int:
-        """
-        Returns the number of output features of the visual embedding layer.
-
-        :return: The number of output features of the visual embedding layer.
-        """
-        return 2048
-
     def forward(self, x: List[Image]) -> torch.Tensor:
         """
         Performs a forward pass through the ResNet50 visual embedding layer.
@@ -101,3 +92,10 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         y = self.resnet50(y)
         y = l2_norm(y, p=2, dim=1)
         return y
+
+    @property
+    def out_features(self) -> int:
+        """
+        Returns the dimensionality of the vectors produced by the embedding transformation.
+        """
+        return 2048

@@ -35,9 +35,6 @@ class ERCEmbeddings(ABC, torch.nn.Module):
     @abstractproperty
     def out_features(self) -> int:
         """
-        When implemented, provides the output features of the embeddings,
-        which is required by the next layer to size its inputs
-
-        :returns: an integer representing the number of output dims.
+        Returns the dimensionality of the vectors produced by the embedding transformation.
         """
-        raise NotImplementedError("Abstract property not implemtented in base class.")
+        raise NotImplementedError("The property 'out_features' must be implemented.")

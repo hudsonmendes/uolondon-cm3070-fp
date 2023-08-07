@@ -3,7 +3,6 @@ import unittest
 import wave
 
 # Third-Party Libraries
-import nltk
 import torch
 from PIL import Image
 
@@ -16,9 +15,11 @@ from hlm12erc.modelling.erc_output import ERCOutput
 
 class TestERCModel(unittest.TestCase):
     def setUp(self):
-        nltk.download("punkt")
         self.classes = ["neutral", "surprise", "fear", "sadness", "joy", "disgust", "anger"]
-        self.config = ERCConfig(feedforward_layers=[ERCConfigFeedForwardLayer(out_features=7, dropout=0.5)])
+        self.config = ERCConfig(
+            feedforward_layers=[ERCConfigFeedForwardLayer(out_features=7, dropout=0.5)],
+            classifier_classes=["a", "b"],
+        )
         self.label_encoder = ERCLabelEncoder(classes=self.classes)
         self.model = ERCModel(self.config, label_encoder=self.label_encoder)
         self.y_true = torch.tensor([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]], dtype=torch.float32)
@@ -28,6 +29,12 @@ class TestERCModel(unittest.TestCase):
 
     def tearDown(self):
         del self.model
+
+    def test_attr_config(self):
+        self.assertEqual(self.model.config, self.config)
+
+    def test_attr_label_encoder(self):
+        self.assertEqual(self.model.label_encoder, self.label_encoder)
 
     def test_forward_output_labels_shape(self):
         out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true)

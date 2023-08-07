@@ -1,5 +1,4 @@
 # Python Built-in Modules
-import json
 import logging
 import pathlib
 import time
@@ -16,6 +15,7 @@ from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel, ERCOutput
 from .erc_config_formatter import ERCConfigFormatter
 from .erc_data_collator import ERCDataCollator
 from .erc_metric_calculator import ERCMetricCalculator
+from .erc_path import ERCPath
 from .meld_dataset import MeldDataset
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class ERCTrainer:
         logger.info("Training & Validation datasets unpacked")
         label_encoder = ERCLabelEncoder(classes=train_dataset.classes)
         logger.info(f"Label Encoder loaded with classes: {', '.join(label_encoder.classes)}")
-        config = self.config or ERCConfig()
+        config = self.config or ERCConfig(classifier_classes=train_dataset.classes)
         logger.info(f"Training with config {'passed to trainer' if self.config else 'default'}")
         model = ERCModel(config=config, label_encoder=label_encoder)
         model_name = ERCConfigFormatter(config).represent()
@@ -79,11 +79,11 @@ class ERCTrainer:
         logger.info(f"TrainingArgs created with {n_epochs} epochs and batch size {batch_size}")
         trainer = self._create_trainer(train_dataset, eval_dataset, model, training_args, label_encoder)
         logger.info(f"Trainer instantiated with samples train={len(train_dataset)}, valid={len(eval_dataset)}")
-        self._store_settings_and_hyperparams(workspace, training_args, config)
-        logger.info("Training settings and hyperparameters stored in workspace")
         logger.info("Training starting, don't wait standing up...")
-        trainer.train()
-        logger.info("Training complete.")
+        # trainer.train()
+        logger.info("Training complete, saving model...")
+        ERCPath(workspace).save(model=model, ta=training_args)
+        logger.info("Model saved, thanks for waiting!")
         return model_name, model
 
     def _create_training_args(
@@ -151,44 +151,6 @@ class ERCTrainer:
             data_collator=ERCDataCollator(label_encoder=label_encoder),
             compute_metrics=ERCMetricCalculator(classifier_loss_fn=classifier_loss_fn),
         )
-
-    def _store_settings_and_hyperparams(
-        self,
-        workspace: pathlib.Path,
-        training_args: transformers.TrainingArguments,
-        config: ERCConfig,
-    ) -> None:
-        """
-        Write the `training_args.json` and the `config.json` files to the workspace,
-        to store both the training arguments and the model hyperparameters.
-
-        :param workspace: Path to the workspace to store the model and logs.
-        :param training_args: transformers.TrainingArguments object containing the training arguments.
-        :param config: ERCConfig object containing the model hyperparameters.
-        """
-        self._write_training_args(workspace, training_args)
-        self._write_config(workspace, config)
-
-    def _write_training_args(self, workspace: pathlib.Path, training_args: transformers.TrainingArguments) -> None:
-        """
-        Write the `training_args.json` file to the workspace, to store the training arguments.
-
-        :param workspace: Path to the workspace to store the model and logs.
-        """
-        with open(workspace / "training_args.json", "w") as file:
-            file.write(json.dumps(training_args.to_dict(), indent=4))
-
-    def _write_config(self, workspace: pathlib.Path, config: ERCConfig) -> None:
-        """
-        Write the `config.json` file to the workspace, to store the model hyperparameters.
-
-        :param workspace: Path to the workspace to store the model and logs.
-        :param config: ERCConfig object containing the model hyperparameters.
-        """
-        with open(workspace / "config.json", "w") as file:
-            doc = config.__dict__
-            doc["feedforward_layers"] = [layer.__dict__ for layer in doc["feedforward_layers"]]
-            file.write(json.dumps(doc, indent=4))
 
 
 class _ERCHuggingfaceCustomTrainer(transformers.Trainer):

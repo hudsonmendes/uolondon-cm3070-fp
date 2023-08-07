@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 # Third-Party Libraries
 import numpy as np
 import torch
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, f1_score
 from transformers import EvalPrediction
 
 # My Packages and Modules
@@ -61,6 +61,4 @@ class ERCMetricCalculator:
             output["loss"] = loss.item() if isinstance(loss, torch.Tensor) else loss
         output["acc"] = accuracy_score(y_true, y_pred)
         output["f1_weighted"] = f1_score(y_true, y_pred, average="weighted")
-        output["p_weighted"] = precision_score(y_true, y_pred, average="weighted")
-        output["r_weighted"] = recall_score(y_true, y_pred, average="weighted")
         return output

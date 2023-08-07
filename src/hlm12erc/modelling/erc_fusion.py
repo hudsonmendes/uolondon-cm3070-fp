@@ -29,7 +29,7 @@ class ERCFusion(ERCEmbeddings):
         :param embeddings: List of embeddings to be fused.
         :param config: Configuration object.
         """
-        super().__init__(config, *args, **kwargs)
+        super(ERCFusion, self).__init__(config=config, *args, **kwargs)
         assert embeddings is not None
         assert config is not None
 
@@ -67,15 +67,6 @@ class ERCConcatFusion(ERCFusion):
         super().__init__(embeddings=embeddings, config=config)
         self.concatenated_embedding_dims = sum([e.out_features for e in embeddings])
 
-    @property
-    def out_features(self) -> int:
-        """
-        Returns the number of output features of the fusion network, which is
-        the sum of the `out_features` of the underlying embeddings to be fused.
-
-        :return: Number of output features."""
-        return self.concatenated_embedding_dims
-
     def forward(self, *x: torch.Tensor) -> torch.Tensor:
         """
         Concatenates the input tensors along the feature dimension.
@@ -86,3 +77,10 @@ class ERCConcatFusion(ERCFusion):
         y = torch.concat(x, dim=1)
         y = l2_norm(y, p=2, dim=1)
         return y
+
+    @property
+    def out_features(self) -> int:
+        """
+        Returns the dimensionality of the vectors produced by the embedding fusion.
+        """
+        return self.concatenated_embedding_dims

@@ -5,9 +5,9 @@ from typing import List, Type
 # Third-Party Libraries
 import torch
 import torchtext
-from nltk import word_tokenize
 from torch.nn.functional import normalize as l2_norm
 from torch.nn.utils.rnn import pad_sequence
+from torchtext.data.utils import get_tokenizer
 
 # Local Folders
 from .erc_config import ERCConfig, ERCTextEmbeddingType
@@ -59,18 +59,10 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
 
         :param config: The configuration for the ERC model.
         """
-        super().__init__(config)
+        super().__init__(config=config)
         self.hidden_size = config.text_out_features
+        self.tokenizer = get_tokenizer("basic_english", language="en")
         self.glove = torchtext.vocab.GloVe(name="6B", dim=config.text_out_features)
-
-    @property
-    def out_features(self) -> int:
-        """
-        Returns the number of output features of the text embedding layer.
-
-        :return: The number of output features of the text embedding layer.
-        """
-        return self.hidden_size
 
     def forward(self, x: List[str]) -> torch.Tensor:
         """
@@ -79,10 +71,17 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         :param x: The input tensor of shape (batch_size,).
         :return: The output tensor of shape (batch_size, hidden_size).
         """
-        t = [word_tokenize(text) for text in x]
+        t = [self.tokenizer(text) for text in x]
         v = [[self.glove.get_vecs_by_tokens(t, lower_case_backup=True) for t in seq] for seq in t]
         v = [[vii for vii in vi if torch.any(vii != 0)] for vi in v]
         y = pad_sequence([torch.stack(seq) for seq in v], batch_first=True)
         y = torch.mean(y, dim=1)
         y = l2_norm(y, p=2, dim=1)
         return y
+
+    @property
+    def out_features(self) -> int:
+        """
+        Returns the dimensionality of the vectors produced by the embedding transformation.
+        """
+        return self.hidden_size

@@ -15,7 +15,7 @@ from hlm12erc.modelling.erc_emb_audio import (
 
 class TestERCRawAudioEmbeddings(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig(audio_in_features=325458, audio_out_features=256)
+        self.config = ERCConfig(audio_in_features=325458, audio_out_features=256, classifier_classes=["a", "b"])
         self.embeddings = ERCAudioEmbeddings.resolve_type_from(ERCAudioEmbeddingType.WAVEFORM)(self.config)
         self.audios = [
             wave.open("tests/fixtures/d-1038-seq-17.wav"),

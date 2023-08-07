@@ -18,6 +18,7 @@ class ERCConfigLoader:
 
         :param filepath: The path to the json file.
         """
+        assert isinstance(filepath, pathlib.Path)
         self.filepath = filepath
 
     def load(self) -> ERCConfig:

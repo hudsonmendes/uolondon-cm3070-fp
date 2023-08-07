@@ -68,8 +68,8 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
 
         :param config: configuration for the model
         """
-        super().__init__(config)
-        self.in_features = config.audio_in_features
+        super().__init__(config=config)
+        self.config = config
         self.ff = ERCFeedForward(
             in_features=config.audio_in_features,
             layers=[
@@ -78,17 +78,6 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
                 ERCConfigFeedForwardLayer(out_features=config.audio_out_features, dropout=0.1),
             ],
         )
-
-    @property
-    def out_features(self) -> int:
-        """
-        Returns the number of features that the audio embedding will return,
-        after the transformations that projec the original raw audio into
-        a fixed size vector.
-
-        :return: number of features
-        """
-        return self.ff.out_features
 
     def forward(self, x: List[Wave]) -> torch.Tensor:
         """
@@ -128,3 +117,10 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
                 vec = vec[: self.in_features]
             vecs.append(vec)
         return torch.stack(vecs)
+
+    @property
+    def out_features(self) -> int:
+        """
+        Returns the dimensionality of the vectors produced by the embedding transformation.
+        """
+        return self.config.audio_out_features

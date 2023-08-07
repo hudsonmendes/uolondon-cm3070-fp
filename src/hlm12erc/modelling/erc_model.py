@@ -24,6 +24,9 @@ class ERCModel(torch.nn.Module):
     Emotion Recognition in Converations (or "ERC")
     """
 
+    label_encoder: ERCLabelEncoder
+    config: ERCConfig
+
     def __init__(self, config: ERCConfig, label_encoder: ERCLabelEncoder) -> None:
         """
         Constructs the ERC model by initializing the different modules based on hyperparameter
@@ -34,6 +37,9 @@ class ERCModel(torch.nn.Module):
         :param classes: List of strings containing the different emotion classes
         """
         super().__init__()
+        # Hyperparameters
+        self.config = config
+        self.label_encoder = label_encoder
         # Embedding Modules
         self.text_embeddings = ERCTextEmbeddings.resolve_type_from(config.modules_text_encoder)(config)
         self.visual_embeddings = ERCVisualEmbeddings.resolve_type_from(config.modules_visual_encoder)(config)
