@@ -30,13 +30,11 @@ class TestERCConfig(unittest.TestCase):
                 ERCConfigFeedForwardLayer(out_features=512),
                 ERCConfigFeedForwardLayer(out_features=256),
             ],
-            feedforward_out_features=1024,
-            classifier_n_classes=7,
             classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
         )
         self.assertEqual(
             ERCConfigFormatter(config_with_ffl).represent(),
-            "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ff1024-ffl512+256-cce",
+            "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ffl512+256-cce",
         )
 
     def test_str_feedforward_out_features(self):
@@ -51,11 +49,9 @@ class TestERCConfig(unittest.TestCase):
             audio_in_features=325458,
             audio_out_features=512,
             feedforward_layers=None,
-            feedforward_out_features=2048,
-            classifier_n_classes=7,
             classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
         )
         self.assertEqual(
             ERCConfigFormatter(config_with_ff_out).represent(),
-            "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ff2048-ffldefault-cce",
+            "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ffldefault-cce",
         )
