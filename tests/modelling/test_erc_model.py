@@ -3,6 +3,7 @@ import unittest
 import wave
 
 # Third-Party Libraries
+import nltk
 import torch
 from PIL import Image
 
@@ -15,6 +16,7 @@ from hlm12erc.modelling.erc_output import ERCOutput
 
 class TestERCModel(unittest.TestCase):
     def setUp(self):
+        nltk.download("punkt")
         self.classes = ["neutral", "surprise", "fear", "sadness", "joy", "disgust", "anger"]
         self.config = ERCConfig(feedforward_layers=[ERCConfigFeedForwardLayer(out_features=7, dropout=0.5)])
         self.label_encoder = ERCLabelEncoder(classes=self.classes)
