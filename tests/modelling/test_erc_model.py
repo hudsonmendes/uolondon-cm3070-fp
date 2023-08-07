@@ -7,15 +7,18 @@ import torch
 from PIL import Image
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_config import ERCConfig
+from hlm12erc.modelling.erc_config import ERCConfig, ERCConfigFeedForwardLayer
+from hlm12erc.modelling.erc_label_encoder import ERCLabelEncoder
 from hlm12erc.modelling.erc_model import ERCModel
 from hlm12erc.modelling.erc_output import ERCOutput
 
 
 class TestERCModel(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig()
-        self.model = ERCModel(self.config)
+        self.classes = ["neutral", "surprise", "fear", "sadness", "joy", "disgust", "anger"]
+        self.config = ERCConfig(feedforward_layers=[ERCConfigFeedForwardLayer(out_features=7, dropout=0.5)])
+        self.label_encoder = ERCLabelEncoder(classes=self.classes)
+        self.model = ERCModel(self.config, label_encoder=self.label_encoder)
         self.y_true = torch.tensor([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]], dtype=torch.float32)
         self.x_text = ["that was a good one for a second there I was wow"]
         self.x_visual = [Image.open("tests/fixtures/d-1038-seq-17.png")]
@@ -26,15 +29,15 @@ class TestERCModel(unittest.TestCase):
 
     def test_forward_output_labels_shape(self):
         out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true)
-        self.assertEqual(out.labels.shape, (len(self.x_text), self.config.classifier_n_classes))
+        self.assertEqual(out.labels.shape, (len(self.x_text), len(self.classes)))
 
     def test_forward_output_logits_shape(self):
         out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true)
-        self.assertEqual(out.logits.shape, (len(self.x_text), self.config.classifier_n_classes))
+        self.assertEqual(out.logits.shape, (len(self.x_text), len(self.classes)))
 
     def test_forward_output_hidden_state_shape(self):
         out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true)
-        self.assertEqual(out.hidden_states.shape, (len(self.x_text), self.config.feedforward_out_features))
+        self.assertEqual(out.hidden_states.shape, (len(self.x_text), self.config.feedforward_layers[-1].out_features))
 
     def test_forward_output_type_dict(self):
         out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true, return_dict=True)
@@ -43,7 +46,7 @@ class TestERCModel(unittest.TestCase):
     def test_forward_output_type_tuple(self):
         out = self.model.forward(self.x_text, self.x_visual, self.x_audio, self.y_true, return_dict=False)
         self.assertIsInstance(out, tuple)
-        self.assertEqual(len(out), 4)
+        self.assertEqual(len(out), 5)
 
     def test_forward_and_backward(self):
         # Compute output and loss

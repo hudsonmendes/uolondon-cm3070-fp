@@ -60,10 +60,10 @@ class ERCConfig:
     modules_audio_encoder: str = ERCAudioEmbeddingType.WAVEFORM
     modules_fusion: str = ERCFusionTechnique.CONCATENATION
 
-    text_in_features: int = 300
-    text_out_features: int = 300
+    text_in_features: int = 50  # 300 is the largest model
+    text_out_features: int = 50  # must match in_features for GloVe
 
-    audio_in_features: int = 300_000
+    audio_in_features: int = 100_000  # 300_000 fits the all audio files
     audio_out_features: int = 512
 
     visual_in_features: int = -1  # defined by resnet50
