@@ -41,6 +41,9 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --junit-xml=./target/test-results.xml
+      env:
+        KAGGLE_USERNAME: hudsonmendes
+        KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
 
     - name: Report pytest restults
       if: always()
