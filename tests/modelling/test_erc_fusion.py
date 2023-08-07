@@ -12,7 +12,7 @@ from hlm12erc.modelling.erc_fusion import ERCConfig, ERCFusion, ERCFusionTechniq
 
 class TestERCStackedFusion(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig()
+        self.config = ERCConfig(classifier_classes=["a", "b"])
         self.embedding_dims = [100, 200, 300]
         self.embeddings = [unittest.mock.create_autospec(ERCEmbeddings, out_features=f) for f in self.embedding_dims]
         self.fusion = ERCFusion.resolve_type_from(ERCFusionTechnique.CONCATENATION)(

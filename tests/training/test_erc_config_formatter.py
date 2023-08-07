@@ -31,6 +31,7 @@ class TestERCConfig(unittest.TestCase):
                 ERCConfigFeedForwardLayer(out_features=256),
             ],
             classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
+            classifier_classes=["anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"],
         )
         self.assertEqual(
             ERCConfigFormatter(config_with_ffl).represent(),
@@ -50,6 +51,7 @@ class TestERCConfig(unittest.TestCase):
             audio_out_features=512,
             feedforward_layers=None,
             classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
+            classifier_classes=["anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"],
         )
         self.assertEqual(
             ERCConfigFormatter(config_with_ff_out).represent(),

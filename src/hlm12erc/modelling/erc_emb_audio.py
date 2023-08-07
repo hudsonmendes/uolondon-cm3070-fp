@@ -70,6 +70,7 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         """
         super().__init__(config=config)
         self.config = config
+        self.in_features = config.audio_in_features
         self.ff = ERCFeedForward(
             in_features=config.audio_in_features,
             layers=[

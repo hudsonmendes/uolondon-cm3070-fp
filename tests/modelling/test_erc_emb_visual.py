@@ -15,7 +15,7 @@ from hlm12erc.modelling.erc_emb_visual import (
 
 class TestERCResNet50VisualEmbeddings(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig()
+        self.config = ERCConfig(classifier_classes=["a", "b"])
         self.embeddings = ERCVisualEmbeddings.resolve_type_from(ERCVisualEmbeddingType.RESNET50)(self.config)
         self.images = [Image.open("tests/fixtures/d-1038-seq-17.png")]
 

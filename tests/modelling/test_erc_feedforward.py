@@ -12,12 +12,13 @@ from hlm12erc.modelling.erc_feedforward import ERCFeedForward
 class TestERCFeedForwardModel(unittest.TestCase):
     def setUp(self):
         self.config = ERCConfig(
+            classifier_classes=["a", "b"],
             feedforward_layers=[
                 ERCConfigFeedForwardLayer(out_features=32, dropout=0.2),
                 ERCConfigFeedForwardLayer(out_features=16, dropout=0.2),
                 ERCConfigFeedForwardLayer(out_features=8, dropout=0.1),
                 ERCConfigFeedForwardLayer(out_features=4),
-            ]
+            ],
         )
         self.model = ERCFeedForward(
             in_features=64,
