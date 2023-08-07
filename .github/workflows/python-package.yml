@@ -30,4 +30,12 @@ jobs:
         python -m pip install -e '.[all]'
     - name: Test with pytest
       run: |
-        pytest
+        pytest --junit-xml=./target/test-results.xml
+    - name: Report pytest restults
+      if: always()
+      uses: pmeier/pytest-results-action@main
+      with:
+        path: ./target/test-results.xml
+        summary: true
+        display-options: fEX
+        fail-on-empty: true
