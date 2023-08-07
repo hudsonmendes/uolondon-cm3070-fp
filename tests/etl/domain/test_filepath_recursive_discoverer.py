@@ -3,14 +3,15 @@ import pathlib
 import shutil
 import unittest
 
-# My Packages and Modules
-from hlm12erc.etl.domain.filepath_recursive_discoverer import (
-    FilepathRecursiveDiscoverer,
-)
-
 
 class TestFilepathRecursiveDiscoverer(unittest.TestCase):
     def setUp(self):
+        # local import to avoid etl dependencies becoming global requirements
+        # My Packages and Modules
+        from hlm12erc.etl.domain.filepath_recursive_discoverer import (
+            FilepathRecursiveDiscoverer,
+        )
+
         self.root = pathlib.Path("/tmp/hlm12erc/tests/test_data/")
         self.discoverer = FilepathRecursiveDiscoverer(self.root)
         (self.root / "subdir1").mkdir(parents=True, exist_ok=True)

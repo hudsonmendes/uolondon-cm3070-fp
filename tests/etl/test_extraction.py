@@ -4,12 +4,13 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-# My Packages and Modules
-from hlm12erc.etl import KaggleDataExtractor, KaggleDataset
-
 
 class TestKaggleDataExtractor(unittest.TestCase):
     def setUp(self):
+        # local import to avoid etl dependencies becoming global requirements
+        # My Packages and Modules
+        from hlm12erc.etl import KaggleDataExtractor, KaggleDataset
+
         self.temp_dir = tempfile.TemporaryDirectory()
         self.dataset = KaggleDataset("hlm12erc", "hlm12erc")
         self.extractor = KaggleDataExtractor(dataset=self.dataset, workspace=pathlib.Path(self.temp_dir.name))

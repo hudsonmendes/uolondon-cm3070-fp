@@ -7,12 +7,13 @@ from unittest.mock import patch
 # Third-Party Libraries
 import pandas as pd
 
-# My Packages and Modules
-from hlm12erc.etl import RawTo1NFTransformer
-
 
 class TestRawTo1NFTransformer(unittest.TestCase):
     def setUp(self):
+        # local import to avoid etl dependencies becoming global requirements
+        # My Packages and Modules
+        from hlm12erc.etl import RawTo1NFTransformer
+
         self.src = pathlib.Path("/tmp/hlm12erc/tests/test_data/")
         self.src.mkdir(parents=True, exist_ok=True)
         (self.src / "train_sent_emo.csv").touch()

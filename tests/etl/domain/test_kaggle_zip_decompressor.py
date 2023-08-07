@@ -5,12 +5,13 @@ import shutil
 import unittest
 import zipfile
 
-# My Packages and Modules
-from hlm12erc.etl.domain.kaggle_zip_decompressor import KaggleZipDecompressor
-
 
 class TestKaggleZipDecompressor(unittest.TestCase):
     def setUp(self):
+        # local import to avoid etl dependencies becoming global requirements
+        # My Packages and Modules
+        from hlm12erc.etl.domain.kaggle_zip_decompressor import KaggleZipDecompressor
+
         self.src_path = pathlib.Path("/tmp/hlm12erc/tests/test_data/")
         self.dest_path = pathlib.Path("/tmp/hlm12erc/tests/test_output/")
         self.zipfile_path = self.src_path / "test_dataset.zip"

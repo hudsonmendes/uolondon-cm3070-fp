@@ -3,15 +3,16 @@ import pathlib
 import unittest
 from unittest.mock import patch
 
-# My Packages and Modules
-from hlm12erc.etl.domain.kaggle_dataset_downloader import (
-    KaggleDataset,
-    KaggleDatasetDownloader,
-)
-
 
 class TestKaggleDatasetDownloader(unittest.TestCase):
     def setUp(self):
+        # local import to avoid etl dependencies becoming global requirements
+        # My Packages and Modules
+        from hlm12erc.etl.domain.kaggle_dataset_downloader import (
+            KaggleDataset,
+            KaggleDatasetDownloader,
+        )
+
         self.dataset = KaggleDataset("hlm12erc", "kaggle-dataset-downloader")
         self.downloader = KaggleDatasetDownloader(self.dataset)
 

@@ -4,12 +4,13 @@ import shutil
 import unittest
 from unittest.mock import patch
 
-# My Packages and Modules
-from hlm12erc.etl.loading import NormalisedDatasetLoader
-
 
 class TestNormalisedDatasetLoader(unittest.TestCase):
     def setUp(self):
+        # local import to avoid etl dependencies becoming global requirements
+        # My Packages and Modules
+        from hlm12erc.etl.loading import NormalisedDatasetLoader
+
         self.src = pathlib.Path("/tmp/hlm12erc/tests/test_data/")
         self.src.mkdir(parents=True, exist_ok=True)
         (self.src / "file1.csv").touch()
