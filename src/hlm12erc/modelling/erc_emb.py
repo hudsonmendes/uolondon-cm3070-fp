@@ -1,5 +1,5 @@
 # Python Built-in Modules
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractproperty
 
 # Third-Party Libraries
 import torch
