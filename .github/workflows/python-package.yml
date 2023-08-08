@@ -4,8 +4,6 @@
 name: hlm12erc, build & test
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
