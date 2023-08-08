@@ -11,6 +11,12 @@
   "python.formatting.provider": "black",
   "python.formatting.blackArgs": ["--line-length", "120"],
   "python.linting.banditEnabled": true,
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "jupyter.debugJustMyCode": false,
   "editor.rulers": [80, 120],
   "files.exclude": {
     "venv": true,
@@ -18,10 +24,5 @@
     ".pytest_cache": true,
     ".vector_cache": true,
   },
-  "python.testing.pytestArgs": [
-    "tests"
-  ],
-  "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true,
   "git.ignoreLimitWarning": true,
 }
