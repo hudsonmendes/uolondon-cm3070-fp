@@ -1,6 +1,6 @@
 # Python Built-in Modules
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class ERCTextEmbeddingType:
@@ -70,6 +70,9 @@ class ERCConfig:
     visual_out_features: int = -1  # defined by resnet50
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self.__dict__
 
 
 @dataclass(frozen=True)
