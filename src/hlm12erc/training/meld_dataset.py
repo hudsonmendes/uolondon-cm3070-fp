@@ -50,8 +50,8 @@ class MeldDataset(Dataset):
         already carries the visual features (PIL.Image) and audio features
         (wave.Wave)
 
-        :param index: The index of the sample to be returned
-        :return: A `MeldRecord` object containing the sample
+        :param index: The index of the sample to be returned, integer or slice
+        :return: A `MeldRecord` instance or batch, containing the sample(s)
         """
         if isinstance(index, slice):
             batch = [self._get_single_item_at(i) for i in range(index.start, index.stop, index.step or 1)]
@@ -63,6 +63,9 @@ class MeldDataset(Dataset):
     def _get_single_item_at(self, i: int):
         """
         Returns a single MELD Entry from position `i` in the dataset.
+
+        :param i: The index of the sample to be returned
+        :return: A `MeldRecord` object containing the sample
         """
         if i < len(self.df):
             row = self.df.iloc[i]
