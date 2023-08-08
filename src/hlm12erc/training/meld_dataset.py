@@ -1,7 +1,7 @@
 # Python Built-in Modules
 import pathlib
 import wave
-from typing import List
+from typing import List, Union
 
 # Third-Party Libraries
 import pandas as pd
@@ -43,7 +43,7 @@ class MeldDataset(Dataset):
         """
         return len(self.df)
 
-    def __getitem__(self, index) -> MeldRecord:
+    def __getitem__(self, index) -> Union[MeldRecord, List[MeldRecord]]:
         """
         Returns a single sample from the dataset, based on the index provided.
         The sample is returned in the form of a `MeldRecord` object, that
@@ -53,21 +53,35 @@ class MeldDataset(Dataset):
         :param index: The index of the sample to be returned
         :return: A `MeldRecord` object containing the sample
         """
-        row = self.df.iloc[index]
-        dialogue = row["dialogue"]
-        sequence = row["sequence"]
-        previous_dialogue = self._extract_previous_dialogue(
-            dialogue=dialogue,
-            before=sequence,
-        )
-        return MeldRecord(
-            speaker=row.speaker,
-            visual=Image.open(str(self.filedir / row.x_visual)),
-            audio=wave.open(str(self.filedir / row.x_audio)),
-            previous_dialogue=previous_dialogue,
-            utterance=row.x_text,
-            label=row.label,
-        )
+        if isinstance(index, slice):
+            batch = [self._get_single_item_at(i) for i in range(index.start, index.stop, index.step or 1)]
+            batch = [item for item in batch if item]
+            return batch
+        else:
+            return self._get_single_item_at(index)
+
+    def _get_single_item_at(self, i: int):
+        """
+        Returns a single MELD Entry from position `i` in the dataset.
+        """
+        if i < len(self.df):
+            row = self.df.iloc[i]
+            dialogue = row["dialogue"]
+            sequence = row["sequence"]
+            previous_dialogue = self._extract_previous_dialogue(
+                dialogue=dialogue,
+                before=sequence,
+            )
+            return MeldRecord(
+                speaker=row.speaker,
+                visual=Image.open(str(self.filedir / row.x_visual)),
+                audio=wave.open(str(self.filedir / row.x_audio)),
+                previous_dialogue=previous_dialogue,
+                utterance=row.x_text,
+                label=row.label,
+            )
+        else:
+            return None
 
     @property
     def classes(self) -> List[str]:
