@@ -28,6 +28,7 @@ class ERCConfigFormatter:
         return "-".join(
             [
                 "hlm12erc",
+                self.config.classifier_name.lower(),
                 self.config.modules_text_encoder.lower(),
                 self.config.modules_visual_encoder.lower(),
                 self.config.modules_audio_encoder.lower(),

@@ -1,3 +1,11 @@
+classifier_name: sample
+classifier_loss_fn: cce
+classifier_classes:
+  - fear
+  - neutral
+  - sadness
+  - surprise
+
 modules_text_encoder: glove
 modules_visual_encoder: resnet50
 modules_audio_encoder: waveform
@@ -17,10 +25,3 @@ feedforward_layers:
     dropout: 0.2
   - out_features: 32
     dropout: 0
-
-classifier_loss_fn: cce
-classifier_classes:
-  - fear
-  - neutral
-  - sadness
-  - surprise

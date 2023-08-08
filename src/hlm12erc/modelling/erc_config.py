@@ -53,6 +53,7 @@ class ERCConfig:
     """
 
     classifier_classes: List[str]
+    classifier_name: str = "untagged"
     classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
 
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
