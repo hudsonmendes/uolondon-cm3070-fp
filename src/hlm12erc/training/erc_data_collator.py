@@ -42,12 +42,10 @@ class ERCDataCollator:
         :param record: The list of records to collate
         :return: The collated data
         """
-        x_text = [r.to_dialogue_prompt() for r in batch]
+        x_text = [r.text for r in batch]
         x_visual = self._visual_to_stacked_tensor([r.visual for r in batch])
         x_audio = self._audio_to_stacked_tensor([r.audio for r in batch])
         y_label = self.label_encoder([r.label for r in batch])
-        assert x_visual.shape == (len(batch), *self.config.visual_in_features)
-        assert x_audio.shape == (len(batch), self.config.audio_in_features)
         return {
             "x_text": x_text,
             "x_visual": x_visual,
