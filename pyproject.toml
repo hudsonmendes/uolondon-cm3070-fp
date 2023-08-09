@@ -48,6 +48,10 @@ training = [
     "transformers[torch]>=4.30.2",
     "wandb>=0.15.8",
 ]
+google_colab = [
+    "cloud-tpu-client==0.10",
+    "torch-xla @ https://storage.googleapis.com/tpu-pytorch/wheels/colab/torch_xla-2.0-cp310-cp310-linux_x86_64.whl",
+]
 serving = ["fire>=0.5.0"]
 
 [tool.black]

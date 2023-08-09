@@ -53,6 +53,7 @@ class ERCTrainer:
         n_epochs: int,
         batch_size: int,
         save_to: pathlib.Path,
+        tpu: bool = False,
     ) -> Tuple[str, ERCModel]:
         """
         Train the model using the given training and validation datasets.
@@ -70,12 +71,16 @@ class ERCTrainer:
         logger.info(f"Training with config {'passed to trainer' if self.config else 'default'}")
         label_encoder = ERCLabelEncoder(classes=config.classifier_classes)
         logger.info(f"Label Encoder loaded with classes: {', '.join(label_encoder.classes)}")
-        model = ERCModel(config=config, label_encoder=label_encoder)
         model_name = ERCConfigFormatter(config).represent()
-        logger.info(f"Model created for training, with identifier {model_name}")
+        logger.info(f"Model identifier {model_name}")
+        model = ERCModel(config=config, label_encoder=label_encoder)
+        logger.info(f"Model setup for device {model.device}")
+        if tpu:
+            self._setup_tpu_if_available(model)
+            logger.info(f"TPU Enabled, model device forced to {model.device}")
         workspace = save_to / model_name
         logger.info(f"Training workspace set to: {workspace}")
-        training_args = self._create_training_args(n_epochs, batch_size, model_name, workspace)
+        training_args = self._create_training_args(n_epochs, batch_size, model_name, workspace, tpu)
         logger.info(f"TrainingArgs created with {n_epochs} epochs and batch size {batch_size}")
         trainer = self._create_trainer(train_dataset, eval_dataset, model, training_args, label_encoder)
         logger.info(f"Trainer instantiated with samples train={len(train_dataset)}, valid={len(eval_dataset)}")
@@ -86,12 +91,25 @@ class ERCTrainer:
         logger.info("Model saved, thanks for waiting!")
         return model_name, model
 
+    def _setup_tpu_if_available(self, model):
+        """
+        For training with TPUs (on Google Collab)
+        Requires dependencies installed with the `.[google_colab]` distro.
+
+        :param model: ERCModel object containing the model to train.
+        """
+        import torch_xla.core.xla_model as xm
+
+        device = xm.xla_device()
+        model.to(device)
+
     def _create_training_args(
         self,
         n_epochs: int,
         batch_size: int,
         model_name: str,
         workspace: pathlib.Path,
+        tpu: bool,
     ) -> transformers.TrainingArguments:
         """
         Create the training arguments for the transformers.Trainer class.
@@ -99,10 +117,12 @@ class ERCTrainer:
         :param n_epochs: Number of epochs to train the model for.
         :param batch_size: Batch size to use for training.
         :param model_name: A representative model name that distiguishes its architecture.
-        :param workspace: Path to the workspace to store the model and logs.
+        :param workspace: Path to the workspace to store the model and logs.\
+        :param tpu: Whether to use TPUs for training.
         :return: transformers.TrainingArguments object containing the training
         """
         return transformers.TrainingArguments(
+            tpu_num_cores=8 if tpu else None,
             run_name=f"run-{int(time.time())}-model-{model_name}",
             label_names=[ERCDataCollator.LABEL_NAME],
             do_train=True,
