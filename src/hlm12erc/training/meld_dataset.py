@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 # Local Folders
 from .meld_preprocessor_audio import MeldAudioPreprocessor
 from .meld_preprocessor_text import MeldTextPreprocessor
-from .meld_preprocessor_video import MeldVideoPreprocessor
+from .meld_preprocessor_visual import MeldVisualPreprocessor
 from .meld_record import MeldRecord
 
 
@@ -37,7 +37,7 @@ class MeldDataset(Dataset):
         self.filedir = filepath.parent
         self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
         self.preprocessor_text = MeldTextPreprocessor(df=self.df)
-        self.preprocessor_visual = MeldVideoPreprocessor()
+        self.preprocessor_visual = MeldVisualPreprocessor()
         self.preprocessor_audio = MeldAudioPreprocessor()
 
     def __len__(self) -> int:

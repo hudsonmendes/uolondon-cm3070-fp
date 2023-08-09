@@ -4,7 +4,7 @@ import torchvision
 from PIL.Image import Image
 
 
-class MeldVideoPreprocessor:
+class MeldVisualPreprocessor:
     """
     Preprocessor calss for the visual (image stack) files, turning them into
     tensors, for better compatibility with TPU training without affecting
