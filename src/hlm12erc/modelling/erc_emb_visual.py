@@ -1,11 +1,8 @@
 # Python Built-in Modules
 from abc import abstractmethod
-from typing import List
 
 # Third-Party Libraries
 import torch
-import torchvision
-from PIL.Image import Image
 from torch.nn.functional import normalize as l2_norm
 
 # Local Folders
@@ -23,10 +20,13 @@ class ERCVisualEmbeddings(ERCEmbeddings):
     """
 
     @abstractmethod
-    def forward(self, x: List[str]) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         When implemented, this method should receive a list of images and
         return a matrix of tensors (batch_size, out_features).
+
+        :param x: stacked vectors representing images
+        :return: matrix of tensors (batch_size, out_features)
         """
         raise NotImplementedError("The method 'forward' must be implemented.")
 
@@ -69,27 +69,18 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         :param config: The configuration for the ERC model.
         """
         super().__init__(config=config)
-        self.preprocessor = torchvision.transforms.Compose(
-            [
-                torchvision.transforms.Resize(256),
-                torchvision.transforms.Lambda(lambda x: torchvision.transforms.functional.crop(x, 0, 0, 256, 721)),
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize(mean=[0.2706, 0.2010, 0.1914], std=[0.1857, 0.1608, 0.1667]),
-            ]
-        )
         self.resnet50 = torch.hub.load("pytorch/vision:v0.6.0", "resnet50", pretrained=True)
         self.resnet50.eval()
         self.resnet50.fc = torch.nn.Identity()
 
-    def forward(self, x: List[Image]) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Performs a forward pass through the ResNet50 visual embedding layer.
 
-        :param x: The input tensor.
-        :return: The output tensor with the restnet50 embedded representation.
+        :param x: stacked vectors representing images
+        :return: matrix of tensors (batch_size, out_features)
         """
-        y = torch.stack([self.preprocessor(xi) for xi in x], dim=0)
-        y = self.resnet50(y)
+        y = self.resnet50(x)
         y = l2_norm(y, p=2, dim=1)
         return y
 

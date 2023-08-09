@@ -1,7 +1,6 @@
 # Python Built-in Modules
 from abc import abstractmethod
-from typing import List, Type
-from wave import Wave_read as Wave
+from typing import Type
 
 # Third-Party Libraries
 import torch
@@ -25,12 +24,12 @@ class ERCAudioEmbeddings(ERCEmbeddings):
     """
 
     @abstractmethod
-    def forward(self, x: List[Wave]) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         When implemented, this method should receive a list of audio files and
         return a matrix of tensors (batch_size, out_features).
 
-        :param x: list of audio files
+        :param x: stacked vectors representing audio waveforms
         :return: matrix of tensors (batch_size, out_features)
         """
         raise NotImplementedError("The method 'forward' must be implemented.")
@@ -80,44 +79,17 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
             ],
         )
 
-    def forward(self, x: List[Wave]) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Create a representation based on the fixed size linear projection of the
         input tensor that represents the raw audio.
 
-        :param x: the list of audio files that will be represented
+        :param x: stacked vectors representing audio waveforms
         :return: matrix of tensors (batch_size, out_features)
         """
-        y = self._preprocess(x)
-        y = self.ff(y)
+        y = self.ff(x)
         y = l2_norm(y, p=2, dim=1)
         return y
-
-    def _preprocess(self, x: List[Wave]) -> torch.Tensor:
-        """
-        Pre-processes the batch of audio files into a single
-        matrix containing the stacked batch of audio tensors.
-
-        :param x: the list of audio files that will be represented
-        :return: matrix of tensors (batch_size, len(samples))
-        """
-        vecs: List[torch.Tensor] = []
-        dtype_map = {1: torch.int8, 2: torch.int16, 4: torch.int32}
-        for wave_file in x:
-            data = wave_file.readframes(wave_file.getnframes())
-            dtype = dtype_map[wave_file.getsampwidth()]
-            samples = torch.frombuffer(data, dtype=dtype).float()
-            samples = samples.reshape(-1, wave_file.getnchannels())
-            vec = samples.flatten()
-            vec_len = vec.shape[0]
-            if vec_len < self.in_features:
-                padding_len = self.in_features - vec_len
-                padding = torch.zeros(padding_len)
-                vec = torch.cat([vec, padding])
-            elif vec_len > self.in_features:
-                vec = vec[: self.in_features]
-            vecs.append(vec)
-        return torch.stack(vecs)
 
     @property
     def out_features(self) -> int:

@@ -67,8 +67,8 @@ class ERCConfig:
     audio_in_features: int = 100_000  # 300_000 fits the all audio files
     audio_out_features: int = 512
 
-    visual_in_features: int = -1  # defined by resnet50
-    visual_out_features: int = -1  # defined by resnet50
+    visual_in_features: int = 546816  # defined by resnet50
+    visual_out_features: int = -1  # defined by resnet50, get it from the embedding class
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
 
