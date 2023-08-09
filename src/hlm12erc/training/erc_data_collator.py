@@ -33,7 +33,7 @@ class ERCDataCollator:
         self.config = config
         self.label_encoder = label_encoder
 
-    def __call__(self, record: List[MeldRecord]) -> dict:
+    def __call__(self, batch: List[MeldRecord]) -> dict:
         """
         Collates the data from the ERC dataset into a format that can be used and
         batched by the model, with multiple records turned into lists of its underlying
@@ -42,12 +42,12 @@ class ERCDataCollator:
         :param record: The list of records to collate
         :return: The collated data
         """
-        x_text = [r.to_dialogue_prompt() for r in record]
-        x_visual = self._visual_to_stacked_tensor(record)
-        x_audio = self._audio_to_stacked_tensor(record)
-        y_label = self.label_encoder([r.label for r in record])
-        assert x_visual.shape == (len(record), self.config.visual_in_features)
-        assert x_audio.shape == (len(record), self.config.audio_in_features)
+        x_text = [r.to_dialogue_prompt() for r in batch]
+        x_visual = self._visual_to_stacked_tensor([r.visual for r in batch])
+        x_audio = self._audio_to_stacked_tensor([r.audio for r in batch])
+        y_label = self.label_encoder([r.label for r in batch])
+        assert x_visual.shape == (len(batch), *self.config.visual_in_features)
+        assert x_audio.shape == (len(batch), self.config.audio_in_features)
         return {
             "x_text": x_text,
             "x_visual": x_visual,
@@ -55,36 +55,33 @@ class ERCDataCollator:
             ERCDataCollator.LABEL_NAME: y_label,
         }
 
-    def _visual_to_stacked_tensor(self, record):
+    def _visual_to_stacked_tensor(self, videos: List[torch.Tensor]) -> torch.Tensor:
         """
         Stack together tensors representing feature vectors of images.
 
-        :param record: The list of records to collate
-        :return: The collated visual data as a tensor of shape (batch_size, visual_in_features)
+        :param record: The list of individual tensors for visual data
+        :return: The collated visual data as a tensor of shape (batch_size, *visual_in_features)
         """
-        return torch.stack([r.visual for r in record], dim=0)
+        return torch.stack(videos, dim=0)
 
-    def _audio_to_stacked_tensor(self, record) -> torch.Tensor:
+    def _audio_to_stacked_tensor(self, audios: List[torch.from_numpy]) -> torch.Tensor:
         """
         Stack together tensors of different sizes by truncating or padding them
         to the `target_size`.
 
-        :param record: The list of records to collate
+        :param record: The list of individual tensors for audio data
         :return: The collated audio data as a tensor of shape (batch_size, audio_in_features)
         """
 
-        def truncate_or_pad(tensor: torch.Tensor, target_size: int) -> torch.Tensor:
-            # If the tensor is larger than the target size, truncate it
-            if tensor.size(0) > target_size:
-                return tensor[:target_size]
-            # If the tensor is smaller, pad it
-            elif tensor.size(0) < target_size:
-                padding_size = target_size - tensor.size(0)
-                padding = torch.zeros(padding_size, *tensor.size()[1:], dtype=tensor.dtype)
-                return torch.cat([tensor, padding], dim=0)
+        def truncate_or_pad(vec: torch.Tensor, target_size: int) -> torch.Tensor:
+            if vec.size(0) > target_size:
+                return vec[:target_size]
+            elif vec.size(0) < target_size:
+                padding_size = target_size - vec.size(0)
+                padding = torch.zeros(padding_size, *vec.size()[1:], dtype=vec.dtype)
+                return torch.cat([vec, padding], dim=0)
             else:
-                return tensor
+                return vec
 
-        vecs = [torch.rand(10, 5), torch.rand(12, 5), torch.rand(8, 5)]
-        vecs = [truncate_or_pad(tensor, target_size=self.config.audio_in_features) for tensor in vecs]
+        vecs = [truncate_or_pad(audio, target_size=self.config.audio_in_features) for audio in audios]
         return torch.stack(vecs, dim=0)

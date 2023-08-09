@@ -81,7 +81,6 @@ class MeldDataset(Dataset):
                 wave.open(str(self.filedir / row.x_audio)) as audio_file,
             ):
                 return MeldRecord(
-                    speaker=row.speaker,
                     text=self.preprocessor_text(row),
                     visual=self.preprocessor_visual(image_file),
                     audio=self.preprocessor_audio(audio_file),
