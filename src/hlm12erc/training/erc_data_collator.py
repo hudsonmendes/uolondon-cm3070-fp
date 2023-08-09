@@ -1,5 +1,5 @@
 # Python Built-in Modules
-from typing import List
+from typing import List, Optional
 
 # Third-Party Libraries
 import torch
@@ -75,8 +75,7 @@ class ERCDataCollator:
             if vec.size(0) > target_size:
                 return vec[:target_size]
             elif vec.size(0) < target_size:
-                padding_size = target_size - vec.size(0)
-                padding = torch.zeros(padding_size, *vec.size()[1:], dtype=vec.dtype)
+                padding = torch.zeros(target_size - vec.size(0), *vec.size()[1:], dtype=vec.dtype)
                 return torch.cat([vec, padding], dim=0)
             else:
                 return vec

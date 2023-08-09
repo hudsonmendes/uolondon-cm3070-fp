@@ -1,10 +1,11 @@
 # Python Built-in Modules
 import pathlib
 import wave
-from typing import List, Union
+from typing import List, Optional, Union
 
 # Third-Party Libraries
 import pandas as pd
+import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
@@ -27,7 +28,14 @@ class MeldDataset(Dataset):
         >>> record = dataset[0]
     """
 
-    def __init__(self, filepath: pathlib.Path):
+    filepath: pathlib.Path
+    filedir: pathlib.Path
+    df: pd.DataFrame
+    preprocessor_text: MeldTextPreprocessor
+    preprocessor_visual: MeldVisualPreprocessor
+    preprocessor_audio: MeldAudioPreprocessor
+
+    def __init__(self, filepath: pathlib.Path, device: Optional[torch.device] = None):
         """
         Creates a new instance of the MeldDataset for a split
 
@@ -37,8 +45,8 @@ class MeldDataset(Dataset):
         self.filedir = filepath.parent
         self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
         self.preprocessor_text = MeldTextPreprocessor(df=self.df)
-        self.preprocessor_visual = MeldVisualPreprocessor()
-        self.preprocessor_audio = MeldAudioPreprocessor()
+        self.preprocessor_visual = MeldVisualPreprocessor(device=device)
+        self.preprocessor_audio = MeldAudioPreprocessor(device=device)
 
     def __len__(self) -> int:
         """
@@ -80,12 +88,10 @@ class MeldDataset(Dataset):
                 Image.open(str(self.filedir / row.x_visual)) as image_file,
                 wave.open(str(self.filedir / row.x_audio)) as audio_file,
             ):
-                return MeldRecord(
-                    text=self.preprocessor_text(row),
-                    visual=self.preprocessor_visual(image_file),
-                    audio=self.preprocessor_audio(audio_file),
-                    label=row.label,
-                )
+                text = self.preprocessor_text(row)
+                visual = self.preprocessor_visual(image_file)
+                audio = self.preprocessor_audio(audio_file)
+                return MeldRecord(text=text, visual=visual, audio=audio, label=row.label)
         else:
             return None
 

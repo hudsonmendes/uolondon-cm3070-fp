@@ -1,5 +1,6 @@
 # Python Built-in Modules
 import wave
+from typing import Optional
 
 # Third-Party Libraries
 import torch
@@ -12,11 +13,12 @@ class MeldAudioPreprocessor:
     CPU-based training.
     """
 
-    def __init__(self):
+    def __init__(self, device: Optional[torch.device] = None):
         """
         Creates a new instance of the MeldAudioPreprocessor class with the
         the `dtype_map` instantiated
         """
+        self.device = device
         self.dtype_map = {
             1: torch.int8,
             2: torch.int16,
@@ -32,6 +34,9 @@ class MeldAudioPreprocessor:
         """
         data = x.readframes(x.getnframes())
         dtype = self.dtype_map[x.getsampwidth()]
-        samples = torch.frombuffer(data, dtype=dtype).float()
-        samples = samples.reshape(-1, x.getnchannels())
-        return samples.flatten()
+        y = torch.frombuffer(data, dtype=dtype).float()
+        y = y.reshape(-1, x.getnchannels())
+        y = y.flatten()
+        if self.device is not None:
+            y = y.to(self.device)
+        return y

@@ -1,3 +1,6 @@
+# Python Built-in Modules
+from typing import Optional
+
 # Third-Party Libraries
 import torch
 import torchvision
@@ -13,11 +16,12 @@ class MeldVisualPreprocessor:
 
     image_preprocessor: torchvision.transforms.Compose
 
-    def __init__(self) -> None:
+    def __init__(self, device: Optional[torch.device] = None) -> None:
         """
         Creates a new instance of the MeldVideoPreprocessor class with the
         default image preprocessor (using torchvision.transforms)
         """
+        self.device = device
         self.image_preprocessor = torchvision.transforms.Compose(
             [
                 torchvision.transforms.Resize(256),
@@ -34,4 +38,7 @@ class MeldVisualPreprocessor:
         :param x: The image to be preprocessed
         :return: The preprocessed image
         """
-        return self.image_preprocessor(x)
+        tensor = self.image_preprocessor(x)
+        if self.device is not None:
+            tensor = tensor.to(self.device)
+        return tensor

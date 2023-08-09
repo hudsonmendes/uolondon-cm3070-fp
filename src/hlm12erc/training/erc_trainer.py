@@ -62,6 +62,7 @@ class ERCTrainer:
         :param n_epochs: Number of epochs to train the model for.
         :param batch_size: Batch size to use for training.
         :param save_to: Path to the directory to save the model and logs to.
+        :param tpu: Flags whether to use a TPU or not to train the model.
         :return: The name of the model and the ERCModel object containing the best trained model.
         """
         logger.info("Training the model...")
@@ -74,43 +75,22 @@ class ERCTrainer:
         model_name = ERCConfigFormatter(config).represent()
         logger.info(f"Model identifier {model_name}")
         model = ERCModel(config=config, label_encoder=label_encoder)
-        logger.info(f"Model setup for device {model.device}")
-        if tpu:
-            self._setup_tpu_if_available(model)
-            logger.info(f"TPU Enabled, model device forced to {model.device}")
+        logger.info(f"Model created, src_device={model.device}, dest_device={'TPU' if tpu else 'CPU'}")
         workspace = save_to / model_name
         logger.info(f"Training workspace set to: {workspace}")
         training_args = self._create_training_args(n_epochs, batch_size, model_name, workspace, tpu)
         logger.info(f"TrainingArgs created with {n_epochs} epochs and batch size {batch_size}")
-        trainer = self._create_trainer(train_dataset, eval_dataset, model, training_args, label_encoder)
-        logger.info(f"Trainer instantiated with samples train={len(train_dataset)}, valid={len(eval_dataset)}")
-        logger.info("Training starting, don't wait standing up...")
+        trainer = self._create_trainer(train_dataset, eval_dataset, model, training_args, label_encoder, config)
+        logger.info(f"Trainer, train={len(train_dataset)}, valid={len(eval_dataset)}, device={model.device}")
+        logger.info("Training starting now, don't wait standing up...")
         trainer.train()
         logger.info("Training complete, saving model...")
         ERCPath(workspace).save(model=model, ta=training_args)
         logger.info("Model saved, thanks for waiting!")
         return model_name, model
 
-    def _setup_tpu_if_available(self, model):
-        """
-        For training with TPUs (on Google Collab)
-        Requires dependencies installed with the `.[google_colab]` distro.
-
-        :param model: ERCModel object containing the model to train.
-        """
-        # Third-Party Libraries
-        import torch_xla.core.xla_model as xm
-
-        device = xm.xla_device()
-        model.to(device)
-
     def _create_training_args(
-        self,
-        n_epochs: int,
-        batch_size: int,
-        model_name: str,
-        workspace: pathlib.Path,
-        tpu: bool,
+        self, n_epochs: int, batch_size: int, model_name: str, workspace: pathlib.Path, tpu: bool
     ) -> transformers.TrainingArguments:
         """
         Create the training arguments for the transformers.Trainer class.
@@ -119,7 +99,7 @@ class ERCTrainer:
         :param batch_size: Batch size to use for training.
         :param model_name: A representative model name that distiguishes its architecture.
         :param workspace: Path to the workspace to store the model and logs.\
-        :param tpu: Whether to use TPUs for training.
+        :param tpu: Flags whether to use a TPU or not to train the model.
         :return: transformers.TrainingArguments object containing the training
         """
         return transformers.TrainingArguments(
@@ -152,6 +132,7 @@ class ERCTrainer:
         model: ERCModel,
         training_args: transformers.TrainingArguments,
         label_encoder: ERCLabelEncoder,
+        config: ERCConfig,
     ) -> transformers.Trainer:
         """
         Create the transformers.Trainer object to train the model.
@@ -161,6 +142,7 @@ class ERCTrainer:
         :param model: ERCModel object containing the model to train.
         :param training_args: transformers.TrainingArguments object containing the training arguments.
         :param label_encoder: ERCLabelEncoder object containing the label encoder to use for training.
+        :param config: ERCConfig object containing the model configuration.
         :return: transformers.Trainer object to train the model.
         """
         classifier_loss_fn = self.config.classifier_loss_fn if self.config else None
@@ -169,7 +151,7 @@ class ERCTrainer:
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
-            data_collator=ERCDataCollator(config=self.config, label_encoder=label_encoder),
+            data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
             compute_metrics=ERCMetricCalculator(classifier_loss_fn=classifier_loss_fn),
         )
 
