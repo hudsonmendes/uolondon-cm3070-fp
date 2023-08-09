@@ -51,15 +51,18 @@ class TestERCModel(unittest.TestCase):
 
     def test_forward_output_labels_shape(self):
         out = self.model.forward(**self.x)
-        self.assertEqual(out.labels.shape, (len(self.x_text), len(self.classes)))
+        self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
 
     def test_forward_output_logits_shape(self):
         out = self.model.forward(**self.x)
-        self.assertEqual(out.logits.shape, (len(self.x_text), len(self.classes)))
+        self.assertEqual(out.logits.shape, (len(self.x["x_text"]), len(self.classes)))
 
     def test_forward_output_hidden_state_shape(self):
         out = self.model.forward(**self.x)
-        self.assertEqual(out.hidden_states.shape, (len(self.x_text), self.config.feedforward_layers[-1].out_features))
+        self.assertEqual(
+            out.hidden_states.shape,
+            (len(self.x["x_text"]), self.config.feedforward_layers[-1].out_features),
+        )
 
     def test_forward_output_type_dict(self):
         out = self.model.forward(return_dict=True, **self.x)

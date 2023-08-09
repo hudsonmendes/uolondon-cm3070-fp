@@ -5,7 +5,7 @@ from typing import List, Union
 
 # Third-Party Libraries
 import pandas as pd
-from PIL.Image import Image
+from PIL import Image
 from torch.utils.data import Dataset
 
 # Local Folders

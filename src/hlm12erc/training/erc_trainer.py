@@ -169,7 +169,7 @@ class ERCTrainer:
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
-            data_collator=ERCDataCollator(label_encoder=label_encoder),
+            data_collator=ERCDataCollator(config=self.config, label_encoder=label_encoder),
             compute_metrics=ERCMetricCalculator(classifier_loss_fn=classifier_loss_fn),
         )
 
