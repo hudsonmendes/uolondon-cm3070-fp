@@ -74,7 +74,7 @@ class ERCConcatFusion(ERCFusion):
         :param x: List of tensors to be fused.
         :return: Fused tensor.
         """
-        y = torch.concat(x, dim=1)
+        y = torch.cat(x, dim=1)
         y = l2_norm(y, p=2, dim=1)
         return y
 

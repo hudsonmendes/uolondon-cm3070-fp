@@ -29,7 +29,7 @@ class ERCEmbeddings(ABC, torch.nn.Module):
 
         :param config: the configuration of the model
         """
-        super().__init__(*args, **kwargs)
+        super(ERCEmbeddings, self).__init__(*args, **kwargs)
         assert config is not None
 
     @abstractproperty

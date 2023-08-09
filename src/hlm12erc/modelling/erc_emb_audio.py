@@ -67,7 +67,7 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
 
         :param config: configuration for the model
         """
-        super().__init__(config=config)
+        super(ERCRawAudioEmbeddings, self).__init__(config=config)
         self.config = config
         self.in_features = config.audio_in_features
         self.ff = ERCFeedForward(
