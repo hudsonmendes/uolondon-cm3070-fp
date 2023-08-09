@@ -85,7 +85,6 @@ class MeldDataset(Dataset):
                     text=self.preprocessor_text(row),
                     visual=self.preprocessor_visual(image_file),
                     audio=self.preprocessor_audio(audio_file),
-                    x_text=row.x_text,
                     label=row.label,
                 )
         else:
