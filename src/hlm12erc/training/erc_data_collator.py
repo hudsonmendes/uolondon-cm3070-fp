@@ -22,8 +22,14 @@ class ERCDataCollator:
 
     config: ERCConfig
     label_encoder: ERCLabelEncoder
+    device: Optional[torch.device]
 
-    def __init__(self, config: ERCConfig, label_encoder: ERCLabelEncoder) -> None:
+    def __init__(
+        self,
+        config: ERCConfig,
+        label_encoder: ERCLabelEncoder,
+        device: Optional[torch.device] = None,
+    ) -> None:
         """
         Initialise the ERCDataCollator class with the given ERCLabelEncoder object.
 
@@ -32,6 +38,7 @@ class ERCDataCollator:
         """
         self.config = config
         self.label_encoder = label_encoder
+        self.device = device
 
     def __call__(self, batch: List[MeldRecord]) -> dict:
         """
@@ -75,7 +82,10 @@ class ERCDataCollator:
             if vec.size(0) > target_size:
                 return vec[:target_size]
             elif vec.size(0) < target_size:
-                padding = torch.zeros(target_size - vec.size(0), *vec.size()[1:], dtype=vec.dtype)
+                pad_len = target_size - vec.size(0)
+                padding = torch.zeros(pad_len, *vec.size()[1:], dtype=vec.dtype)
+                if self.device is not None:
+                    padding = padding.to(self.device)
                 return torch.cat([vec, padding], dim=0)
             else:
                 return vec

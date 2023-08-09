@@ -69,6 +69,14 @@ class ERCModel(torch.nn.Module):
         # One-Hot Encoder (for labels)
         self.label_encoder = label_encoder
 
+    def device(self) -> torch.device:
+        """
+        Returns the device the model is currently on
+
+        :return: The device the model is currently on
+        """
+        return next(self.parameters()).device
+
     def forward(
         self,
         x_text: List[str],
