@@ -6,7 +6,7 @@ from PIL import Image
 
 # My Packages and Modules
 from hlm12erc.modelling import ERCConfig
-from hlm12erc.training.meld_preprocessor_visual import MeldVisualPreprocessor
+from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreprocessor
 
 
 class TestMeldVisualPreprocessor(unittest.TestCase):

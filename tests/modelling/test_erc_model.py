@@ -12,9 +12,9 @@ from hlm12erc.modelling.erc_label_encoder import ERCLabelEncoder
 from hlm12erc.modelling.erc_model import ERCModel
 from hlm12erc.modelling.erc_output import ERCOutput
 from hlm12erc.training.erc_data_collator import ERCDataCollator
-from hlm12erc.training.meld_preprocessor_audio import MeldAudioPreprocessor
-from hlm12erc.training.meld_preprocessor_visual import MeldVisualPreprocessor
 from hlm12erc.training.meld_record import MeldRecord
+from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessor
+from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreprocessor
 
 
 class TestERCModel(unittest.TestCase):

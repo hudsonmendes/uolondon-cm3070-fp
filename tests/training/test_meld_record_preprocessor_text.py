@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 
 # My Packages and Modules
-from hlm12erc.training.meld_preprocessor_text import MeldTextPreprocessor
+from hlm12erc.training.meld_record_preprocessor_text import MeldTextPreprocessor
 
 
 class TestMeldTextPreprocessor(unittest.TestCase):

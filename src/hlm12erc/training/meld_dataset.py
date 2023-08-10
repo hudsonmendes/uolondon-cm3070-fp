@@ -1,19 +1,15 @@
 # Python Built-in Modules
 import pathlib
-import wave
-from typing import List, Optional, Union
+from typing import List, Optional
 
 # Third-Party Libraries
 import pandas as pd
 import torch
-from PIL import Image
 from torch.utils.data import Dataset
 
 # Local Folders
-from .meld_preprocessor_audio import MeldAudioPreprocessor
-from .meld_preprocessor_text import MeldTextPreprocessor
-from .meld_preprocessor_visual import MeldVisualPreprocessor
 from .meld_record import MeldRecord
+from .meld_record_reader import MeldRecordReader
 
 
 class MeldDataset(Dataset):
@@ -30,10 +26,7 @@ class MeldDataset(Dataset):
 
     filepath: pathlib.Path
     filedir: pathlib.Path
-    df: pd.DataFrame
-    preprocessor_text: MeldTextPreprocessor
-    preprocessor_visual: MeldVisualPreprocessor
-    preprocessor_audio: MeldAudioPreprocessor
+    records: List[MeldRecord]
 
     def __init__(self, filepath: pathlib.Path, device: Optional[torch.device] = None):
         """
@@ -43,10 +36,9 @@ class MeldDataset(Dataset):
         """
         self.filepath = filepath
         self.filedir = filepath.parent
-        self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
-        self.preprocessor_text = MeldTextPreprocessor(df=self.df)
-        self.preprocessor_visual = MeldVisualPreprocessor(device=device)
-        self.preprocessor_audio = MeldAudioPreprocessor(device=device)
+        df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
+        record_reader = MeldRecordReader(df=df, filedir=self.filedir, device=device)
+        self.records = record_reader.read_all_valid()
 
     def __len__(self) -> int:
         """
@@ -55,9 +47,9 @@ class MeldDataset(Dataset):
 
         :return: The number of samples in the dataset
         """
-        return len(self.df)
+        return len(self.records)
 
-    def __getitem__(self, index) -> Union[MeldRecord, List[MeldRecord]]:
+    def __getitem__(self, index: slice | int) -> MeldRecord | List[MeldRecord]:
         """
         Returns a single sample from the dataset, based on the index provided.
         The sample is returned in the form of a `MeldRecord` object, that
@@ -68,32 +60,9 @@ class MeldDataset(Dataset):
         :return: A `MeldRecord` instance or batch, containing the sample(s)
         """
         if isinstance(index, slice):
-            batch = [self._get_single_item_at(i) for i in range(index.start, index.stop, index.step or 1)]
-            batch = [item for item in batch if item]
-            return batch
+            return [self.records(i) for i in range(index.start, index.stop, index.step or 1)]
         else:
-            return self._get_single_item_at(index)
-
-    def _get_single_item_at(self, i: int):
-        """
-        Returns a single MELD Entry from position `i` in the dataset.
-
-        :param i: The index of the sample to be returned
-        :return: A `MeldRecord` object containing the sample
-        """
-        if i < len(self.df):
-            row = self.df.iloc[i]
-
-            with (
-                Image.open(str(self.filedir / row.x_visual)) as image_file,
-                wave.open(str(self.filedir / row.x_audio)) as audio_file,
-            ):
-                text = self.preprocessor_text(row)
-                visual = self.preprocessor_visual(image_file)
-                audio = self.preprocessor_audio(audio_file)
-                return MeldRecord(text=text, visual=visual, audio=audio, label=row.label)
-        else:
-            return None
+            return self.records(index)
 
     @property
     def classes(self) -> List[str]:

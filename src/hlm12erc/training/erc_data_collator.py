@@ -83,9 +83,7 @@ class ERCDataCollator:
                 return vec[:target_size]
             elif vec.size(0) < target_size:
                 pad_len = target_size - vec.size(0)
-                padding = torch.zeros(pad_len, *vec.size()[1:], dtype=vec.dtype)
-                if self.device is not None:
-                    padding = padding.to(self.device)
+                padding = torch.zeros(pad_len, *vec.size()[1:], dtype=vec.dtype, device=self.device)
                 return torch.cat([vec, padding], dim=0)
             else:
                 return vec

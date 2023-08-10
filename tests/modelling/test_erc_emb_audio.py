@@ -12,7 +12,7 @@ from hlm12erc.modelling.erc_emb_audio import (
     ERCConfig,
 )
 from hlm12erc.training.erc_data_collator import ERCDataCollator
-from hlm12erc.training.meld_preprocessor_audio import MeldAudioPreprocessor
+from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessor
 
 
 class TestERCRawAudioEmbeddings(unittest.TestCase):
