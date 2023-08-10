@@ -7,6 +7,7 @@ from typing import Optional
 import pandas as pd
 import torch
 from PIL import Image
+from tqdm.auto import trange
 
 # Local Folders
 from .meld_record import MeldRecord
@@ -16,15 +17,22 @@ from .meld_record_preprocessor_visual import MeldVisualPreprocessor
 
 
 class MeldRecordReader:
-    def __init__(self, filedir: pathlib.Path, df: pd.DataFrame, device: Optional[torch.device] = None):
+    def __init__(
+        self,
+        filename: str,
+        filedir: pathlib.Path,
+        df: pd.DataFrame,
+        device: Optional[torch.device] = None,
+    ):
         self.df = df
+        self.filename = filename
         self.filedir = filedir
         self.preprocessor_text = MeldTextPreprocessor(df=df)
         self.preprocessor_visual = MeldVisualPreprocessor(device=device)
         self.preprocessor_audio = MeldAudioPreprocessor(device=device)
 
     def read_all_valid(self) -> list[MeldRecord]:
-        records = [self.read_at(i) for i in range(len(self.df))]
+        records = [self.read_at(i) for i in trange(len(self.df), desc=f"meld({self.filename})")]
         return [record for record in records if record is not None]
 
     def read_at(self, i: int) -> Optional[MeldRecord]:

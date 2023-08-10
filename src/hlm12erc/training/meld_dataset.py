@@ -37,7 +37,7 @@ class MeldDataset(Dataset):
         self.filepath = filepath
         self.filedir = filepath.parent
         df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
-        record_reader = MeldRecordReader(df=df, filedir=self.filedir, device=device)
+        record_reader = MeldRecordReader(df=df, filename=filepath.stem, filedir=self.filedir, device=device)
         self.records = record_reader.read_all_valid()
 
     def __len__(self) -> int:
