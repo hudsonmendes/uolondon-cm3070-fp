@@ -34,7 +34,7 @@ class MeldAudioPreprocessor:
         """
         data = x.readframes(x.getnframes())
         dtype = self.dtype_map[x.getsampwidth()]
-        y = torch.frombuffer(data, dtype=dtype).float().clone()
+        y = torch.frombuffer(data, dtype=dtype).clone().float()
         y = y.reshape(-1, x.getnchannels())
         y = y.flatten()
         if self.device is not None:
