@@ -60,9 +60,11 @@ class MeldDataset(Dataset):
         :return: A `MeldRecord` instance or batch, containing the sample(s)
         """
         if isinstance(index, slice):
-            return [self.records(i) for i in range(index.start, index.stop, index.step or 1)]
+            return [self.records[i] for i in range(index.start, index.stop, index.step or 1)]
+        elif isinstance(index, int):
+            return self.records[index]
         else:
-            return self.records(index)
+            raise TypeError(f"The index '{index}' is an invalid index type.")
 
     @property
     def classes(self) -> List[str]:

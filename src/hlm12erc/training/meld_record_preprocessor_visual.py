@@ -38,7 +38,7 @@ class MeldVisualPreprocessor:
         :param x: The image to be preprocessed
         :return: The preprocessed image
         """
-        tensor = self.image_preprocessor(x)
+        tensor = self.image_preprocessor(x).float()
         if self.device is not None:
             tensor = tensor.to(self.device)
         return tensor
