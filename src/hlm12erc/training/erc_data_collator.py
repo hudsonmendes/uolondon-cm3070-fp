@@ -1,5 +1,5 @@
 # Python Built-in Modules
-from typing import List, Optional
+from typing import List
 
 # Third-Party Libraries
 import torch
@@ -22,14 +22,9 @@ class ERCDataCollator:
 
     config: ERCConfig
     label_encoder: ERCLabelEncoder
-    device: Optional[torch.device]
+    device: torch.device | None
 
-    def __init__(
-        self,
-        config: ERCConfig,
-        label_encoder: ERCLabelEncoder,
-        device: Optional[torch.device] = None,
-    ) -> None:
+    def __init__(self, config: ERCConfig, label_encoder: ERCLabelEncoder) -> None:
         """
         Initialise the ERCDataCollator class with the given ERCLabelEncoder object.
 
@@ -38,21 +33,29 @@ class ERCDataCollator:
         """
         self.config = config
         self.label_encoder = label_encoder
-        self.device = device
 
-    def __call__(self, batch: List[MeldRecord]) -> dict:
+    def __call__(
+        self,
+        batch: List[MeldRecord],
+        device: torch.device | None = None,
+    ) -> dict:
         """
         Collates the data from the ERC dataset into a format that can be used and
         batched by the model, with multiple records turned into lists of its underlying
         datapoints. We also encode the labels to make it easier to use in the model.
 
         :param record: The list of records to collate
+        :param device: if provided, send tensors to device
         :return: The collated data
         """
         x_text = [r.text for r in batch]
         x_visual = self._visual_to_stacked_tensor([r.visual for r in batch])
         x_audio = self._audio_to_stacked_tensor([r.audio for r in batch])
         y_label = self.label_encoder([r.label for r in batch])
+        if device is not None:
+            x_visual = x_visual.to(device)
+            x_audio = x_audio.to(device)
+            y_label = y_label.to(device)
         return {
             "x_text": x_text,
             "x_visual": x_visual,
@@ -83,7 +86,7 @@ class ERCDataCollator:
                 return vec[:target_size]
             elif vec.size(0) < target_size:
                 pad_len = target_size - vec.size(0)
-                padding = torch.zeros(pad_len, *vec.size()[1:], dtype=vec.dtype, device=self.device)
+                padding = torch.zeros(pad_len, *vec.size()[1:], dtype=vec.dtype)
                 return torch.cat([vec, padding], dim=0)
             else:
                 return vec

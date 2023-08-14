@@ -75,7 +75,9 @@ class ERCTrainer:
         model_name = ERCConfigFormatter(config).represent()
         logger.info(f"Model identifier {model_name}")
         model = ERCModel(config=config, label_encoder=label_encoder)
-        logger.info(f"Model created, src_device={model.device}, dest_device={device or model.device}")
+        if device is not None:
+            model.to(device)
+        logger.info(f"Model created in device {model.device}")
         workspace = save_to / model_name
         logger.info(f"Training workspace set to: {workspace}")
         training_args = self._create_training_args(
@@ -83,7 +85,6 @@ class ERCTrainer:
             batch_size=batch_size,
             model_name=model_name,
             workspace=workspace,
-            tpu=device is not None,
         )
         logger.info(f"TrainingArgs created with {n_epochs} epochs and batch size {batch_size}")
         trainer = self._create_trainer(
@@ -93,7 +94,6 @@ class ERCTrainer:
             training_args=training_args,
             label_encoder=label_encoder,
             config=config,
-            device=device,
         )
         logger.info(f"Trainer, train={len(train_dataset)}, valid={len(eval_dataset)}, device={model.device}")
         logger.info("Training starting now, don't wait standing up...")
@@ -104,7 +104,11 @@ class ERCTrainer:
         return model_name, model
 
     def _create_training_args(
-        self, n_epochs: int, batch_size: int, model_name: str, workspace: pathlib.Path, tpu: bool
+        self,
+        n_epochs: int,
+        batch_size: int,
+        model_name: str,
+        workspace: pathlib.Path,
     ) -> transformers.TrainingArguments:
         """
         Create the training arguments for the transformers.Trainer class.
@@ -113,11 +117,9 @@ class ERCTrainer:
         :param batch_size: Batch size to use for training.
         :param model_name: A representative model name that distiguishes its architecture.
         :param workspace: Path to the workspace to store the model and logs.\
-        :param tpu: Flags whether to use a TPU or not to train the model.
         :return: transformers.TrainingArguments object containing the training
         """
         return transformers.TrainingArguments(
-            tpu_num_cores=8 if tpu else None,
             run_name=f"run-{int(time.time())}-model-{model_name}",
             label_names=[ERCDataCollator.LABEL_NAME],
             do_train=True,
@@ -147,7 +149,6 @@ class ERCTrainer:
         training_args: transformers.TrainingArguments,
         label_encoder: ERCLabelEncoder,
         config: ERCConfig,
-        device: Optional[torch.device] = None,
     ) -> transformers.Trainer:
         """
         Create the transformers.Trainer object to train the model.
@@ -158,7 +159,6 @@ class ERCTrainer:
         :param training_args: transformers.TrainingArguments object containing the training arguments.
         :param label_encoder: ERCLabelEncoder object containing the label encoder to use for training.
         :param config: ERCConfig object containing the model configuration.
-        :param device: device to use for data collator and training.
         :return: transformers.Trainer object to train the model.
         """
         classifier_loss_fn = self.config.classifier_loss_fn if self.config else None
@@ -167,7 +167,7 @@ class ERCTrainer:
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
-            data_collator=ERCDataCollator(config=config, label_encoder=label_encoder, device=device),
+            data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
             compute_metrics=ERCMetricCalculator(classifier_loss_fn=classifier_loss_fn),
         )
 

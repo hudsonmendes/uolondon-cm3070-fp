@@ -26,9 +26,10 @@ class MeldDataset(Dataset):
 
     filepath: pathlib.Path
     filedir: pathlib.Path
-    records: List[MeldRecord]
+    df: pd.DataFrame
+    record_reader: MeldRecordReader
 
-    def __init__(self, filepath: pathlib.Path, device: Optional[torch.device] = None):
+    def __init__(self, filepath: pathlib.Path):
         """
         Creates a new instance of the MeldDataset for a split
 
@@ -36,9 +37,9 @@ class MeldDataset(Dataset):
         """
         self.filepath = filepath
         self.filedir = filepath.parent
-        df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
-        record_reader = MeldRecordReader(df=df, filename=filepath.stem, filedir=self.filedir, device=device)
-        self.records = record_reader.read_all_valid()
+        self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
+        self.record_reader = MeldRecordReader(df=self.df, filename=filepath.stem, filedir=self.filedir)
+        self.emotions = sorted(self.df.label.unique().tolist())
 
     def __len__(self) -> int:
         """
@@ -47,7 +48,7 @@ class MeldDataset(Dataset):
 
         :return: The number of samples in the dataset
         """
-        return len(self.records)
+        return len(self.df)
 
     def __getitem__(self, index: slice | int) -> MeldRecord | List[MeldRecord]:
         """
@@ -60,9 +61,13 @@ class MeldDataset(Dataset):
         :return: A `MeldRecord` instance or batch, containing the sample(s)
         """
         if isinstance(index, slice):
-            return [self.records[i] for i in range(index.start, index.stop, index.step or 1)]
+            records = [self.record_reader.read_at(i) for i in range(index.start, index.stop, index.step or 1)]
+            return [r for r in records if r is not None]
         elif isinstance(index, int):
-            return self.records[index]
+            record = self.record_reader.read_at(index)
+            if record is None:
+                raise IndexError(f"The index '{index}' is out of bounds.")
+            return record
         else:
             raise TypeError(f"The index '{index}' is an invalid index type.")
 
@@ -74,4 +79,4 @@ class MeldDataset(Dataset):
 
         :return: A list of the classes in the dataset
         """
-        return sorted(self.df.label.unique().tolist())
+        return self.emotions
