@@ -27,7 +27,11 @@ class ERCModel(torch.nn.Module):
     label_encoder: ERCLabelEncoder
     config: ERCConfig
 
-    def __init__(self, config: ERCConfig, label_encoder: ERCLabelEncoder) -> None:
+    def __init__(
+        self,
+        config: ERCConfig,
+        label_encoder: ERCLabelEncoder,
+    ) -> None:
         """
         Constructs the ERC model by initializing the different modules based on hyperparameter
         configuration for the text, visual and audio encoders, as well as for the fusion network,
@@ -36,7 +40,7 @@ class ERCModel(torch.nn.Module):
         :param config: ERCConfig object containing the hyperparameters for the ERC model
         :param classes: List of strings containing the different emotion classes
         """
-        super().__init__()
+        super(ERCModel, self).__init__()
         # Hyperparameters
         self.config = config
         self.label_encoder = label_encoder
@@ -65,6 +69,15 @@ class ERCModel(torch.nn.Module):
         # One-Hot Encoder (for labels)
         self.label_encoder = label_encoder
 
+    @property
+    def device(self) -> torch.device:
+        """
+        Returns the device the model is currently on
+
+        :return: The device the model is currently on
+        """
+        return next(self.parameters()).device
+
     def forward(
         self,
         x_text: List[str],
@@ -88,12 +101,12 @@ class ERCModel(torch.nn.Module):
         :return: ERCOutput object containing the loss, predicted labels, logits, hidden states and attentions
         """
 
-        y_text = self.text_embeddings(x_text)
-        y_visual = self.visual_embeddings(x_visual)
-        y_audio = self.audio_embeddings(x_audio)
+        y_text = self.text_embeddings(x_text).to(self.device)
+        y_visual = self.visual_embeddings(x_visual).to(self.device)
+        y_audio = self.audio_embeddings(x_audio).to(self.device)
         y_fusion = self.fusion_network(y_text, y_visual, y_audio)
         y_attn = None
-        y_transformed = self.feedforward(y_fusion)
+        y_transformed = self.feedforward(y_fusion).to(self.device)
         y_logits = self.logits(y_transformed)
         y_pred = self.softmax(y_logits)
         loss = self.loss(y_pred, y_true) if y_true is not None else None

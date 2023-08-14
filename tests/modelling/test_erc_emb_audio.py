@@ -11,16 +11,22 @@ from hlm12erc.modelling.erc_emb_audio import (
     ERCAudioEmbeddingType,
     ERCConfig,
 )
+from hlm12erc.training.erc_data_collator import ERCDataCollator
+from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessor
 
 
 class TestERCRawAudioEmbeddings(unittest.TestCase):
     def setUp(self):
         self.config = ERCConfig(audio_in_features=325458, audio_out_features=256, classifier_classes=["a", "b"])
         self.embeddings = ERCAudioEmbeddings.resolve_type_from(ERCAudioEmbeddingType.WAVEFORM)(self.config)
-        self.audios = [
-            wave.open("tests/fixtures/d-1038-seq-17.wav"),
-            wave.open("tests/fixtures/dia1_utt0.wav"),
-        ]
+        self.preprocessor = MeldAudioPreprocessor()
+        self.data_collator = ERCDataCollator(config=self.config, label_encoder=None)
+        self.audios = self.data_collator._audio_to_stacked_tensor(
+            [
+                self.preprocessor(wave.open("tests/fixtures/d-1038-seq-17.wav")),
+                self.preprocessor(wave.open("tests/fixtures/dia1_utt0.wav")),
+            ]
+        )
 
     def tearDown(self):
         del self.embeddings

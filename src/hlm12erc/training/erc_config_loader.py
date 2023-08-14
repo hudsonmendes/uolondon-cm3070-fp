@@ -27,6 +27,7 @@ class ERCConfigLoader:
         """
         raw = self._read_as_dict()
         raw["feedforward_layers"] = self._convert_ff_layers_dict(raw["feedforward_layers"])
+        raw["visual_in_features"] = tuple(raw["visual_in_features"])
         return ERCConfig(**raw)
 
     def _read_as_dict(self):

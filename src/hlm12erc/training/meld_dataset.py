@@ -1,15 +1,15 @@
 # Python Built-in Modules
 import pathlib
-import wave
-from typing import List, Union
+from typing import List, Optional
 
 # Third-Party Libraries
 import pandas as pd
-from PIL import Image
+import torch
 from torch.utils.data import Dataset
 
 # Local Folders
-from .meld_record import MeldDialogueEntry, MeldRecord
+from .meld_record import MeldRecord
+from .meld_record_reader import MeldRecordReader
 
 
 class MeldDataset(Dataset):
@@ -24,6 +24,11 @@ class MeldDataset(Dataset):
         >>> record = dataset[0]
     """
 
+    filepath: pathlib.Path
+    filedir: pathlib.Path
+    df: pd.DataFrame
+    record_reader: MeldRecordReader
+
     def __init__(self, filepath: pathlib.Path):
         """
         Creates a new instance of the MeldDataset for a split
@@ -33,6 +38,8 @@ class MeldDataset(Dataset):
         self.filepath = filepath
         self.filedir = filepath.parent
         self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
+        self.record_reader = MeldRecordReader(df=self.df, filename=filepath.stem, filedir=self.filedir)
+        self.emotions = sorted(self.df.label.unique().tolist())
 
     def __len__(self) -> int:
         """
@@ -43,7 +50,7 @@ class MeldDataset(Dataset):
         """
         return len(self.df)
 
-    def __getitem__(self, index) -> Union[MeldRecord, List[MeldRecord]]:
+    def __getitem__(self, index: slice | int) -> MeldRecord | List[MeldRecord]:
         """
         Returns a single sample from the dataset, based on the index provided.
         The sample is returned in the form of a `MeldRecord` object, that
@@ -54,37 +61,15 @@ class MeldDataset(Dataset):
         :return: A `MeldRecord` instance or batch, containing the sample(s)
         """
         if isinstance(index, slice):
-            batch = [self._get_single_item_at(i) for i in range(index.start, index.stop, index.step or 1)]
-            batch = [item for item in batch if item]
-            return batch
+            records = [self.record_reader.read_at(i) for i in range(index.start, index.stop, index.step or 1)]
+            return [r for r in records if r is not None]
+        elif isinstance(index, int):
+            record = self.record_reader.read_at(index)
+            if record is None:
+                raise IndexError(f"The index '{index}' is out of bounds.")
+            return record
         else:
-            return self._get_single_item_at(index)
-
-    def _get_single_item_at(self, i: int):
-        """
-        Returns a single MELD Entry from position `i` in the dataset.
-
-        :param i: The index of the sample to be returned
-        :return: A `MeldRecord` object containing the sample
-        """
-        if i < len(self.df):
-            row = self.df.iloc[i]
-            dialogue = row["dialogue"]
-            sequence = row["sequence"]
-            previous_dialogue = self._extract_previous_dialogue(
-                dialogue=dialogue,
-                before=sequence,
-            )
-            return MeldRecord(
-                speaker=row.speaker,
-                visual=Image.open(str(self.filedir / row.x_visual)),
-                audio=wave.open(str(self.filedir / row.x_audio)),
-                previous_dialogue=previous_dialogue,
-                utterance=row.x_text,
-                label=row.label,
-            )
-        else:
-            return None
+            raise TypeError(f"The index '{index}' is an invalid index type.")
 
     @property
     def classes(self) -> List[str]:
@@ -94,16 +79,4 @@ class MeldDataset(Dataset):
 
         :return: A list of the classes in the dataset
         """
-        return sorted(self.df.label.unique().tolist())
-
-    def _extract_previous_dialogue(self, dialogue: int, before: int) -> List[MeldDialogueEntry]:
-        """
-        Extracts the dialogue that happened before the current one, based on
-        the dialogue number and the sequence number of the current dialogue.
-
-        :param dialogue: The dialogue number of the current dialogue
-        :param before: The sequence number of the current dialogue
-        :return: The previous dialogue as a list of `MeldDialogueEntry`
-        """
-        previous_dialogue = self.df[(self.df.dialogue == dialogue) & (self.df.sequence < before)]
-        return [MeldDialogueEntry(speaker=row.speaker, utterance=row.x_text) for _, row in previous_dialogue.iterrows()]
+        return self.emotions

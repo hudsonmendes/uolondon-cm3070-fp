@@ -15,6 +15,30 @@ from hlm12erc.training.erc_config_formatter import ERCConfigFormatter
 
 
 class TestERCConfig(unittest.TestCase):
+    def test_str_classifier_name(self):
+        # Test that __str__ includes feedforward layers if present
+        config_with_ffl = ERCConfig(
+            modules_text_encoder=ERCTextEmbeddingType.GLOVE,
+            modules_visual_encoder=ERCVisualEmbeddingType.RESNET50,
+            modules_audio_encoder=ERCAudioEmbeddingType.WAVEFORM,
+            modules_fusion=ERCFusionTechnique.CONCATENATION,
+            text_in_features=300,
+            text_out_features=300,
+            audio_in_features=325458,
+            audio_out_features=512,
+            feedforward_layers=[
+                ERCConfigFeedForwardLayer(out_features=512),
+                ERCConfigFeedForwardLayer(out_features=256),
+            ],
+            classifier_name="special_tag",
+            classifier_loss_fn=ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY,
+            classifier_classes=["anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"],
+        )
+        self.assertEqual(
+            ERCConfigFormatter(config_with_ffl).represent(),
+            "hlm12erc-special_tag-glove-resnet50-waveform-concat-t300x300-a325458x512-ffl512+256-cce",
+        )
+
     def test_str_feedforward_layers(self):
         # Test that __str__ includes feedforward layers if present
         config_with_ffl = ERCConfig(
@@ -35,7 +59,7 @@ class TestERCConfig(unittest.TestCase):
         )
         self.assertEqual(
             ERCConfigFormatter(config_with_ffl).represent(),
-            "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ffl512+256-cce",
+            "hlm12erc-untagged-glove-resnet50-waveform-concat-t300x300-a325458x512-ffl512+256-cce",
         )
 
     def test_str_feedforward_out_features(self):
@@ -55,5 +79,5 @@ class TestERCConfig(unittest.TestCase):
         )
         self.assertEqual(
             ERCConfigFormatter(config_with_ff_out).represent(),
-            "hlm12erc-glove-resnet50-waveform-concat-t300x300-a325458x512-ffldefault-cce",
+            "hlm12erc-untagged-glove-resnet50-waveform-concat-t300x300-a325458x512-ffldefault-cce",
         )
