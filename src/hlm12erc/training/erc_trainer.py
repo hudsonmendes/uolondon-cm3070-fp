@@ -9,13 +9,12 @@ import torch
 import transformers
 
 # My Packages and Modules
-from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel, ERCOutput
+from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel, ERCOutput, ERCPath
 
 # Local Folders
 from .erc_config_formatter import ERCConfigFormatter
 from .erc_data_collator import ERCDataCollator
 from .erc_metric_calculator import ERCMetricCalculator
-from .erc_path import ERCPath
 from .meld_dataset import MeldDataset
 
 logger = logging.getLogger(__name__)

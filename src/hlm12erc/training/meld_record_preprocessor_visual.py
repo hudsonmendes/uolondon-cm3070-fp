@@ -1,6 +1,3 @@
-# Python Built-in Modules
-from typing import Optional
-
 # Third-Party Libraries
 import torch
 import torchvision
