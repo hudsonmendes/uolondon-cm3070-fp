@@ -39,4 +39,4 @@ class MeldTextPreprocessor:
         :param dialog: The dialogue to be formatted
         :return: The formatted dialogue
         """
-        return "\n".join([f"{speaker} said: {utterance}" for speaker, utterance in dialog])
+        return "\n\n\n".join([f'The speaker "{speaker}" said:\n###\n{utterance}\n###' for speaker, utterance in dialog])

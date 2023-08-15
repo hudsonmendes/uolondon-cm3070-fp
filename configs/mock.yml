@@ -1,4 +1,4 @@
-classifier_name: sample
+classifier_name: mock
 classifier_loss_fn: cce
 classifier_classes:
   - fear

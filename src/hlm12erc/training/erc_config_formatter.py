@@ -20,22 +20,4 @@ class ERCConfigFormatter:
 
         :return: String representation of the ERCConfig
         """
-        ff_layerspec = (
-            "+".join([str(layer.out_features) for layer in self.config.feedforward_layers])
-            if self.config.feedforward_layers
-            else "default"
-        )
-        return "-".join(
-            [
-                "hlm12erc",
-                self.config.classifier_name.lower(),
-                self.config.modules_text_encoder.lower(),
-                self.config.modules_visual_encoder.lower(),
-                self.config.modules_audio_encoder.lower(),
-                self.config.modules_fusion.lower(),
-                f"t{self.config.text_in_features}x{self.config.text_out_features}",
-                f"a{self.config.audio_in_features}x{self.config.audio_out_features}",
-                f"ffl{ff_layerspec}",
-                f"{self.config.classifier_loss_fn}",
-            ]
-        )
+        return "-".join(["hlm12erc", self.config.classifier_name.lower()])

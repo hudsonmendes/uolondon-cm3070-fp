@@ -11,6 +11,35 @@ most if not all functionality required to run emotion recognition in<br />
 conversations, including (a) **Model Training**, (b) **ERC Inference**<br />
 and (c) **Model Evaluation**.
 
+## ML Workflow Recipe
+
+This is a personal workflow that I follow to simplify ML development,
+which can often be extremely complex, specially depending on which
+ML infrastructure is being used.
+
+1. Setup your package to have the following subpackages: `modelling`, `training` and `serving`;
+
+2. Create your first version of `yourpackage.training.your_dataset_record` trying to make your data as flat as possible and having either (a) `strings` or `tensors` as its attributes;
+
+3. Create your first version of `yourpackage.training.your_dataset_record_reader` to transform and flatten out your data. Very important to unit test your transformations here and ensure data is precisely what you need it to be, including their ranges and scale;
+
+4. Create your first version of `yourpackage.training.your_dataset` to hold the dataframe that will have pointers to your feature sources, but won't load everything in memory;
+
+5. Create your model building blocks, their simples possible implementation, and unit test them. Assert that all transformations and output shapes are exactly what they need to be;
+
+6. Wrap your building blocks int o `your_model` and unit-test it. Ensure that your model is able to choose between your building block implementation using a simple configuration dictionary, call it `my_config`;
+
+7. Write your metric calculation classes and unit test them. Make sure it works with the exact output of your model and the result of your label_encoder; **Important** use scikit-learn here, don't reinvent the wheel;
+
+8. Get your `mlflow`, `aim`, `wandb` setup and build your first `dev/local.ipynb`. Build your mlops pipeline there, as simple as you can, to ensure you _can_ train your model using Jupyter Notebook; **Important**: only train on a `sample.csv` of your data, not your entire training dataset, and ensure your metrics are showing in your monitoring tool correctly;
+
+9. If you are serving your model as an api, time to wrap it up in your REST stack and start trying to serve it. **Important**: test it _as an API_, including load tests. This will give you an initial idea of trade-offs you will need to do in your model to make it work in production;
+
+10. Ship your code to run in your GPU/TPU-accelerated infrastructure and run a full training on your dataset. Your monitoring should work perfectly, and you should have your baseline metrics to start getting your modelling work done.
+
+From this point ownwards, the amount of choices you're gonna have to make is far too large for a recipe, but the above should get you started.
+
+
 ## ETL
 
 ```bash

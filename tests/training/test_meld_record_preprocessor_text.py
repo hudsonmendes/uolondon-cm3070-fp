@@ -32,7 +32,14 @@ class TestMeldTextPreprocessor(unittest.TestCase):
         mock_row.speaker = "A"
         mock_row.x_text = "Howdy"
 
-        expected = "A said: Hello\nB said: Hi\nA said: How are you?\nA said: Howdy"
+        expected = "\n\n\n".join(
+            [
+                'The speaker "A" said:\n###\nHello\n###',
+                'The speaker "B" said:\n###\nHi\n###',
+                'The speaker "A" said:\n###\nHow are you?\n###',
+                'The speaker "A" said:\n###\nHowdy\n###',
+            ]
+        )
 
         # Act
         result = self.preprocessor(mock_row)

@@ -16,7 +16,8 @@ from .erc_label_encoder import ERCLabelEncoder
 from .erc_loss import ERCLoss
 from .erc_model import ERCModel
 from .erc_output import ERCOutput
-from .erc_path import ERCPath
+from .erc_storage import ERCStorage
+from .erc_storage_links import ERCStorageLinks
 
 __all__ = [
     "ERCTextEmbeddingType",
@@ -34,5 +35,6 @@ __all__ = [
     "ERCLabelEncoder",
     "ERCLoss",
     "ERCOutput",
-    "ERCPath",
+    "ERCStorage",
+    "ERCStorageLinks",
 ]
