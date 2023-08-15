@@ -7,15 +7,22 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 # Third-Party Libraries
 import torch
 import transformers
+import wandb
 
 # My Packages and Modules
-from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel, ERCOutput
+from hlm12erc.modelling import (
+    ERCConfig,
+    ERCLabelEncoder,
+    ERCModel,
+    ERCOutput,
+    ERCStorage,
+    ERCStorageLinks,
+)
 
 # Local Folders
 from .erc_config_formatter import ERCConfigFormatter
 from .erc_data_collator import ERCDataCollator
 from .erc_metric_calculator import ERCMetricCalculator
-from .erc_path import ERCPath
 from .meld_dataset import MeldDataset
 
 logger = logging.getLogger(__name__)
@@ -99,8 +106,13 @@ class ERCTrainer:
         logger.info("Training starting now, don't wait standing up...")
         trainer.train()
         logger.info("Training complete, saving model...")
-        ERCPath(workspace).save(model=model, ta=training_args)
-        logger.info("Model saved, thanks for waiting!")
+        links = ERCStorage(workspace).save(model=model, ta=training_args)
+        logger.info(f"Model saved into disk {links.pth}")
+        if wandb.run is not None:
+            logger.info("Uploading Metrics & Artifacts to W&B, ...")
+            self._wanb_upload_artifact(model_name=model_name, links=links)
+            wandb.finish()
+            logger.info("W&B run marked as completed.")
         return model_name, model
 
     def _create_training_args(
@@ -170,6 +182,13 @@ class ERCTrainer:
             data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
             compute_metrics=ERCMetricCalculator(classifier_loss_fn=classifier_loss_fn),
         )
+
+    def _wanb_upload_artifact(self, model_name: str, links: ERCStorageLinks) -> None:
+        artifact = wandb.Artifact(model_name, type="model")
+        artifact.add_file(str(links.pth))
+        artifact.add_file(str(links.training_args))
+        artifact.add_file(str(links.config))
+        artifact.save()
 
 
 class _ERCHuggingfaceCustomTrainer(transformers.Trainer):
