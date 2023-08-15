@@ -29,7 +29,17 @@ class ERCEvaluator:
         dataset: MeldDataset,
         device: torch.device | None = None,
         batch_size: int = 4,
-    ) -> Dict[str, Any]:
+        output_dict: bool = False,
+    ) -> Dict[str, Any] | None:
+        """
+        Evaluates the model on the given dataset.
+
+        :param dataset: The dataset to evaluate on, usually the test split.
+        :param device: The device to run the data collation on
+        :param batch_size: The size of the batches that will be run against the model
+        :param output_dict: Whether to return the classification report dictionary
+        :return: The classification report dictionary, unless print_only=True
+        """
         if device is not None:
             self.model.to(device)
 
@@ -38,7 +48,7 @@ class ERCEvaluator:
         with torch.no_grad():
             labels, preds = self._collect_labels_and_preds(dataset, device, batch_size)
 
-        return self._report_on_results(emotions, labels, preds)
+        return self._report_on_results(emotions, labels, preds, output_dict)
 
     def _collect_labels_and_preds(self, dataset, device, batch_size) -> Tuple[List[List[int]], List[List[int]]]:
         """
@@ -61,15 +71,22 @@ class ERCEvaluator:
         preds = torch.stack(y_pred, dim=0).argmax(dim=1).tolist()
         return labels, preds
 
-    def _report_on_results(self, emotions, labels, preds) -> Dict[str, Any]:
+    def _report_on_results(
+        self,
+        emotions: List[str],
+        labels: List[List[int]],
+        preds: List[List[int]],
+        output_dict: bool,
+    ) -> Dict[str, Any] | None:
         """
         Prints the classification report and returns the report dictionary.
 
         :param emotions: The list of emotions
         :param labels: The true labels
         :param preds: The predicted labels
+        :param output_dict: Whether to return the classification report dictionary
         :return: The classification report dictionary
         """
-        report_dict = classification_report(y_true=labels, y_pred=preds, target_names=emotions, output_dict=True)
         print(classification_report(y_true=labels, y_pred=preds, target_names=emotions))
-        return report_dict
+        if output_dict:
+            return classification_report(y_true=labels, y_pred=preds, target_names=emotions, output_dict=True)

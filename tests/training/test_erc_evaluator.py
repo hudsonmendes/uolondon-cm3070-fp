@@ -21,38 +21,42 @@ class TestERCEvaluator(unittest.TestCase):
         self.dataset = MeldDataset(pathlib.Path("tests/fixtures/sample.csv"))
 
     def test_evaluate_returns_report_dict(self):
-        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4)
+        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4, output_dict=True)
         self.assertIsInstance(report_dict, dict)
 
+    def test_evaluate_returns_report_none(self):
+        output = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4)
+        self.assertIsNone(output)
+
     def test_evaluate_returns_report_dict_with_correct_keys(self):
-        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4)
+        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4, output_dict=True)
         expected_keys = ["joy", "neutral", "accuracy", "macro avg", "weighted avg"]
         self.assertListEqual(list(report_dict.keys()), expected_keys)
 
     def test_evaluate_returns_report_dict_with_correct_metrics_for_brokendown_metrics(self):
-        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4)
+        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4, output_dict=True)
         metric_groups = self.label_encoder.classes + ["macro avg", "weighted avg"]
         expected_keys = ["precision", "recall", "f1-score", "support"]
         for class_name in metric_groups:
             self.assertListEqual(list(report_dict[class_name].keys()), expected_keys)
 
     def test_evaluate_returns_report_dict_with_single_metric_for_acc(self):
-        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4)
+        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4, output_dict=True)
         self.assertIsInstance(report_dict["accuracy"], float)
 
     def test_evaluate_returns_report_dict_with_correct_breakdown(self):
-        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4)
+        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4, output_dict=True)
         metric_groups = self.label_encoder.classes + ["macro avg", "weighted avg"]
         breakdown_metrics = ["precision", "recall", "f1-score"]
         for metric_group, breakdown_item in itertools.product(metric_groups, breakdown_metrics):
             self.assertIsInstance(report_dict[metric_group][breakdown_item], float)
 
     def test_evaluate_returns_report_dict_with_correct_support_for_classes(self):
-        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4)
+        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4, output_dict=True)
         for metric_group in self.label_encoder.classes:
             self.assertEqual(report_dict[metric_group]["support"], 1)
 
     def test_evaluate_returns_report_dict_with_correct_support_for_aggregated(self):
-        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4)
+        report_dict = self.evaluator.evaluate(dataset=self.dataset, device=self.device, batch_size=4, output_dict=True)
         for metric_group in ["macro avg", "weighted avg"]:
             self.assertEqual(report_dict[metric_group]["support"], 2)
