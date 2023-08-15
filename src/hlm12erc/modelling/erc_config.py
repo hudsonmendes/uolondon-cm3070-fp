@@ -7,6 +7,7 @@ class ERCTextEmbeddingType:
     """Enumerates all available text embedding types for the model."""
 
     GLOVE = "glove"
+    GPT2 = "gpt2"
 
 
 class ERCVisualEmbeddingType:

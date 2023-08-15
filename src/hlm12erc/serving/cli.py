@@ -79,8 +79,8 @@ class ERCCommands:
         """
 
         # My Packages and Modules
-        from hlm12erc.modelling import ERCConfig
-        from hlm12erc.training import ERCConfigLoader, ERCTrainer, MeldDataset
+        from hlm12erc.modelling import ERCConfig, ERCConfigLoader
+        from hlm12erc.training import ERCTrainer, MeldDataset
 
         train_dataset = pathlib.Path(train_dataset) if not isinstance(train_dataset, pathlib.Path) else train_dataset
         valid_dataset = pathlib.Path(valid_dataset) if not isinstance(valid_dataset, pathlib.Path) else valid_dataset

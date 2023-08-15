@@ -5,6 +5,7 @@ from typing import List, Type
 # Third-Party Libraries
 import torch
 import torchtext
+import transformers
 from torch.nn.functional import normalize as l2_norm
 from torch.nn.utils.rnn import pad_sequence
 from torchtext.data.utils import get_tokenizer
@@ -36,6 +37,8 @@ class ERCTextEmbeddings(ERCEmbeddings):
     def resolve_type_from(expression: str) -> Type["ERCTextEmbeddings"]:
         if expression == ERCTextEmbeddingType.GLOVE:
             return ERCGloveTextEmbeddings
+        elif expression == ERCTextEmbeddingType.GPT2:
+            return ERCGpt2TextEmbeddings
         raise ValueError(f"The text embeddings '{expression}' is not supported.")
 
 
@@ -85,3 +88,47 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         Returns the dimensionality of the vectors produced by the embedding transformation.
         """
         return self.hidden_size
+
+
+class ERCGpt2TextEmbeddings(ERCTextEmbeddings):
+    """
+    ERCGpt2TextEmbeddings is a class that implements the text embedding layer
+    using the last hidden state produced by the GPT-2 model prior to the
+    softmax layer, as a form of embedding.
+    """
+
+    def __init__(self, config: ERCConfig) -> None:
+        super().__init__(config=config)
+        self.gpt2_tokenizer = transformers.GPT2Tokenizer.from_pretrained("gpt2")
+        self.gpt2_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+        self.gpt2_model = transformers.GPT2Model.from_pretrained("gpt2")
+        self.gpt2_model.resize_token_embeddings(len(self.gpt2_tokenizer))
+        self.tokenizer_opts = dict(add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+
+    def forward(self, x: List[str]) -> torch.Tensor:
+        """
+        Performs a forward pass through the text embedding layer.
+
+        :param x: The input tensor of shape (batch_size,).
+        :return: The output tensor of shape (batch_size, hidden_size).
+        """
+
+        # encode the input
+        y = self.gpt2_tokenizer.batch_encode_plus(x, **self.tokenizer_opts)
+        attention_mask = y["attention_mask"]
+
+        # extract the representation from the last token
+        y = self.gpt2_model(**y).last_hidden_state
+        last_token_pos = attention_mask.sum(dim=1) - 1
+        y = y[torch.arange(y.size(0)), last_token_pos]
+
+        # normalize the representation
+        y = l2_norm(y, p=2, dim=1)
+        return y
+
+    @property
+    def out_features(self) -> int:
+        """
+        Returns the dimensionality of the vectors produced by the embedding transformation.
+        """
+        return self.gpt2_model.config.hidden_size

@@ -59,3 +59,27 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
+
+
+class TestERCGpt2TextEmbeddings(unittest.TestCase):
+    def setUp(self):
+        config = ERCConfig(modules_text_encoder=ERCTextEmbeddingType.GPT2, classifier_classes=["a", "b"])
+        self.embeddings = ERCTextEmbeddings.resolve_type_from(config.modules_text_encoder)(config=config)
+
+    def tearDown(self):
+        del self.embeddings
+
+    def test_forward_shape(self):
+        input_list = ["here a test sentence", "this is another test sentence"]
+        output_tensor = self.embeddings(input_list)
+        self.assertEqual(output_tensor.shape, (len(input_list), 768))
+
+    def test_out_features(self):
+        self.assertEqual(self.embeddings.out_features, 768)
+
+    def test_forward_normalization(self):
+        input_list = ["here a test sentence", "this is another test sentence"]
+        output_tensor = self.embeddings(input_list)
+        norms = torch.norm(output_tensor, dim=1)
+        for norm in norms:
+            self.assertAlmostEqual(norm.item(), 1.0, places=5)
