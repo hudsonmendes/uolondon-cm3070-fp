@@ -1,5 +1,8 @@
 classifier_name: baseline
 classifier_loss_fn: cce
+classifier_learning_rate: 0.00005
+classifier_weight_decay: 0.1
+classifier_warmup_steps: 500
 classifier_classes:
   - anger
   - disgust

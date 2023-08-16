@@ -1,6 +1,6 @@
 classifier_name: e01-gpt2
 classifier_loss_fn: cce
-classifier_learning_rate: 0.00005
+classifier_learning_rate: 0.01
 classifier_weight_decay: 0.1
 classifier_warmup_steps: 5
 classifier_classes:

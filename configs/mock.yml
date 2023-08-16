@@ -1,5 +1,8 @@
 classifier_name: mock
 classifier_loss_fn: cce
+classifier_learning_rate: 5e-5
+classifier_weight_decay: 1e-1
+classifier_warmup_steps: 5
 classifier_classes:
   - fear
   - neutral

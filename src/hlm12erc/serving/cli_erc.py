@@ -13,17 +13,17 @@ class ERCCommands:
         train_dataset: pathlib.Path | str,
         valid_dataset: pathlib.Path | str,
         n_epochs: int,
-        batch_size: int = 16,
+        batch_size: int,
         out: pathlib.Path | str | None = None,
     ) -> None:
         """
         Trains the emotion recognition classifier on the train and validation datasets.
 
+        :param config: The path to the config file, usually a file within `./config`.
         :param train_dataset: The path to the train dataset.
         :param valid_dataset: The path to the validation dataset.
         :param n_epochs: The number of epochs to train for.
-        :param batch_size: The batch size to use for training, defaults to 16.
-        :param config: The path to the config file, defaults to the default settings
+        :param batch_size: The batch size to use for training.
         :param out: The path to save the model to, defaults to './target'
         """
         # My Packages and Modules

@@ -55,6 +55,9 @@ class ERCConfig:
 
     classifier_classes: List[str]
     classifier_name: str = "untagged"
+    classifier_learning_rate: float = 5e-5
+    classifier_weight_decay: float = 0.1
+    classifier_warmup_steps: int = 500
     classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
 
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE

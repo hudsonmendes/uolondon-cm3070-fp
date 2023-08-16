@@ -30,17 +30,17 @@
             "args": [
                 "erc",
                 "train",
+                "--config", "./configs/e01-gpt2.yml",
                 "--train_dataset", "./data/sample.csv",
                 "--valid_dataset", "./data/sample.csv",
-                "--n_epochs", "5",
-                "--batch_size", "8",
-                "--config", "./configs/e01-gpt2.yml",
+                "--n_epochs", "10",
+                "--batch_size", "4",
                 "--out", "./target",
             ],
             "env": {
                 "WANDB_PROJECT": "hlm12erc",
             },
-            "justMyCode": false
+            "justMyCode": true
         },
     ]
 }
