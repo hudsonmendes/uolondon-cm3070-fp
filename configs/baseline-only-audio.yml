@@ -1,4 +1,4 @@
-classifier_name: baseline
+classifier_name: baseline-only-audio
 classifier_loss_fn: cce
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
