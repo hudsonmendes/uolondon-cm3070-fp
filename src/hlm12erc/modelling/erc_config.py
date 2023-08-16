@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 class ERCTextEmbeddingType:
     """Enumerates all available text embedding types for the model."""
 
+    NONE = "none"
     GLOVE = "glove"
     GPT2 = "gpt2"
 
@@ -13,12 +14,14 @@ class ERCTextEmbeddingType:
 class ERCVisualEmbeddingType:
     """Enumerates all available visual embedding types for the model."""
 
+    NONE = "none"
     RESNET50 = "resnet50"
 
 
 class ERCAudioEmbeddingType:
     """Enumerates all available audio embedding types for the model."""
 
+    NONE = "none"
     WAVEFORM = "waveform"
 
 

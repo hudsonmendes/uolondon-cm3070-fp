@@ -44,6 +44,8 @@ class ERCAudioEmbeddings(ERCEmbeddings):
         """
         if expression == ERCAudioEmbeddingType.WAVEFORM:
             return ERCRawAudioEmbeddings
+        elif expression == ERCAudioEmbeddingType.NONE:
+            return lambda _: None
         raise ValueError(f"Unknown audio embedding type: {expression}")
 
 

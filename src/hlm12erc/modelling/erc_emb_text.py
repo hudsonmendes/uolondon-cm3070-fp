@@ -39,6 +39,8 @@ class ERCTextEmbeddings(ERCEmbeddings):
             return ERCGloveTextEmbeddings
         elif expression == ERCTextEmbeddingType.GPT2:
             return ERCGpt2TextEmbeddings
+        elif expression == ERCTextEmbeddingType.NONE:
+            return lambda _: None
         raise ValueError(f"The text embeddings '{expression}' is not supported.")
 
 

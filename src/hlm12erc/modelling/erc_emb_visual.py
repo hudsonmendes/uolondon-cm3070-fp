@@ -34,6 +34,8 @@ class ERCVisualEmbeddings(ERCEmbeddings):
     def resolve_type_from(expression: str) -> type["ERCVisualEmbeddings"]:
         if expression == ERCVisualEmbeddingType.RESNET50:
             return ERCResNet50VisualEmbeddings
+        elif expression == ERCVisualEmbeddingType.NONE:
+            return lambda _: None
         raise ValueError(f"The visual embedding '{expression}' is not supported.")
 
 
