@@ -30,7 +30,7 @@
             "args": [
                 "erc",
                 "train",
-                "--config", "./configs/e01-gpt2.yml",
+                "--config", "./configs/e01-gpt2-lr01.yml",
                 "--train_dataset", "./data/sample.csv",
                 "--valid_dataset", "./data/sample.csv",
                 "--n_epochs", "10",
