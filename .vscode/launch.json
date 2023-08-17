@@ -30,15 +30,16 @@
             "args": [
                 "erc",
                 "train",
-                "--config", "./configs/baseline-loss-dice.yml",
+                "--config", "./configs/baseline.yml",
                 "--train_dataset", "./data/sample.csv",
                 "--valid_dataset", "./data/sample.csv",
-                "--n_epochs", "10",
+                "--n_epochs", "1",
                 "--batch_size", "4",
                 "--out", "./target",
             ],
             "env": {
-                "WANDB_PROJECT": "hlm12erc",
+                "WANDB_PROJECT": "hlm12erc_local",
+                "WANDB_MODE": "offline"
             },
             "justMyCode": true
         },

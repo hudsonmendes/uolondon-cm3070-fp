@@ -59,3 +59,7 @@ class TestERCMetricCalculator(unittest.TestCase):
         output = self.metric_calculator(self.eval_pred)
         expected = 0.375
         self.assertAlmostEqual(output["f1_weighted"], expected, places=5)
+
+    def test_determine_loss_has_no_grad_decorator(self):
+        loss_fn = self.metric_calculator._determine_loss
+        self.assertTrue(hasattr(loss_fn, "__wrapped__"))

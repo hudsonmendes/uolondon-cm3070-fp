@@ -254,7 +254,7 @@ class _ERCHuggingfaceCustomTrainer(transformers.Trainer):
         """
         metrics = dict(loss=loss)
         if self.custom_metric_computation is not None:
-            eval_pred = transformers.EvalPrediction(predictions=labels, label_ids=outputs.labels)
+            eval_pred = transformers.EvalPrediction(predictions=outputs.labels, label_ids=labels)
             custom_metrics = self.custom_metric_computation(eval_pred)
             metrics.update(custom_metrics)
         return metrics

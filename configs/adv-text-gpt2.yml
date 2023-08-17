@@ -1,4 +1,4 @@
-classifier_name: baseline-only-visual
+classifier_name: adv-text-gpt2
 classifier_loss_fn: cce
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
@@ -12,13 +12,13 @@ classifier_classes:
   - sadness
   - surprise
 
-modules_text_encoder: none
+modules_text_encoder: gpt2
 modules_visual_encoder: resnet50
-modules_audio_encoder: none
+modules_audio_encoder: waveform
 modules_fusion: concat
 
-text_in_features: 50
-text_out_features: 50
+text_in_features: -1 # defined by tokenizer & padding
+text_out_features: -1 # defined by the encoder output hidden state
 
 audio_in_features: 150000 # truncates the waveform after 150K samples
 audio_out_features: 32

@@ -4,13 +4,12 @@ from typing import Optional, Type
 
 # Third-Party Libraries
 import torch
-import torch.nn.functional as F
 
 # Local Folders
 from .erc_config import ERCConfig, ERCLossFunctions
 
 
-class ERCLoss(ABC):
+class ERCLoss(ABC, torch.nn.Module):
     """
     Defines the contract of loss functions for ERC models.
 
@@ -26,7 +25,7 @@ class ERCLoss(ABC):
         self.config = config
 
     @abstractmethod
-    def __call__(
+    def forward(
         self,
         y_pred: torch.Tensor,
         y_true: torch.Tensor | None = None,
@@ -46,6 +45,8 @@ class ERCLoss(ABC):
             return CategoricalCrossEntropyLoss
         elif expression == ERCLossFunctions.DICE_COEFFICIENT:
             return DiceCoefficientLoss
+        elif expression == ERCLossFunctions.FOCAL_MULTI_CLASS_LOG:
+            return FocalMutiClassLogLoss
         else:
             raise ValueError(f"Unknown ERC Loss type {expression}")
 
@@ -56,10 +57,10 @@ class CategoricalCrossEntropyLoss(ERCLoss):
     """
 
     def __init__(self, config: ERCConfig):
-        super().__init__(config=None)
+        super().__init__(config=config)
         self.loss = torch.nn.CrossEntropyLoss()
 
-    def __call__(
+    def forward(
         self,
         y_pred: torch.Tensor,
         y_true: Optional[torch.Tensor] = None,
@@ -73,13 +74,18 @@ class CategoricalCrossEntropyLoss(ERCLoss):
 class DiceCoefficientLoss(ERCLoss):
     """
     Dice Coefficient Loss function for ERC models.
+
+    Reference:
+    >>> Peiqing Lv, Jinke Wang, Xiangyang Zhang, Chunlei Ji, Lubiao Zhou, and Haiying Wang. 2022.
+    ... An improved residual U-Net with morphological-based loss function for automatic liver
+    ... segmentation in computed tomography. Math. Biosci. Eng. 19, 2 (January 2022), 1426–1447.
     """
 
     def __init__(self, config: ERCConfig):
         super().__init__(config=config)
         self.epsilon = config.classifier_epsilon
 
-    def __call__(
+    def forward(
         self,
         y_pred: torch.Tensor,
         y_true: Optional[torch.Tensor] = None,
@@ -105,3 +111,49 @@ class DiceCoefficientLoss(ERCLoss):
 
         # Average Dice coefficient across all classes and compute the loss
         return 1 - dice_class.mean()
+
+
+class FocalMutiClassLogLoss(ERCLoss):
+    """
+    Focal Multi-class Log Loss function for ERC models.
+
+    Reference:
+    >>> Tsung-Yi Lin, Priya Goyal, Ross Girshick, Kaiming He, and Piotr Dollár. 2020.
+    ... Focal Loss for Dense Object Detection. IEEE Transactions on Pattern Analysis
+    ... and Machine Intelligence 42, 2 (2020), 318–327. DOI:https://doi.org/10.1109/TPAMI.2018.2858826
+    """
+
+    def __init__(self, config: ERCConfig):
+        super().__init__(config=config)
+        alpha = config.losses_focal_alpha
+        gamma = config.losses_focal_gamma
+        reduction = config.losses_focal_reduction
+        epsilon = config.classifier_epsilon
+        if not (isinstance(alpha, list) and len(alpha) == len(config.classifier_classes)):
+            raise ValueError("alpha must be a list of length equal to the number of classes")
+        self.alpha = torch.tensor(alpha)
+        self.gamma = gamma if gamma else 2.0
+        self.reduction = reduction if reduction else "mean"
+        self.epsilon = epsilon
+
+    def forward(
+        self,
+        y_pred: torch.Tensor,
+        y_true: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """
+        Calculates and returns the loss given the predicted and true labels
+        using the Focal Cross Entropy Loss function, which is defined as:
+        >>> -alpha * (1 - p)^gamma * log(p)
+
+        :param y_pred: Predicted labels, already converted to a batch of softmax probability distributions
+        :param y_true: True labels
+        :return: Loss value
+        """
+        assert y_true is not None
+        probs = torch.sum(y_pred * y_true, dim=1)
+        safe_probs = torch.clamp(probs, min=self.epsilon, max=1.0 - self.epsilon)
+        alpha = self.alpha[y_true.argmax(dim=1)]
+        focal_weights = alpha * (1.0 - safe_probs).pow(self.gamma)
+        loss = focal_weights * -torch.log(safe_probs)
+        return loss.mean() if self.reduction == "mean" else loss.sum()

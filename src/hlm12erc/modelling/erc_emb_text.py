@@ -44,10 +44,17 @@ class ERCTextEmbeddings(ERCEmbeddings):
         raise ValueError(f"The text embeddings '{expression}' is not supported.")
 
 
+# Third-Party Libraries
+import torch
+from torch.nn import Embedding
+from torch.nn import functional as F
+from torch.nn.utils.rnn import pad_sequence
+
+
 class ERCGloveTextEmbeddings(ERCTextEmbeddings):
     """
-    ERCGloveTextEmbeddings is a class that implements the text embedding layer using GloVe embeddings
-    and then the mean of the embeddings for each token in the text.
+    ERCGloveTextEmbeddings is a class that implements the text embedding layer using trainable GloVe embeddings
+    and then computes the mean of the embeddings for each token in the text.
 
     Example:
         >>> from hlm12erc.modelling import ERCConfig, ERCTextEmbeddingType
@@ -67,7 +74,12 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         super().__init__(config=config)
         self.hidden_size = config.text_out_features
         self.tokenizer = get_tokenizer("basic_english", language="en")
-        self.glove = torchtext.vocab.GloVe(name="6B", dim=config.text_out_features)
+        glove = torchtext.vocab.GloVe(name="6B", dim=config.text_out_features)
+        self.vocab_size, self.embedding_dim = glove.vectors.shape
+        # Create the embedding layer with GloVe vectors as initial weights and set them as trainable
+        self.embeddings = Embedding(self.vocab_size, self.embedding_dim, _weight=glove.vectors)
+        self.embeddings.weight.requires_grad = True  # Make the embeddings trainable
+        self.token_to_idx = {token: idx for idx, token in enumerate(glove.itos)}
 
     def forward(self, x: List[str]) -> torch.Tensor:
         """
@@ -76,12 +88,14 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         :param x: The input tensor of shape (batch_size,).
         :return: The output tensor of shape (batch_size, hidden_size).
         """
-        t = [self.tokenizer(text) for text in x]
-        v = [[self.glove.get_vecs_by_tokens(t, lower_case_backup=True) for t in seq] for seq in t]
+        s = [self.tokenizer(text) for text in x]
+        t = [[self.token_to_idx.get(token, -1) for token in seq] for seq in s]
+        t = [[tid for tid in seq if tid >= 0] for seq in t]
+        v = [[self.embeddings(torch.tensor(tid)) for tid in seq] for seq in t]
         v = [[vii for vii in vi if torch.any(vii != 0)] for vi in v]
-        y = pad_sequence([torch.stack(seq) for seq in v], batch_first=True)
+        y = pad_sequence([torch.stack(seq).squeeze() for seq in v], batch_first=True)
         y = torch.mean(y, dim=1)
-        y = l2_norm(y, p=2, dim=1)
+        y = F.normalize(y, p=2, dim=1)
         return y
 
     @property

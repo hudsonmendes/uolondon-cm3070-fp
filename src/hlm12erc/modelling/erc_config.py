@@ -36,6 +36,7 @@ class ERCLossFunctions:
 
     CATEGORICAL_CROSS_ENTROPY = "cce"
     DICE_COEFFICIENT = "dice"
+    FOCAL_MULTI_CLASS_LOG = "focal"
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,10 @@ class ERCConfig:
     classifier_warmup_steps: int = 500
     classifier_epsilon: float = 1e-8
     classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
+
+    losses_focal_alpha: List[float] | None = None
+    losses_focal_gamma: float | None = None
+    losses_focal_reduction: str | None = None
 
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
     modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET50

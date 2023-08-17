@@ -1,6 +1,6 @@
-classifier_name: baseline-loss-dice-lr-5e-4
+classifier_name: losses-dice-lr-5e-3
 classifier_loss_fn: dice
-classifier_learning_rate: 0.0005
+classifier_learning_rate: 0.005
 classifier_weight_decay: 0.1
 classifier_warmup_steps: 500
 classifier_classes:

@@ -1,6 +1,5 @@
 # Python Built-in Modules
 import unittest
-from unittest import mock
 
 # Third-Party Libraries
 import torch
@@ -15,10 +14,6 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         self.config = ERCConfig(text_in_features=50, text_out_features=50, classifier_classes=["a", "b"])
         self.embeddings = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GLOVE)(config=self.config)
 
-    def tearDown(self):
-        del self.embeddings
-        mock.patch.stopall()
-
     def test_forward_shape(self):
         input_list = ["here a test sentence", "this is another test sentence"]
         output_tensor = self.embeddings(input_list)
@@ -27,31 +22,15 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
     def test_out_features(self):
         self.assertEqual(self.embeddings.out_features, self.config.text_out_features)
 
-    @mock.patch("hlm12erc.modelling.erc_emb_text.torchtext.vocab.GloVe.get_vecs_by_tokens")
-    def test_forward_oov_are_not_counted(self, get_vecs_by_tokens_mock: mock.MagicMock):
-        def get_vecs_by_tokens_fn(x, lower_case_backup: bool = False):
-            return torch.ones((3,)) if x == "term" else torch.zeros((3,))
+    def test_forward_oov_term_not_counted(self):
+        tensor_without_oov = self.embeddings(["ones halves"])
+        tensor_with_oov = self.embeddings(["ones ########################################################### halves"])
+        self.assertEqual(tensor_without_oov.mean().item(), tensor_with_oov.mean().item())
 
-        get_vecs_by_tokens_mock.side_effect = get_vecs_by_tokens_fn
-        input_list = ["term oov term"]
-        output_tensor = self.embeddings(input_list)
-        self.assertEqual(
-            output_tensor.tolist(),
-            [[0.5773502588272095, 0.5773502588272095, 0.5773502588272095]],
-        )  # [1., 1., 1.] vector, but normalised
-
-    @mock.patch("hlm12erc.modelling.erc_emb_text.torchtext.vocab.GloVe.get_vecs_by_tokens")
-    def test_forward_mean(self, get_vecs_by_tokens_mock: mock.MagicMock):
-        def get_vecs_by_tokens_fn(x, lower_case_backup: bool = False):
-            return torch.ones((3,)) if x == "ones" else (torch.ones((3,)) / 2)
-
-        get_vecs_by_tokens_mock.side_effect = get_vecs_by_tokens_fn
+    def test_forward_mean(self):
         input_list = ["ones halves"]
         output_tensor = self.embeddings(input_list)
-        self.assertEqual(
-            output_tensor.tolist(),
-            [[0.5773503184318542, 0.5773503184318542, 0.5773503184318542]],
-        )  # [0.75, 0.75, 0.75] vector, but normalised
+        self.assertEqual(output_tensor.mean().item(), 0.02751464769244194)
 
     def test_forward_normalization(self):
         input_list = ["here a test sentence", "this is another test sentence"]

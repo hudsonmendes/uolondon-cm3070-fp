@@ -52,6 +52,7 @@ class ERCMetricCalculator:
         labels = torch.from_numpy(labels) if isinstance(labels, np.ndarray) else labels
         return pred, labels
 
+    @torch.no_grad()
     def _determine_loss(self, pred: torch.Tensor, labels: torch.Tensor):
         return self.loss_fn(y_pred=pred, y_true=labels) if self.loss_fn is not None else None
 
