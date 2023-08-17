@@ -78,7 +78,7 @@ class ERCModel(torch.nn.Module):
         )
         self.softmax = torch.nn.Softmax(dim=1)
         # Loss Function
-        self.loss = ERCLoss.resolve_type_from(config.classifier_loss_fn)()
+        self.loss = ERCLoss.resolve_type_from(config.classifier_loss_fn)(config)
 
     @property
     def device(self) -> torch.device:
