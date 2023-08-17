@@ -96,9 +96,9 @@ class DiceCoefficientLoss(ERCLoss):
         """
         # Compute TP, FP, and FN for each class
         assert y_true is not None
-        TP = (y_pred * y_true).sum(dim=1)
-        FP = (y_pred * (1 - y_true)).sum(dim=1)
-        FN = ((1 - y_pred) * y_true).sum(dim=1)
+        TP = (y_pred * y_true).sum(dim=0)
+        FP = (y_pred * (1 - y_true)).sum(dim=0)
+        FN = ((1 - y_pred) * y_true).sum(dim=0)
 
         # Compute Dice coefficient for each class
         dice_class = (2 * TP) / (2 * TP + FP + FN + self.epsilon)

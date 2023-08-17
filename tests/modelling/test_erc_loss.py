@@ -31,5 +31,5 @@ class TestDiceCoefficientLoss(unittest.TestCase):
         y_pred = torch.tensor([[0.1, 0.9], [0.8, 0.2], [0.4, 0.6]])
         y_true = torch.tensor([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]])
         loss_value = self.loss(y_pred, y_true)
-        expected_loss_value = torch.tensor(0.5666666030883789)
+        expected_loss_value = torch.tensor(0.6976743936538696)
         self.assertAlmostEqual(loss_value.item(), expected_loss_value.item(), places=4)
