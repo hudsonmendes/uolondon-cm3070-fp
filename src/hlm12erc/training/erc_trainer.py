@@ -183,14 +183,13 @@ class ERCTrainer:
         :param config: ERCConfig object containing the model configuration.
         :return: transformers.Trainer object to train the model.
         """
-        classifier_loss_fn = self.config.classifier_loss_fn if self.config else None
         return _ERCHuggingfaceCustomTrainer(
             model=model,
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
-            compute_metrics=ERCMetricCalculator(classifier_loss_fn=classifier_loss_fn),
+            compute_metrics=ERCMetricCalculator(config=config),
         )
 
     def _wanb_upload_artifact(self, model_name: str, links: ERCStorageLinks) -> None:
