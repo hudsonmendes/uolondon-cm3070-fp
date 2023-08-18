@@ -150,7 +150,10 @@ class FocalMutiClassLogLoss(ERCLoss):
         :param y_true: True labels
         :return: Loss value
         """
+        # ensure forware pre-reqs
         assert y_true is not None
+        self.alpha = self.alpha if self.alpha.device == y_pred.device else self.alpha.to(y_pred.device)
+        # compute the loss
         probs = torch.sum(y_pred * y_true, dim=1)
         safe_probs = torch.clamp(probs, min=self.epsilon, max=1.0 - self.epsilon)
         alpha = self.alpha[y_true.argmax(dim=1)]

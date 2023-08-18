@@ -20,6 +20,8 @@ class ERCEmbeddings(ABC, torch.nn.Module):
         >>>     pass
     """
 
+    _device: torch.device | None
+
     def __init__(self, config: ERCConfig, *args, **kwargs) -> None:
         """
         Contract for the constructor of classes implementing
@@ -30,7 +32,22 @@ class ERCEmbeddings(ABC, torch.nn.Module):
         :param config: the configuration of the model
         """
         super(ERCEmbeddings, self).__init__(*args, **kwargs)
+        self._device = None
         assert config is not None
+
+    def cache_or_get_same_device_as(self, module: torch.nn.Module) -> torch.device | None:
+        """
+        Unless self._device has a value `next(module.parameters()).device` and
+        caches it as self._device, then returns self._device.
+
+        :param module: the module to get the device from
+        :return: the device of the module
+        """
+        if self._device is None:
+            next_param = next(module.parameters(), None)
+            if next_param is not None:
+                self._device = next_param.device
+        return self._device
 
     @abstractproperty
     def out_features(self) -> int:
