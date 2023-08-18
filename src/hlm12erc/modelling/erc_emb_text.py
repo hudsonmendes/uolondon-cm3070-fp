@@ -64,6 +64,7 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
     """
 
     hidden_size: int
+    _device: torch.device | None
 
     def __init__(self, config: ERCConfig) -> None:
         """
@@ -80,6 +81,7 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         self.embeddings = Embedding(self.vocab_size, self.embedding_dim, _weight=glove.vectors)
         self.embeddings.weight.requires_grad = True  # Make the embeddings trainable
         self.token_to_idx = {token: idx for idx, token in enumerate(glove.itos)}
+        self._device = None
 
     def forward(self, x: List[str]) -> torch.Tensor:
         """
@@ -88,10 +90,14 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         :param x: The input tensor of shape (batch_size,).
         :return: The output tensor of shape (batch_size, hidden_size).
         """
-        s = [self.tokenizer(text) for text in x]
-        t = [[self.token_to_idx.get(token, -1) for token in seq] for seq in s]
-        t = [[tid for tid in seq if tid >= 0] for seq in t]
-        v = [[self.embeddings(torch.tensor(tid)) for tid in seq] for seq in t]
+        if self._device is None:
+            self._device = next(self.embeddings.parameters()).device
+        seqs = [self.tokenizer(text) for text in x]
+        tidss = [[self.token_to_idx.get(token, -1) for token in seq] for seq in seqs]
+        ttnss = [[torch.tensor(tid) for tid in tids if tid >= 0] for tids in tidss]
+        if self._device is not None:
+            ttnss = [[ttn.to(self._device) for ttn in ttns] for ttns in ttnss]
+        v = [[self.embeddings(ttn) for ttn in ttns] for ttns in ttnss]
         v = [[vii for vii in vi if torch.any(vii != 0)] for vi in v]
         y = pad_sequence([torch.stack(seq).squeeze() for seq in v], batch_first=True)
         y = torch.mean(y, dim=1)

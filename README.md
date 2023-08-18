@@ -39,6 +39,26 @@ ML infrastructure is being used.
 
 From this point ownwards, the amount of choices you're gonna have to make is far too large for a recipe, but the above should get you started.
 
+## Offline Tests
+
+```bash
+export WANDB_MODE=offline
+
+python -m hlm12erc erc  train --config ./configs/baseline.yml             --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+python -m hlm12erc erc  train --config ./configs/baseline-a.yml           --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+python -m hlm12erc erc  train --config ./configs/baseline-t.yml           --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+python -m hlm12erc erc  train --config ./configs/baseline-v.yml           --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+
+python -m hlm12erc erc  train --config ./configs/losses-dice.yml          --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+python -m hlm12erc erc  train --config ./configs/losses-dice-lr-5e-3.yml  --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+python -m hlm12erc erc  train --config ./configs/losses-dice-lr-5e-4.yml  --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+
+python -m hlm12erc erc  train --config ./configs/losses-focal.yml         --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+python -m hlm12erc erc  train --config ./configs/losses-focal-lr-5e-3.yml --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+python -m hlm12erc erc  train --config ./configs/losses-focal-lr-5e-4.yml --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+
+python -m hlm12erc erc  train --config ./configs/adv-text-gpt2.yml        --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+```
 
 ## ETL
 
