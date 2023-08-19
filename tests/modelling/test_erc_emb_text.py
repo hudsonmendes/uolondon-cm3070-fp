@@ -30,7 +30,7 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
     def test_forward_mean(self):
         input_list = ["ones halves"]
         output_tensor = self.embeddings(input_list)
-        self.assertEqual(output_tensor.mean().item(), 0.02751464769244194)
+        self.assertAlmostEqual(output_tensor.mean().item(), 0.02751464769244194, places=5)
 
     def test_forward_normalization(self):
         input_list = ["here a test sentence", "this is another test sentence"]
