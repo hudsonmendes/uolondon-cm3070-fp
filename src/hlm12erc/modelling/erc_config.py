@@ -23,6 +23,7 @@ class ERCAudioEmbeddingType:
 
     NONE = "none"
     WAVEFORM = "waveform"
+    WAV2VEC2 = "wav2vec2"
 
 
 class ERCFusionTechnique:
