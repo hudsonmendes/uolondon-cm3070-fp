@@ -1,6 +1,6 @@
-classifier_name: baseline
-classifier_loss_fn: cce
-classifier_learning_rate: 0.00005
+classifier_name: losses-focal-lr-5e-2
+classifier_loss_fn: focal
+classifier_learning_rate: 0.05
 classifier_weight_decay: 0.1
 classifier_warmup_steps: 500
 classifier_classes:
@@ -11,6 +11,17 @@ classifier_classes:
   - neutral
   - sadness
   - surprise
+
+losses_focal_gamma: 2.0
+losses_focal_reduction: mean
+losses_focal_alpha:
+ -  9.01 # anger    => 9989/1109
+ - 36.86 # disgust  => 9989/271
+ - 37.27 # fear     => 9989/268
+ -  5.73 # joy      => 9989/1743
+ -  2.12 # neutral  => 9989/4710
+ - 14.63 # sadness  => 9989/683
+ -  8.29 # surprise => 9989/1205
 
 modules_text_encoder: glove
 modules_visual_encoder: resnet50

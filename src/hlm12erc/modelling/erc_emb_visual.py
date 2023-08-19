@@ -1,5 +1,6 @@
 # Python Built-in Modules
 from abc import abstractmethod
+from typing import Callable, Optional, Type
 
 # Third-Party Libraries
 import torch
@@ -31,9 +32,13 @@ class ERCVisualEmbeddings(ERCEmbeddings):
         raise NotImplementedError("The method 'forward' must be implemented.")
 
     @staticmethod
-    def resolve_type_from(expression: str) -> type["ERCVisualEmbeddings"]:
+    def resolve_type_from(
+        expression: str,
+    ) -> Type["ERCVisualEmbeddings"] | Callable[[ERCConfig], Optional["ERCVisualEmbeddings"]]:
         if expression == ERCVisualEmbeddingType.RESNET50:
             return ERCResNet50VisualEmbeddings
+        elif expression == ERCVisualEmbeddingType.NONE:
+            return lambda _: None
         raise ValueError(f"The visual embedding '{expression}' is not supported.")
 
 

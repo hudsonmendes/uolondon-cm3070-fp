@@ -30,17 +30,18 @@
             "args": [
                 "erc",
                 "train",
-                "--train_dataset", "./data/train.csv",
-                "--valid_dataset", "./data/valid.csv",
-                "--n_epochs", "5",
-                "--batch_size", "8",
                 "--config", "./configs/baseline.yml",
+                "--train_dataset", "./data/sample.csv",
+                "--valid_dataset", "./data/sample.csv",
+                "--n_epochs", "1",
+                "--batch_size", "4",
                 "--out", "./target",
             ],
             "env": {
-                "WANDB_PROJECT": "hlm12erc",
+                "WANDB_PROJECT": "hlm12erc_local",
+                "WANDB_MODE": "offline"
             },
-            "justMyCode": false
+            "justMyCode": true
         },
     ]
 }

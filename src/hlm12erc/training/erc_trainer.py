@@ -92,6 +92,9 @@ class ERCTrainer:
             batch_size=batch_size,
             model_name=model_name,
             workspace=workspace,
+            learning_rate=config.classifier_learning_rate,
+            weight_decay=config.classifier_weight_decay,
+            warmup_steps=config.classifier_warmup_steps,
         )
         logger.info(f"TrainingArgs created with {n_epochs} epochs and batch size {batch_size}")
         trainer = self._create_trainer(
@@ -121,6 +124,9 @@ class ERCTrainer:
         batch_size: int,
         model_name: str,
         workspace: pathlib.Path,
+        learning_rate: float,
+        weight_decay: float,
+        warmup_steps: int,
     ) -> transformers.TrainingArguments:
         """
         Create the training arguments for the transformers.Trainer class.
@@ -128,7 +134,10 @@ class ERCTrainer:
         :param n_epochs: Number of epochs to train the model for.
         :param batch_size: Batch size to use for training.
         :param model_name: A representative model name that distiguishes its architecture.
-        :param workspace: Path to the workspace to store the model and logs.\
+        :param workspace: Path to the workspace to store the model and logs.
+        :param learning_rate: Learning rate to use for training.
+        :param weight_decay: Weight decay to use for training.
+        :param warmup_steps: Number of warmup steps to use for training.
         :return: transformers.TrainingArguments object containing the training
         """
         return transformers.TrainingArguments(
@@ -139,8 +148,9 @@ class ERCTrainer:
             num_train_epochs=n_epochs,
             per_device_train_batch_size=batch_size,
             per_device_eval_batch_size=batch_size,
-            warmup_steps=500,
-            weight_decay=0.01,
+            learning_rate=learning_rate,
+            weight_decay=weight_decay,
+            warmup_steps=warmup_steps,
             output_dir=str(workspace / "models"),
             evaluation_strategy="epoch",
             save_strategy="epoch",
@@ -173,14 +183,13 @@ class ERCTrainer:
         :param config: ERCConfig object containing the model configuration.
         :return: transformers.Trainer object to train the model.
         """
-        classifier_loss_fn = self.config.classifier_loss_fn if self.config else None
         return _ERCHuggingfaceCustomTrainer(
             model=model,
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
-            compute_metrics=ERCMetricCalculator(classifier_loss_fn=classifier_loss_fn),
+            compute_metrics=ERCMetricCalculator(config=config),
         )
 
     def _wanb_upload_artifact(self, model_name: str, links: ERCStorageLinks) -> None:
@@ -245,7 +254,7 @@ class _ERCHuggingfaceCustomTrainer(transformers.Trainer):
         """
         metrics = dict(loss=loss)
         if self.custom_metric_computation is not None:
-            eval_pred = transformers.EvalPrediction(predictions=labels, label_ids=outputs.labels)
+            eval_pred = transformers.EvalPrediction(predictions=outputs.labels, label_ids=labels)
             custom_metrics = self.custom_metric_computation(eval_pred)
             metrics.update(custom_metrics)
         return metrics

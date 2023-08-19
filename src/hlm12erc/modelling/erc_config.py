@@ -6,18 +6,22 @@ from typing import Any, Dict, List, Optional, Tuple
 class ERCTextEmbeddingType:
     """Enumerates all available text embedding types for the model."""
 
+    NONE = "none"
     GLOVE = "glove"
+    GPT2 = "gpt2"
 
 
 class ERCVisualEmbeddingType:
     """Enumerates all available visual embedding types for the model."""
 
+    NONE = "none"
     RESNET50 = "resnet50"
 
 
 class ERCAudioEmbeddingType:
     """Enumerates all available audio embedding types for the model."""
 
+    NONE = "none"
     WAVEFORM = "waveform"
 
 
@@ -31,6 +35,8 @@ class ERCLossFunctions:
     """Enumerates all available loss functions for the model."""
 
     CATEGORICAL_CROSS_ENTROPY = "cce"
+    DICE_COEFFICIENT = "dice"
+    FOCAL_MULTI_CLASS_LOG = "focal"
 
 
 @dataclass(frozen=True)
@@ -54,7 +60,15 @@ class ERCConfig:
 
     classifier_classes: List[str]
     classifier_name: str = "untagged"
+    classifier_learning_rate: float = 5e-5
+    classifier_weight_decay: float = 0.1
+    classifier_warmup_steps: int = 500
+    classifier_epsilon: float = 1e-8
     classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
+
+    losses_focal_alpha: List[float] | None = None
+    losses_focal_gamma: float | None = None
+    losses_focal_reduction: str | None = None
 
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
     modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET50
@@ -63,6 +77,7 @@ class ERCConfig:
 
     text_in_features: int = 50  # 300 is the largest model
     text_out_features: int = 50  # must match in_features for GloVe
+    text_limit_to_n_last_tokens: int | None = None  # truncation to most recent dialogue
 
     audio_in_features: int = 100_000  # 300_000 fits the all audio files
     audio_out_features: int = 512

@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, f1_score
 from transformers import EvalPrediction
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_loss import ERCLoss
+from hlm12erc.modelling import ERCConfig, ERCLoss
 
 
 class ERCMetricCalculator:
@@ -19,15 +19,15 @@ class ERCMetricCalculator:
 
     loss_fn: Optional[ERCLoss]
 
-    def __init__(self, classifier_loss_fn: Optional[str] = None) -> None:
+    def __init__(self, config: ERCConfig) -> None:
         """
         Contructs a new ERCMetricCalculator.
 
         :param classifier_loss_fn: The name of the loss function to use for the classifier.
         """
         self.loss_fn = None
-        if classifier_loss_fn:
-            self.loss_fn = ERCLoss.resolve_type_from(classifier_loss_fn)()
+        if config is not None and config.classifier_loss_fn is not None:
+            self.loss_fn = ERCLoss.resolve_type_from(config.classifier_loss_fn)(config)
 
     def __call__(self, eval_pred: EvalPrediction) -> Dict[str, Any]:
         """
@@ -52,6 +52,7 @@ class ERCMetricCalculator:
         labels = torch.from_numpy(labels) if isinstance(labels, np.ndarray) else labels
         return pred, labels
 
+    @torch.no_grad()
     def _determine_loss(self, pred: torch.Tensor, labels: torch.Tensor):
         return self.loss_fn(y_pred=pred, y_true=labels) if self.loss_fn is not None else None
 

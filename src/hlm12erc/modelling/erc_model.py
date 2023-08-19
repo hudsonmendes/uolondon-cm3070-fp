@@ -24,8 +24,16 @@ class ERCModel(torch.nn.Module):
     Emotion Recognition in Converations (or "ERC")
     """
 
-    label_encoder: ERCLabelEncoder
     config: ERCConfig
+    label_encoder: ERCLabelEncoder
+    text_embeddings: ERCTextEmbeddings | None
+    visual_embeddings: ERCVisualEmbeddings | None
+    audio_embeddings: ERCAudioEmbeddings | None
+    fusion_network: ERCFusion
+    feedforward: ERCFeedForward
+    logits: torch.nn.Linear
+    softmax: torch.nn.Softmax
+    loss: ERCLoss
 
     def __init__(
         self,
@@ -43,6 +51,7 @@ class ERCModel(torch.nn.Module):
         super(ERCModel, self).__init__()
         # Hyperparameters
         self.config = config
+        # One-Hot Encoder (for labels)
         self.label_encoder = label_encoder
         # Embedding Modules
         self.text_embeddings = ERCTextEmbeddings.resolve_type_from(config.modules_text_encoder)(config)
@@ -50,7 +59,11 @@ class ERCModel(torch.nn.Module):
         self.audio_embeddings = ERCAudioEmbeddings.resolve_type_from(config.modules_audio_encoder)(config)
         # Fusion Network
         self.fusion_network = ERCFusion.resolve_type_from(config.modules_fusion)(
-            embeddings=[self.text_embeddings, self.visual_embeddings, self.audio_embeddings],
+            embeddings=[
+                embedding
+                for embedding in [self.text_embeddings, self.visual_embeddings, self.audio_embeddings]
+                if embedding is not None
+            ],
             config=config,
         )
         # Feed Forward Transformation
@@ -65,9 +78,7 @@ class ERCModel(torch.nn.Module):
         )
         self.softmax = torch.nn.Softmax(dim=1)
         # Loss Function
-        self.loss = ERCLoss.resolve_type_from(config.classifier_loss_fn)()
-        # One-Hot Encoder (for labels)
-        self.label_encoder = label_encoder
+        self.loss = ERCLoss.resolve_type_from(config.classifier_loss_fn)(config)
 
     @property
     def device(self) -> torch.device:
@@ -101,14 +112,43 @@ class ERCModel(torch.nn.Module):
         :return: ERCOutput object containing the loss, predicted labels, logits, hidden states and attentions
         """
 
-        y_text = self.text_embeddings(x_text).to(self.device)
-        y_visual = self.visual_embeddings(x_visual).to(self.device)
-        y_audio = self.audio_embeddings(x_audio).to(self.device)
-        y_fusion = self.fusion_network(y_text, y_visual, y_audio)
+        # processing each modality independently, based on the presence
+        # of the respective encoder module, which can be set to None in the
+        # ERCConfig object.
+        y_embeddings = []
+        if self.text_embeddings is not None:
+            y_text = self.text_embeddings(x_text).to(self.device)
+            y_embeddings.append(y_text)
+        if self.visual_embeddings is not None:
+            y_visual = self.visual_embeddings(x_visual).to(self.device)
+            y_embeddings.append(y_visual)
+        if self.audio_embeddings is not None:
+            y_audio = self.audio_embeddings(x_audio).to(self.device)
+            y_embeddings.append(y_audio)
+
+        # if the model is on a GPU, we need to move the embeddings to the GPU as well
+        if self.device is not None:
+            new_y_embeddings = []
+            for y_embedding in y_embeddings:
+                new_y_embeddings.append(y_embedding.to(self.device))
+            y_embeddings = new_y_embeddings
+
+        # fuse the embeddings from the different modalities
+        y_fusion = self.fusion_network(*y_embeddings)
         y_attn = None
-        y_transformed = self.feedforward(y_fusion).to(self.device)
+
+        # transform the fused embeedings into the logits
+        y_transformed = self.feedforward(y_fusion)
+        if self.device is not None:
+            y_transformed = y_transformed.to(self.device)
         y_logits = self.logits(y_transformed)
+
+        # transform the logits into the softmax probability distribution
         y_pred = self.softmax(y_logits)
+
+        # if the true labels are provided, calculate the loss
         loss = self.loss(y_pred, y_true) if y_true is not None else None
+
+        # return the output as a dictionary or tuple
         output = ERCOutput(loss=loss, labels=y_pred, logits=y_logits, hidden_states=y_transformed, attentions=y_attn)
         return output if return_dict else output.to_tuple()

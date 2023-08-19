@@ -19,9 +19,9 @@ from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreproce
 
 class TestERCModel(unittest.TestCase):
     def setUp(self):
-        ff_layers = [ERCConfigFeedForwardLayer(out_features=7, dropout=0.5)]
+        self.ff_layers = [ERCConfigFeedForwardLayer(out_features=7, dropout=0.5)]
         self.classes = ["neutral", "surprise", "fear", "sadness", "joy", "disgust", "anger"]
-        self.config = ERCConfig(feedforward_layers=ff_layers, classifier_classes=self.classes)
+        self.config = ERCConfig(feedforward_layers=self.ff_layers, classifier_classes=self.classes)
 
         self.label_encoder = ERCLabelEncoder(classes=self.classes)
         self.data_collator = ERCDataCollator(config=self.config, label_encoder=self.label_encoder)
@@ -51,6 +51,42 @@ class TestERCModel(unittest.TestCase):
 
     def test_forward_output_labels_shape(self):
         out = self.model.forward(**self.x)
+        self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
+
+    def test_forward_output_success_with_only_text(self):
+        out = ERCModel(
+            label_encoder=self.label_encoder,
+            config=ERCConfig(
+                feedforward_layers=self.ff_layers,
+                classifier_classes=self.classes,
+                modules_visual_encoder="none",
+                modules_audio_encoder="none",
+            ),
+        ).forward(**self.x)
+        self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
+
+    def test_forward_output_success_with_only_visual(self):
+        out = ERCModel(
+            label_encoder=self.label_encoder,
+            config=ERCConfig(
+                feedforward_layers=self.ff_layers,
+                classifier_classes=self.classes,
+                modules_text_encoder="none",
+                modules_audio_encoder="none",
+            ),
+        ).forward(**self.x)
+        self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
+
+    def test_forward_output_success_with_only_audio(self):
+        out = ERCModel(
+            label_encoder=self.label_encoder,
+            config=ERCConfig(
+                feedforward_layers=self.ff_layers,
+                classifier_classes=self.classes,
+                modules_visual_encoder="none",
+                modules_text_encoder="none",
+            ),
+        ).forward(**self.x)
         self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
 
     def test_forward_output_logits_shape(self):

@@ -1,6 +1,6 @@
 # Python Built-in Modules
 from abc import abstractmethod
-from typing import Type
+from typing import Callable, Optional, Type
 
 # Third-Party Libraries
 import torch
@@ -35,7 +35,9 @@ class ERCAudioEmbeddings(ERCEmbeddings):
         raise NotImplementedError("The method 'forward' must be implemented.")
 
     @staticmethod
-    def resolve_type_from(expression: str) -> Type["ERCAudioEmbeddings"]:
+    def resolve_type_from(
+        expression: str,
+    ) -> Type["ERCAudioEmbeddings"] | Callable[[ERCConfig], Optional["ERCAudioEmbeddings"]]:
         """
         Resolves the Audio Feature Extraction module type from the given expression.
 
@@ -44,6 +46,8 @@ class ERCAudioEmbeddings(ERCEmbeddings):
         """
         if expression == ERCAudioEmbeddingType.WAVEFORM:
             return ERCRawAudioEmbeddings
+        elif expression == ERCAudioEmbeddingType.NONE:
+            return lambda _: None
         raise ValueError(f"Unknown audio embedding type: {expression}")
 
 
