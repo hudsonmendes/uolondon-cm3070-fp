@@ -42,7 +42,11 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
 
 class TestERCGpt2TextEmbeddings(unittest.TestCase):
     def setUp(self):
-        config = ERCConfig(modules_text_encoder=ERCTextEmbeddingType.GPT2, classifier_classes=["a", "b"])
+        config = ERCConfig(
+            modules_text_encoder=ERCTextEmbeddingType.GPT2,
+            classifier_classes=["a", "b"],
+            text_limit_to_n_last_tokens=4,
+        )
         self.embeddings = ERCTextEmbeddings.resolve_type_from(config.modules_text_encoder)(config=config)
 
     def tearDown(self):
@@ -62,3 +66,28 @@ class TestERCGpt2TextEmbeddings(unittest.TestCase):
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
+
+    def test_token_limitation(self):
+        embedding1 = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GPT2)(
+            config=ERCConfig(
+                modules_text_encoder=ERCTextEmbeddingType.GPT2,
+                classifier_classes=["a", "b"],
+                text_limit_to_n_last_tokens=2,
+            )
+        )(["here a test sentence"])[0]
+        embedding2 = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GPT2)(
+            config=ERCConfig(
+                modules_text_encoder=ERCTextEmbeddingType.GPT2,
+                classifier_classes=["a", "b"],
+                text_limit_to_n_last_tokens=3,
+            )
+        )(["here a test sentence"])[0]
+        embedding3 = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GPT2)(
+            config=ERCConfig(
+                modules_text_encoder=ERCTextEmbeddingType.GPT2,
+                classifier_classes=["a", "b"],
+                text_limit_to_n_last_tokens=3,
+            )
+        )(["here a test sentence"])[0]
+        self.assertNotEqual(embedding1.tolist(), embedding2.tolist())
+        self.assertEqual(embedding2.tolist(), embedding3.tolist())

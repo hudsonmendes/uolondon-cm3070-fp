@@ -118,6 +118,7 @@ class ERCGpt2TextEmbeddings(ERCTextEmbeddings):
     gpt2_tokenizer: transformers.GPT2Tokenizer
     gpt2_model: transformers.GPT2Model
     tokenizer_opts: dict
+    maxlength: int
 
     def __init__(self, config: ERCConfig) -> None:
         super().__init__(config=config)
@@ -125,7 +126,12 @@ class ERCGpt2TextEmbeddings(ERCTextEmbeddings):
         self.gpt2_tokenizer = transformers.GPT2Tokenizer.from_pretrained("gpt2")
         self.gpt2_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         self.gpt2_model.resize_token_embeddings(len(self.gpt2_tokenizer))
-        self.tokenizer_opts = dict(add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+        self.maxlength = config.text_limit_to_n_last_tokens or 1024
+        self.tokenizer_opts = dict(
+            truncation=True,
+            padding="longest",
+            return_tensors="pt",
+        )
 
     def forward(self, x: List[str]) -> torch.Tensor:
         """
@@ -140,6 +146,12 @@ class ERCGpt2TextEmbeddings(ERCTextEmbeddings):
         y = self.gpt2_tokenizer.batch_encode_plus(x, **self.tokenizer_opts)
         y["input_ids"] = y["input_ids"].to(device)
         attention_mask = y["attention_mask"] = y["attention_mask"].to(device)
+
+        # fix shape, if greater than max_length
+        if y["input_ids"].size(dim=1) > self.maxlength:
+            start = self.maxlength
+            y["input_ids"] = y["input_ids"][:, -start:]
+            attention_mask = y["attention_mask"] = y["attention_mask"][:, -start:]
 
         # extract the representation from the last token
         y = self.gpt2_model(**y).last_hidden_state

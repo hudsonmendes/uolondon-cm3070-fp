@@ -77,6 +77,7 @@ class ERCConfig:
 
     text_in_features: int = 50  # 300 is the largest model
     text_out_features: int = 50  # must match in_features for GloVe
+    text_limit_to_n_last_tokens: int | None = None  # truncation to most recent dialogue
 
     audio_in_features: int = 100_000  # 300_000 fits the all audio files
     audio_out_features: int = 512
