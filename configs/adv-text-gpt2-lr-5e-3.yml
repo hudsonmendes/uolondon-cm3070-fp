@@ -1,6 +1,6 @@
-classifier_name: adv-text-gpt2
+classifier_name: adv-text-gpt2-lr-5e-3
 classifier_loss_fn: dice
-classifier_learning_rate: 0.00005
+classifier_learning_rate: 0.005
 classifier_weight_decay: 0.1
 classifier_warmup_steps: 2000 # over A100, batch_size=8
 classifier_classes:
