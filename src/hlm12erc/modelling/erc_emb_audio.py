@@ -109,7 +109,20 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
 class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
     """
     ERCWave2Vec2Embeddings is a class that implements the
-    Audio Feature Extraction model using the pretrained Wave2Vec2 model.
+    Audio Feature Extraction model using the pretrained Wave2Vec2 model,
+    by concatenating the mean and max pooling of the hidden states.
+
+    References:
+        >>> Alexei Baevski, Yuhao Zhou, Abdelrahman Mohamed, and Michael Auli.
+        ... 2020. wav2vec 2.0: A Framework for Self-Supervised Learning of Speech
+        ... Representations. In Advances in Neural Information Processing Systems,
+        ... Curran Associates, Inc., 12449–12460. Retrieved
+        ... from https://proceedings.neurips.cc/paper_files/paper/2020/file/92d1e1eb1cd6f9fba3227870bb6d7f07-Paper.pdf
+
+        >>> Minghua Zhang, Yunfang Wu, Weikang Li, and Wei Li. 2018. Learning
+        ... Universal Sentence Representations with Mean-Max Attention Autoencoder.
+        ... In Proceedings of the 2018 Conference on Empirical Methods in Natural
+        ... Language Processing, 4514–4523.
 
     Example:
         >>> from hlm12erc.modelling import ERCConfig, ERCAudioEmbeddingType
@@ -119,6 +132,9 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
     """
 
     in_features: int
+    hidden_size: int
+    wav2vec2: transformers.Wav2Vec2Model
+    fc: torch.nn.Linear | None
 
     def __init__(self, config: ERCConfig) -> None:
         """
@@ -129,23 +145,45 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
         super(ERCWave2Vec2Embeddings, self).__init__(config=config)
         self.config = config
         self.in_features = config.audio_in_features
+        self.hidden_size = config.audio_out_features
         self.wav2vec2 = transformers.Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base")
+        # determine the hidden size of this layer which may either be set by config
+        # or twice the size of the wav2vec2 hidden size (mean+max pooling)
+        wav2vec2_meanmax_dims = self.wav2vec2.config.hidden_size * 2
+        if self.hidden_size is None or self.hidden_size <= 0:
+            self.hidden_size = wav2vec2_meanmax_dims  # mean+max pooling
+        # only create project _if_ the output size is different from the hidden size
+        self.fc = None
+        if wav2vec2_meanmax_dims != self.hidden_size:
+            self.fc = torch.nn.Linear(wav2vec2_meanmax_dims, self.hidden_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Create a representation based using the last hidden state of the
-        pretrained Wave2Vec2 model.
+        Create a representation based on the last hidden state of the pretrained
+        Wave2Vec2 model concatenating the mean and max pooling of the hidden states.
 
         :param x: stacked vectors representing audio waveforms
         :return: matrix of tensors (batch_size, out_features)
         """
-        y = self.wav2vec2(x).last_hidden_state
-        y = l2_norm(y, p=2, dim=1)
-        return y
+
+        # concatenate the mean and max pooling of the hidden states
+        # to generate a fixed size vector that can be used as input
+        # to the classifier
+        h = self.wav2vec2(x).last_hidden_state
+        h_mean = torch.mean(h, dim=1)
+        h_max = torch.max(h, dim=1)[0]
+        y = torch.cat((h_mean, h_max), dim=1)
+
+        # only projects if the output size is different from the hidden size
+        if self.fc is not None and self.hidden_size != y.size(dim=1):
+            y = self.fc(y)
+
+        # normalize the output vector to have unit norm
+        return l2_norm(y, p=2, dim=1)
 
     @property
     def out_features(self) -> int:
         """
         Returns the dimensionality of the vectors produced by the wav2vec2 model.
         """
-        return self.wav2vec2.config.hidden_size
+        return self.hidden_size
