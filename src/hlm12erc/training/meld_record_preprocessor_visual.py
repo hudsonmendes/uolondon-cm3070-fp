@@ -17,6 +17,11 @@ class MeldVisualPreprocessor:
         """
         Creates a new instance of the MeldVideoPreprocessor class with the
         default image preprocessor (using torchvision.transforms)
+
+        The preprocessing transformation routine normalises the input images using
+        the meand and standard deviation calculated on the images of the training
+        set, calculated as part of the mlops notebook, in the "Measures of Spread"
+        section, by the function `calculate_measures_of_spread` .
         """
         self.image_preprocessor = torchvision.transforms.Compose(
             [

@@ -16,6 +16,7 @@ class ERCVisualEmbeddingType:
 
     NONE = "none"
     RESNET50 = "resnet50"
+    DTR_RESNET50 = "dtr_resnet50"
 
 
 class ERCAudioEmbeddingType:
