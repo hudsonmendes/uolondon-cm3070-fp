@@ -10,9 +10,6 @@
 
 from __future__ import print_function
 
-# Python Built-in Modules
-import time
-
 # Third-Party Libraries
 import cv2
 import numpy as np
@@ -48,25 +45,18 @@ def remove_prefix(state_dict, prefix):
     return {f(key): value for key, value in state_dict.items()}
 
 
-def load_model(model, pretrained_path, load_to_cpu):
+def load_model(model, pretrained_path, device: torch.device):
     print("Loading pretrained model from {}".format(pretrained_path))
-    if load_to_cpu:
-        pretrained_dict = torch.load(pretrained_path, map_location=lambda storage, loc: storage)
-    else:
-        device = torch.cuda.current_device()
-        pretrained_dict = torch.load(pretrained_path, map_location=lambda storage, loc: storage.cuda(device))
-    if "state_dict" in pretrained_dict.keys():
-        pretrained_dict = remove_prefix(pretrained_dict["state_dict"], "module.")
-    else:
-        pretrained_dict = remove_prefix(pretrained_dict, "module.")
+    states_dict = torch.load(pretrained_path, map_location=device)
+    pretrained_dict = remove_prefix(states_dict, "module.")
     check_keys(model, pretrained_dict)
     model.load_state_dict(pretrained_dict, strict=False)
-    return model
+    return model.to(device)
 
 
 def detect(model: RetinaFace, device: torch.device, args: RetinaFaceArgs, filepath: str) -> list:
-    torch.set_grad_enabled(False)
-    cudnn.benchmark = True
+    # torch.set_grad_enabled(False)
+    # cudnn.benchmark = True
     resize = 1
 
     # testing begin
@@ -77,11 +67,12 @@ def detect(model: RetinaFace, device: torch.device, args: RetinaFaceArgs, filepa
 
         im_height, im_width, _ = img.shape
         scale = torch.Tensor([img.shape[1], img.shape[0], img.shape[1], img.shape[0]])
+        scale = scale.to(device)
+
         img -= (104, 117, 123)
         img = img.transpose(2, 0, 1)
         img = torch.from_numpy(img).unsqueeze(0)
         img = img.to(device)
-        scale = scale.to(device)
 
         loc, conf, _ = model(img)  # forward pass
 

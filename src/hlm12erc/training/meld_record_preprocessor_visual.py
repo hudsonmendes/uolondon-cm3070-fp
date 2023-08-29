@@ -89,7 +89,7 @@ class MeldVisualPreprocessorFilepathToFaceOnlyImage(MeldVisualPreprocessor):
     negatively CPU-based training.
     """
 
-    def __init__(self, filepath_retinaface_resnet50: pathlib.Path, device: torch.device = None) -> None:
+    def __init__(self, filepath_retinaface_resnet50: pathlib.Path, device: torch.device | None = None) -> None:
         """
         Creates a face detector that blacks out every pixel not found within the
         bounding box of a face.

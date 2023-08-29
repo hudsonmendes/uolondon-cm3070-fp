@@ -21,13 +21,18 @@ def create_face_detector(
     device = device or _cpu
     args = args or RetinaFaceArgs()
     net = _load_from_pretrained(filepath_pretrained, device)
-    assert device is not None
-    assert args is not None
-    return lambda x: detect(model=net, device=device, args=args, filepath=str(x))
+    assert isinstance(device, torch.device) and device is not None
+    assert isinstance(args, RetinaFaceArgs) and args is not None
+
+    @torch.no_grad()
+    def fn(filepath: str) -> list:
+        return detect(model=net, device=device, args=args, filepath=str(filepath))
+
+    return fn
 
 
 def _load_from_pretrained(filepath_pretrained: str, device: torch.device):
     net = RetinaFace(cfg=cfg_re50, phase="test")
-    net = load_model(net, filepath_pretrained, load_to_cpu=device == _cpu)
+    net = load_model(net, filepath_pretrained, device=device)
     net.eval()
     return net
