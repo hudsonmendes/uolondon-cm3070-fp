@@ -85,7 +85,23 @@ class MeldDataset(Dataset):
         """
         return len(self.df)
 
-    def __getitem__(self, index: slice | int) -> MeldRecord | List[MeldRecord]:
+    def __getitem__(
+        self,
+        index: slice | int,
+    ) -> MeldRecord | List[MeldRecord]:
+        # for batch/slices, we recursively return this call to getitem with the integer index
+        if isinstance(index, slice):
+            records = [self._read(i, out_of_range_ok=True) for i in range(index.start, index.stop, index.step or 1)]
+            return [r for r in records if isinstance(r, MeldRecord) and r is not None]
+        # for single items, we return the record at that index and raise an error if out of range
+        else:
+            return self._read(index=index, out_of_range_ok=False)
+
+    def _read(
+        self,
+        index: int,
+        out_of_range_ok: bool,
+    ) -> MeldRecord:
         """
         Returns a single sample from the dataset, based on the index provided.
         The sample is returned in the form of a `MeldRecord` object, that
@@ -93,13 +109,9 @@ class MeldDataset(Dataset):
         (wave.Wave)
 
         :param index: The index of the sample to be returned, integer or slice
+        :param out_of_range_ok: Whether to return None or raise an error when the index is out of range, used for slices
         :return: A `MeldRecord` instance or batch, containing the sample(s)
         """
-        # for batch/slices, we recursively return this call to getitem with the integer index
-        if isinstance(index, slice):
-            records = [self[i] for i in range(index.start, index.stop, index.step or 1)]
-            return [r for r in records if isinstance(r, MeldRecord) and r is not None]
-
         # when the index is precise, we return the record at that index
         if index < len(self.df):
             row = self.df.iloc[index]
@@ -107,7 +119,7 @@ class MeldDataset(Dataset):
             visual = self._preprocess_visual(row)
             audio = self._preprocess_audio(row)
             return MeldRecord(text=text, visual=visual, audio=audio, label=row.label)
-        else:
+        elif not out_of_range_ok:
             raise IndexError(f"Index {index} out of range for dataset of size {len(self.df)}")
 
     def preprocessing_with(self, *preprocessors: list) -> "MeldDataset":
