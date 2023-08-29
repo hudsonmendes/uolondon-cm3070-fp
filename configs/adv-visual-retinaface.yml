@@ -24,6 +24,7 @@ audio_in_features: 150000 # truncates the waveform after 150K samples
 audio_out_features: -1 #determined by wav2vec
 
 visual_preprocess_faceonly: true
+visual_preprocess_retinaface_weights_path: .weights_cache/retinaface_resnet50.pth
 visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
