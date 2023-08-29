@@ -1,8 +1,6 @@
 # Python Built-in Modules
+import pathlib
 import unittest
-
-# Third-Party Libraries
-from PIL import Image
 
 # My Packages and Modules
 from hlm12erc.modelling import ERCConfig
@@ -20,6 +18,5 @@ class TestMeldVisualPreprocessor(unittest.TestCase):
         pass
 
     def test_call_creates_4d_tensor(self):
-        with Image.open("tests/fixtures/d-1038-seq-17.png") as image:
-            result = self.preprocessor(image)
-            self.assertEqual(result.shape, self.config.visual_in_features)
+        result = self.preprocessor(pathlib.Path("tests/fixtures/d-1038-seq-17.png"))
+        self.assertEqual(result.shape, self.config.visual_in_features)
