@@ -6,7 +6,7 @@ import wave
 from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessorToWaveform
 
 
-class TestMeldAudioPreprocessor(unittest.TestCase):
+class TestMeldAudioPreprocessorToWaveform(unittest.TestCase):
     def setUp(self):
         self.preprocessor = MeldAudioPreprocessorToWaveform()
 
