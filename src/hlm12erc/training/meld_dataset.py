@@ -46,6 +46,9 @@ class MeldDataset(Dataset):
     def __init__(
         self,
         filepath: pathlib.Path,
+        filedir: pathlib.Path | None = None,
+        df: pd.DataFrame | None = None,
+        classes: List[str] | None = None,
         preprocessors_text: List[MeldTextPreprocessor] | None = None,
         preprocessors_visual: List[MeldVisualPreprocessor] | None = None,
         preprocessors_audio: List[MeldAudioPreprocessor] | None = None,
@@ -54,17 +57,20 @@ class MeldDataset(Dataset):
         Creates a new instance of the MeldDataset for a split
 
         :param filepath: The dataframe containing the data for the split
+        :param filedir: The directory where the files are located, None leads to default
+        :param df: The dataframe containing the data for the split
         :param preprocessors_text: the list of text preprocessors to be applied, None leads to default
         :param preprocessors_visual: the list of visual preprocessors to be applied, None leads to default
         :param preprocessors_audio: the list of audio preprocessors to be applied, None leads to default
+        :param classes: the list of classes in the dataset, None leads to default
         """
         self.filepath = filepath
-        self.filedir = filepath.parent
-        self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
+        self.filedir = filedir or filepath.parent
+        self.df = df or pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
         self.preprocessors_text = preprocessors_text or [MeldTextPreprocessorToDialogPrompt(df=self.df)]
         self.preprocessors_visual = preprocessors_visual or [MeldVisualPreprocessorFilepathToResnet50()]
         self.preprocessors_audio = preprocessors_audio or [MeldAudioPreprocessorToWaveform()]
-        self.classes_ = sorted(self.df.label.unique().tolist())
+        self.classes_ = classes or sorted(self.df.label.unique().tolist())
 
     def __len__(self) -> int:
         """
@@ -98,6 +104,27 @@ class MeldDataset(Dataset):
             return MeldRecord(text=text, visual=visual, audio=audio, label=row.label)
         else:
             raise IndexError(f"Index {index} out of range for dataset of size {len(self.df)}")
+
+    def preprocessing_with(self, preprocessors: list) -> "MeldDataset":
+        """
+        Returns a copy of the present dataset, with the preprocessors preprended
+        to the list of preprocessors already present in the dataset.
+
+        :param preprocessors: The list of preprocessors to be applied
+        :return: A new instance (copy) of the dataset, with the preprocessors prepended
+        """
+        new_pp_text = [fn for fn in preprocessors if isinstance(fn, MeldTextPreprocessor)]
+        new_pp_visual = [fn for fn in preprocessors if isinstance(fn, MeldVisualPreprocessor)]
+        new_pp_audio = [fn for fn in preprocessors if isinstance(fn, MeldAudioPreprocessor)]
+        return MeldDataset(
+            filepath=self.filepath,
+            filedir=self.filedir,
+            df=self.df,
+            classes=self.classes_,
+            preprocessors_text=new_pp_text + self.preprocessors_text,
+            preprocessors_visual=new_pp_visual + self.preprocessors_visual,
+            preprocessors_audio=new_pp_audio + self.preprocessors_audio,
+        )
 
     def _preprocess_text(self, row: pd.Series) -> str:
         """
