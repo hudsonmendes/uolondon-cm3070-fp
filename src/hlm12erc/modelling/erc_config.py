@@ -16,7 +16,6 @@ class ERCVisualEmbeddingType:
 
     NONE = "none"
     RESNET50 = "resnet50"
-    DTR_RESNET50 = "dtr_resnet50"
 
 
 class ERCAudioEmbeddingType:
@@ -84,6 +83,8 @@ class ERCConfig:
     audio_in_features: int = 100_000  # 300_000 fits the all audio files
     audio_out_features: int = 512
 
+    visual_retinaface_face_only: bool = False
+    visual_retinaface_model_path: str | None = None
     visual_in_features: Tuple[int, ...] = (3, 256, 721)  # required by resnet
     visual_out_features: int = -1  # defined by resnet50, get it from the embedding class
 
