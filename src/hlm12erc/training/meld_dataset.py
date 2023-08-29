@@ -1,6 +1,6 @@
 # Python Built-in Modules
 import pathlib
-from typing import List, Optional
+from typing import List
 
 # Third-Party Libraries
 import pandas as pd
@@ -9,7 +9,18 @@ from torch.utils.data import Dataset
 
 # Local Folders
 from .meld_record import MeldRecord
-from .meld_record_reader import MeldRecordReader
+from .meld_record_preprocessor_audio import (
+    MeldAudioPreprocessor,
+    MeldAudioPreprocessorToWaveform,
+)
+from .meld_record_preprocessor_text import (
+    MeldTextPreprocessor,
+    MeldTextPreprocessorToDialogPrompt,
+)
+from .meld_record_preprocessor_visual import (
+    MeldVisualPreprocessor,
+    MeldVisualPreprocessorFilepathToResnet50,
+)
 
 
 class MeldDataset(Dataset):
@@ -27,19 +38,33 @@ class MeldDataset(Dataset):
     filepath: pathlib.Path
     filedir: pathlib.Path
     df: pd.DataFrame
-    record_reader: MeldRecordReader
+    classes_: List[str]
+    preprocessors_text: List[MeldTextPreprocessor]
+    preprocessors_visual: List[MeldVisualPreprocessor]
+    preprocessors_audio: List[MeldAudioPreprocessor]
 
-    def __init__(self, filepath: pathlib.Path):
+    def __init__(
+        self,
+        filepath: pathlib.Path,
+        preprocessors_text: List[MeldTextPreprocessor] | None = None,
+        preprocessors_visual: List[MeldVisualPreprocessor] | None = None,
+        preprocessors_audio: List[MeldAudioPreprocessor] | None = None,
+    ):
         """
         Creates a new instance of the MeldDataset for a split
 
-        :param df: The dataframe containing the data for the split
+        :param filepath: The dataframe containing the data for the split
+        :param preprocessors_text: the list of text preprocessors to be applied, None leads to default
+        :param preprocessors_visual: the list of visual preprocessors to be applied, None leads to default
+        :param preprocessors_audio: the list of audio preprocessors to be applied, None leads to default
         """
         self.filepath = filepath
         self.filedir = filepath.parent
         self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
-        self.record_reader = MeldRecordReader(df=self.df, filename=filepath.stem, filedir=self.filedir)
-        self.emotions = sorted(self.df.label.unique().tolist())
+        self.preprocessors_text = preprocessors_text or [MeldTextPreprocessorToDialogPrompt(df=self.df)]
+        self.preprocessors_visual = preprocessors_visual or [MeldVisualPreprocessorFilepathToResnet50()]
+        self.preprocessors_audio = preprocessors_audio or [MeldAudioPreprocessorToWaveform()]
+        self.classes_ = sorted(self.df.label.unique().tolist())
 
     def __len__(self) -> int:
         """
@@ -60,16 +85,55 @@ class MeldDataset(Dataset):
         :param index: The index of the sample to be returned, integer or slice
         :return: A `MeldRecord` instance or batch, containing the sample(s)
         """
+        # for batch/slices, we recursively return this call to getitem with the integer index
         if isinstance(index, slice):
-            records = [self.record_reader.read_at(i) for i in range(index.start, index.stop, index.step or 1)]
-            return [r for r in records if r is not None]
-        elif isinstance(index, int):
-            record = self.record_reader.read_at(index)
-            if record is None:
-                raise IndexError(f"The index '{index}' is out of bounds.")
-            return record
+            return [r for r in [self[i] for i in range(index.start, index.stop, index.step or 1)]]
+
+        # when the index is precise, we return the record at that index
+        if index < len(self.df):
+            row = self.df.iloc[index]
+            text = self._preprocess_text(row)
+            visual = self._preprocess_visual(row)
+            audio = self._preprocess_audio(row)
+            return MeldRecord(text=text, visual=visual, audio=audio, label=row.label)
         else:
-            raise TypeError(f"The index '{index}' is an invalid index type.")
+            raise IndexError(f"Index {index} out of range for dataset of size {len(self.df)}")
+
+    def _preprocess_text(self, row: pd.Series) -> str:
+        """
+        Applies each one of the text preprocessors and returns the last output
+
+        :param row: The row to be preprocessed
+        :return: The preprocessed string
+        """
+        y = row
+        for fn in self.preprocessors_text:
+            y = fn(y)
+        return y
+
+    def _preprocess_visual(self, row: pd.Series) -> torch.Tensor:
+        """
+        Applies each one of the visual preprocessors and returns the last output
+
+        :param row: The row to be preprocessed
+        :return: The preprocessed tensor
+        """
+        y = self.filedir / row.x_visual
+        for fn in self.preprocessors_visual:
+            y = fn(y)
+        return y
+
+    def _preprocess_audio(self, row: pd.Series) -> torch.Tensor:
+        """
+        Applies each one of the audio preprocessors and returns the last output
+
+        :param row: The row to be preprocessed
+        :return: The preprocessed tensor
+        """
+        y = self.filedir / row.x_audio
+        for fn in self.preprocessors_audio:
+            y = fn(y)
+        return y
 
     @property
     def classes(self) -> List[str]:
@@ -79,4 +143,4 @@ class MeldDataset(Dataset):
 
         :return: A list of the classes in the dataset
         """
-        return self.emotions
+        return self.classes_

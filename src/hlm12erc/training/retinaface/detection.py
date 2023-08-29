@@ -21,9 +21,9 @@ import torch.backends.cudnn as cudnn
 
 # Local Folders
 from .args import RetinaFaceArgs
-from .config import cfg_re50
+from .config import cfg_re50 as cfg
 from .model import RetinaFace
-from .utils_bbox import decode, decode_landm
+from .utils_bbox import decode
 from .utils_prior_box import PriorBox
 from .utils_py_cpu_nms import py_cpu_nms
 
@@ -64,9 +64,8 @@ def load_model(model, pretrained_path, load_to_cpu):
     return model
 
 
-def detect(model: RetinaFace, device: torch.device, args: RetinaFaceArgs, filepath: str):
+def detect(model: RetinaFace, device: torch.device, args: RetinaFaceArgs, filepath: str) -> list:
     torch.set_grad_enabled(False)
-    cfg = cfg_re50
     cudnn.benchmark = True
     resize = 1
 
@@ -84,47 +83,26 @@ def detect(model: RetinaFace, device: torch.device, args: RetinaFaceArgs, filepa
         img = img.to(device)
         scale = scale.to(device)
 
-        tic = time.time()
-        loc, conf, landms = net(img)  # forward pass
-        print("net forward time: {:.4f}".format(time.time() - tic))
+        loc, conf, _ = model(img)  # forward pass
 
         priorbox = PriorBox(cfg, image_size=(im_height, im_width))
         priors = priorbox.forward()
         priors = priors.to(device)
         prior_data = priors.data
+
         boxes = decode(loc.data.squeeze(0), prior_data, cfg["variance"])
         boxes = boxes * scale / resize
         boxes = boxes.cpu().numpy()
         scores = conf.squeeze(0).data.cpu().numpy()[:, 1]
-        landms = decode_landm(landms.data.squeeze(0), prior_data, cfg["variance"])
-        scale1 = torch.Tensor(
-            [
-                img.shape[3],
-                img.shape[2],
-                img.shape[3],
-                img.shape[2],
-                img.shape[3],
-                img.shape[2],
-                img.shape[3],
-                img.shape[2],
-                img.shape[3],
-                img.shape[2],
-            ]
-        )
-        scale1 = scale1.to(device)
-        landms = landms * scale1 / resize
-        landms = landms.cpu().numpy()
 
         # ignore low scores
         inds = np.where(scores > args.confidence_threshold)[0]
         boxes = boxes[inds]
-        landms = landms[inds]
         scores = scores[inds]
 
         # keep top-K before NMS
         order = scores.argsort()[::-1][: args.top_k]
         boxes = boxes[order]
-        landms = landms[order]
         scores = scores[order]
 
         # do NMS
@@ -132,33 +110,19 @@ def detect(model: RetinaFace, device: torch.device, args: RetinaFaceArgs, filepa
         keep = py_cpu_nms(dets, args.nms_threshold)
         # keep = nms(dets, args.nms_threshold,force_cpu=args.cpu)
         dets = dets[keep, :]
-        landms = landms[keep]
 
         # keep top-K faster NMS
         dets = dets[: args.keep_top_k, :]
-        landms = landms[: args.keep_top_k, :]
 
-        dets = np.concatenate((dets, landms), axis=1)
-
-        # show image
-        if args.save_image:
-            for b in dets:
-                if b[4] < args.vis_thres:
-                    continue
-                text = "{:.4f}".format(b[4])
-                b = list(map(int, b))
-                cv2.rectangle(img_raw, (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 2)
-                cx = b[0]
-                cy = b[1] + 12
-                cv2.putText(img_raw, text, (cx, cy), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255))
-
-                # landms
-                cv2.circle(img_raw, (b[5], b[6]), 1, (0, 0, 255), 4)
-                cv2.circle(img_raw, (b[7], b[8]), 1, (0, 255, 255), 4)
-                cv2.circle(img_raw, (b[9], b[10]), 1, (255, 0, 255), 4)
-                cv2.circle(img_raw, (b[11], b[12]), 1, (0, 255, 0), 4)
-                cv2.circle(img_raw, (b[13], b[14]), 1, (255, 0, 0), 4)
-            # save image
-
-            name = "test.jpg"
-            cv2.imwrite(name, img_raw)
+        faces = []
+        for box in dets:
+            faces.append(
+                {
+                    "x": box[0],
+                    "y": box[1],
+                    "width": box[2],
+                    "height": box[3],
+                    "confidence": box[4],
+                }
+            )
+        return faces

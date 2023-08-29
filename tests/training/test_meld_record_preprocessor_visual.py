@@ -6,13 +6,15 @@ from PIL import Image
 
 # My Packages and Modules
 from hlm12erc.modelling import ERCConfig
-from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreprocessor
+from hlm12erc.training.meld_record_preprocessor_visual import (
+    MeldVisualPreprocessorFilepathToResnet50,
+)
 
 
 class TestMeldVisualPreprocessor(unittest.TestCase):
     def setUp(self):
         self.config = ERCConfig(classifier_classes=["a", "b", "c"])
-        self.preprocessor = MeldVisualPreprocessor()
+        self.preprocessor = MeldVisualPreprocessorFilepathToResnet50()
 
     def tearDown(self):
         pass

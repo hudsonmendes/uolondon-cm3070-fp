@@ -3,12 +3,14 @@ import unittest
 import wave
 
 # My Packages and Modules
-from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessor
+from hlm12erc.training.meld_record_preprocessor_audio import (
+    MeldAudioPreprocessorToWaveform,
+)
 
 
 class TestMeldAudioPreprocessor(unittest.TestCase):
     def setUp(self):
-        self.preprocessor = MeldAudioPreprocessor()
+        self.preprocessor = MeldAudioPreprocessorToWaveform()
 
     def tearDown(self):
         pass

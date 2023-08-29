@@ -13,8 +13,12 @@ from hlm12erc.modelling.erc_model import ERCModel
 from hlm12erc.modelling.erc_output import ERCOutput
 from hlm12erc.training.erc_data_collator import ERCDataCollator
 from hlm12erc.training.meld_record import MeldRecord
-from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessor
-from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreprocessor
+from hlm12erc.training.meld_record_preprocessor_audio import (
+    MeldAudioPreprocessorToWaveform,
+)
+from hlm12erc.training.meld_record_preprocessor_visual import (
+    MeldVisualPreprocessorFilepathToResnet50,
+)
 
 
 class TestERCModel(unittest.TestCase):
@@ -27,8 +31,8 @@ class TestERCModel(unittest.TestCase):
         self.data_collator = ERCDataCollator(config=self.config, label_encoder=self.label_encoder)
         self.model = ERCModel(self.config, label_encoder=self.label_encoder)
 
-        self.preprocessor_visual = MeldVisualPreprocessor()
-        self.preprocessor_audio = MeldAudioPreprocessor()
+        self.preprocessor_visual = MeldVisualPreprocessorFilepathToResnet50()
+        self.preprocessor_audio = MeldAudioPreprocessorToWaveform()
         self.x = self.data_collator(
             [
                 MeldRecord(

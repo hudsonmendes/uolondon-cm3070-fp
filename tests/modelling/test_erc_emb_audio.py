@@ -12,7 +12,9 @@ from hlm12erc.modelling.erc_emb_audio import (
     ERCConfig,
 )
 from hlm12erc.training.erc_data_collator import ERCDataCollator
-from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessor
+from hlm12erc.training.meld_record_preprocessor_audio import (
+    MeldAudioPreprocessorToWaveform,
+)
 
 
 class TestERCRawAudioEmbeddings(unittest.TestCase):
@@ -20,7 +22,7 @@ class TestERCRawAudioEmbeddings(unittest.TestCase):
         self.config = ERCConfig(audio_in_features=325458, audio_out_features=256, classifier_classes=["a", "b"])
         self.embeddings = ERCAudioEmbeddings.resolve_type_from(ERCAudioEmbeddingType.WAVEFORM)(self.config)
         self.data_collator = ERCDataCollator(config=self.config, label_encoder=None)
-        preprocessor = MeldAudioPreprocessor()
+        preprocessor = MeldAudioPreprocessorToWaveform()
         self.audios = self.data_collator._audio_to_stacked_tensor(
             [
                 preprocessor(wave.open("tests/fixtures/d-1038-seq-17.wav")),
@@ -50,7 +52,7 @@ class TestERCWave2Vec2Embeddings(unittest.TestCase):
         self.config = ERCConfig(audio_in_features=16000, audio_out_features=32, classifier_classes=["a", "b"])
         self.embeddings = ERCAudioEmbeddings.resolve_type_from(ERCAudioEmbeddingType.WAV2VEC2)(self.config)
         self.data_collator = ERCDataCollator(config=self.config, label_encoder=None)
-        preprocessor = MeldAudioPreprocessor()
+        preprocessor = MeldAudioPreprocessorToWaveform()
         self.audios = self.data_collator._audio_to_stacked_tensor(
             [
                 preprocessor(wave.open("tests/fixtures/d-1038-seq-17.wav")),

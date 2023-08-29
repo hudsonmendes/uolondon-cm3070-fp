@@ -6,7 +6,9 @@ from unittest.mock import MagicMock
 import pandas as pd
 
 # My Packages and Modules
-from hlm12erc.training.meld_record_preprocessor_text import MeldTextPreprocessor
+from hlm12erc.training.meld_record_preprocessor_text import (
+    MeldTextPreprocessorToDialogPrompt,
+)
 
 
 class TestMeldTextPreprocessor(unittest.TestCase):
@@ -19,7 +21,7 @@ class TestMeldTextPreprocessor(unittest.TestCase):
                 "x_text": ["Hello", "Hi", "How are you?", "Goodbye", "See you later", "Bye"],
             }
         )
-        self.preprocessor = MeldTextPreprocessor(self.df)
+        self.preprocessor = MeldTextPreprocessorToDialogPrompt(self.df)
 
     def tearDown(self):
         pass
