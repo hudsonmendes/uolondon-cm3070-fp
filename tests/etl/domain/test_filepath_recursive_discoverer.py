@@ -8,9 +8,7 @@ class TestFilepathRecursiveDiscoverer(unittest.TestCase):
     def setUp(self):
         # local import to avoid etl dependencies becoming global requirements
         # My Packages and Modules
-        from hlm12erc.etl.domain.filepath_recursive_discoverer import (
-            FilepathRecursiveDiscoverer,
-        )
+        from hlm12erc.etl.domain.filepath_recursive_discoverer import FilepathRecursiveDiscoverer
 
         self.root = pathlib.Path("/tmp/hlm12erc/tests/test_data/")
         self.discoverer = FilepathRecursiveDiscoverer(self.root)

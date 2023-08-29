@@ -1,11 +1,29 @@
 # Python Built-in Modules
+from abc import ABC, abstractmethod
 from typing import List, Tuple
 
 # Third-Party Libraries
 import pandas as pd
 
 
-class MeldTextPreprocessor:
+class MeldTextPreprocessor(ABC):
+    """
+    Abstract class that define the contract of text preprocessors.
+    """
+
+    @abstractmethod
+    def __call__(self, row: pd.Series | str) -> pd.Series | str:
+        """
+        when implemented, preprocesses either a row of the dataframe into
+        a string. Returning strings should be the last step of the chain.
+
+        :param row: The row to be preprocessed
+        :return: The preprocessed string
+        """
+        raise NotImplementedError("Not yet implemented")
+
+
+class MeldTextPreprocessorToDialogPrompt(MeldTextPreprocessor):
     """
     Preprocessor class for the textual files, creating the dialog prompt
     by concatenating the utterances from the previous dialogues.
@@ -14,7 +32,14 @@ class MeldTextPreprocessor:
     def __init__(self, df: pd.DataFrame) -> None:
         self.df = df
 
-    def __call__(self, row: pd.Series) -> str:
+    def __call__(self, row: pd.Series | str) -> pd.Series | str:
+        if not isinstance(row, pd.Series):
+            raise ValueError(
+                """
+                The input `row` is not a `pd.Series` anymore, which means that the processor
+                has already materialised the data into the format that the model will process
+                and does not allow for preprocessing anymore."""
+            )
         dialog_until_now = self._extract_previous_dialogue(dialogue=row.dialogue, before=row.sequence)
         dialog_until_now += [(row.speaker, row.x_text)]
         return self._format_dialog(dialog_until_now)

@@ -10,14 +10,7 @@ import transformers
 import wandb
 
 # My Packages and Modules
-from hlm12erc.modelling import (
-    ERCConfig,
-    ERCLabelEncoder,
-    ERCModel,
-    ERCOutput,
-    ERCStorage,
-    ERCStorageLinks,
-)
+from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel, ERCOutput, ERCStorage, ERCStorageLinks
 
 # Local Folders
 from .erc_config_formatter import ERCConfigFormatter

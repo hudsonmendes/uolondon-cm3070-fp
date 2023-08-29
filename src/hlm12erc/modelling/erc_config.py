@@ -83,6 +83,8 @@ class ERCConfig:
     audio_in_features: int = 100_000  # 300_000 fits the all audio files
     audio_out_features: int = 512
 
+    visual_preprocess_faceonly: bool | None = None
+    visual_preprocess_retinaface_weights_path: str | None = None
     visual_in_features: Tuple[int, ...] = (3, 256, 721)  # required by resnet
     visual_out_features: int = -1  # defined by resnet50, get it from the embedding class
 
