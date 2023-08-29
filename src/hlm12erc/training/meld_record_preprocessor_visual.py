@@ -87,17 +87,18 @@ class MeldVisualPreprocessorFilepathToFaceOnlyImage(MeldVisualPreprocessor):
     negatively CPU-based training.
     """
 
-    image_preprocessor: torchvision.transforms.Compose
-
-    def __init__(self, filepath_retinaface_resnet50: pathlib.Path) -> None:
+    def __init__(self, filepath_retinaface_resnet50: pathlib.Path, device: torch.device = None) -> None:
         """
         Creates a face detector that blacks out every pixel not found within the
         bounding box of a face.
+
+        :param filepath_retinaface_resnet50: the path to the pretrained retinaface/resnet50 weights
+        :param device: the device that will be used for inferences
         """
         # Local Folders
         from .retinaface import create_face_detector
 
-        self.face_detector = create_face_detector(filepath_retinaface_resnet50)
+        self.face_detector = create_face_detector(str(filepath_retinaface_resnet50), device=device)
 
     def __call__(self, image: Image | pathlib.Path) -> Image | torch.Tensor:
         """
@@ -120,8 +121,16 @@ class MeldVisualPreprocessorFilepathToFaceOnlyImage(MeldVisualPreprocessor):
         # detect faces in image
         faces = self.face_detector(image)
 
-        # black out pixels not within faces
+        # create the image we will manipulate
         image_instance = open_image(image)
+
+        # eliminate faces that larger than 1/5 of the image
+        # because it would be a face spanning over 2 frames
+        # which is impossible
+        faces = [face for face in faces if face["width"] < image_instance.height / 5]
+
+        # black out pixels not within faces
+        # TODO: improve performance by using numpy
         for x in range(image_instance.width):
             for y in range(image_instance.height):
                 pixel = (x, y)

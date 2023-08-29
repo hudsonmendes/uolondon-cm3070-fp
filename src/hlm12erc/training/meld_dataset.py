@@ -66,11 +66,15 @@ class MeldDataset(Dataset):
         """
         self.filepath = filepath
         self.filedir = filedir or filepath.parent
-        self.df = df or pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
+        self.df = df
+        self.classes_ = classes
+        if self.df is None:
+            self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
+        if self.classes_ is None:
+            self.classes_ = sorted(self.df.label.unique())
         self.preprocessors_text = preprocessors_text or [MeldTextPreprocessorToDialogPrompt(df=self.df)]
         self.preprocessors_visual = preprocessors_visual or [MeldVisualPreprocessorFilepathToResnet50()]
         self.preprocessors_audio = preprocessors_audio or [MeldAudioPreprocessorToWaveform()]
-        self.classes_ = classes or sorted(self.df.label.unique().tolist())
 
     def __len__(self) -> int:
         """
@@ -93,7 +97,8 @@ class MeldDataset(Dataset):
         """
         # for batch/slices, we recursively return this call to getitem with the integer index
         if isinstance(index, slice):
-            return [r for r in [self[i] for i in range(index.start, index.stop, index.step or 1)]]
+            records = [self[i] for i in range(index.start, index.stop, index.step or 1)]
+            return [r for r in records if isinstance(r, MeldRecord) and r is not None]
 
         # when the index is precise, we return the record at that index
         if index < len(self.df):
@@ -105,7 +110,7 @@ class MeldDataset(Dataset):
         else:
             raise IndexError(f"Index {index} out of range for dataset of size {len(self.df)}")
 
-    def preprocessing_with(self, preprocessors: list) -> "MeldDataset":
+    def preprocessing_with(self, *preprocessors: list) -> "MeldDataset":
         """
         Returns a copy of the present dataset, with the preprocessors preprended
         to the list of preprocessors already present in the dataset.

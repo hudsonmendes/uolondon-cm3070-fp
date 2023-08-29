@@ -163,6 +163,9 @@ cython_debug/
 .vector_cache
 .vector_cache/
 .vector_cache/*
+.weights_cache
+.weights_cache/
+.weights_cache/*
 
 # Logs
 wandb/

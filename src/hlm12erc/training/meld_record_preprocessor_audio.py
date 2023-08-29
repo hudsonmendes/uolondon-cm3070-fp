@@ -59,7 +59,7 @@ class MeldAudioPreprocessorToWaveform(MeldAudioPreprocessor):
                 and does not allow for preprocessing anymore."""
             )
         elif isinstance(x, pathlib.Path):
-            x = wave.open(x, "rb")
+            x = wave.open(str(x), "rb")
 
         # we will turn the waveform into a tensor, therefore sealing it
         with x:

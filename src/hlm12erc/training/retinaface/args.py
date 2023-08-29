@@ -8,7 +8,6 @@ class RetinaFaceArgs:
     Replace the command line arguments from the original code with a dataclass.
     """
 
-    trained_model: str = "./weights/Resnet50_Final.pth"
     network: str = "resnet50"
     cpu: bool = False
     confidence_threshold: float = 0.02
