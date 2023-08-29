@@ -118,10 +118,10 @@ def detect(model: RetinaFace, device: torch.device, args: RetinaFaceArgs, filepa
         for box in dets:
             faces.append(
                 {
-                    "x": box[0],
-                    "y": box[1],
-                    "width": box[2],
-                    "height": box[3],
+                    "x1": int(box[0]),
+                    "y1": int(box[1]),
+                    "x2": int(box[2]),
+                    "y2": int(box[3]),
                     "confidence": box[4],
                 }
             )

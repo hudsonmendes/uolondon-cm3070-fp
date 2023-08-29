@@ -4,9 +4,11 @@ import uuid
 from abc import ABC, abstractmethod
 
 # Third-Party Libraries
+import numpy as np
 import torch
 import torchvision
 from PIL.Image import Image
+from PIL.Image import fromarray as image_from_array
 from PIL.Image import open as open_image
 
 
@@ -122,36 +124,31 @@ class MeldVisualPreprocessorFilepathToFaceOnlyImage(MeldVisualPreprocessor):
         faces = self.face_detector(image)
 
         # create the image we will manipulate
-        image_instance = open_image(image)
+        with open_image(image) as image_instance:
+            # eliminate faces that larger than 1/5 of the image
+            # because it would be a face spanning over 2 frames
+            # which is impossible
+            faces = [face for face in faces if (face["y2"] - face["y1"]) < image_instance.height / 5]
 
-        # eliminate faces that larger than 1/5 of the image
-        # because it would be a face spanning over 2 frames
-        # which is impossible
-        faces = [face for face in faces if face["width"] < image_instance.height / 5]
+            # black out pixels not within faces
+            image_blackedout = self._black_out_non_face_pixels(image=image_instance, faces=faces)
 
-        # black out pixels not within faces
-        # TODO: improve performance by using numpy
-        for x in range(image_instance.width):
-            for y in range(image_instance.height):
-                pixel = (x, y)
-                if not self._is_pixel_within_face_bbox(pixel, faces):
-                    image_instance.putpixel(pixel, (0, 0, 0))
+            # returns the image instance, that can be used by the next preprocessor
+            return image_blackedout
 
-        # returns the image instance, that can be used by the next preprocessor
-        return image_instance
-
-    def _is_pixel_within_face_bbox(self, pixel: tuple, faces: list) -> bool:
+    def _black_out_non_face_pixels(self, image: Image, faces: list) -> Image:
         """
-        Retuns True whenever the pixel is found within the bounding box of
-        a face, and false if not within any.
+        Uses numpy to efficiently black out pixels that are not within the bounding
 
-        :param pixel: tuple with x, y coordinates
-        :param faces: the list of dictionaries describing bounding boxes of faces.
+        :param image: The image to be manipulated
+        :param faces: The list of faces detected in the image
+        :return: The image with the non-face pixels blacked out
         """
-        x, y = pixel
+        img_array = np.array(image)
+        mask = np.zeros((image.height, image.width), dtype=bool)
         for face in faces:
-            x1, y1, w, h = face["x"], face["y"], face["width"], face["height"]
-            x2, y2 = x1 + w, y1 + h
-            if x1 <= x <= x2 and y1 <= y <= y2:
-                return True
-        return False
+            x1, y1, x2, y2 = face["x1"], face["y1"], face["x2"], face["y2"]
+            mask[y1:y2, x1:x2] = True
+
+        img_array[~mask] = [0, 0, 0]
+        return image_from_array(img_array)
