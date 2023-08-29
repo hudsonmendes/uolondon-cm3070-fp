@@ -4,9 +4,7 @@ import unittest
 
 # My Packages and Modules
 from hlm12erc.modelling import ERCConfig
-from hlm12erc.training.meld_record_preprocessor_visual import (
-    MeldVisualPreprocessorFilepathToResnet50,
-)
+from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreprocessorFilepathToResnet50
 
 
 class TestMeldVisualPreprocessor(unittest.TestCase):

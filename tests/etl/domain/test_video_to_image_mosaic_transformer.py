@@ -72,9 +72,7 @@ class TestVideoToImageMosaicTransformer(unittest.TestCase):
     def _create_subject(self, n: int, height: int, force: bool):
         # local import to avoid etl dependencies becoming global requirements
         # My Packages and Modules
-        from hlm12erc.etl.domain.video_to_image_mosaic_transformer import (
-            VideoToImageMosaicTransformer,
-        )
+        from hlm12erc.etl.domain.video_to_image_mosaic_transformer import VideoToImageMosaicTransformer
 
         # create and return instance
         return VideoToImageMosaicTransformer(self.dest, n=n, height=height, force=force)

@@ -8,9 +8,7 @@ import torch
 # My Packages and Modules
 from hlm12erc.training.meld_dataset import MeldDataset
 from hlm12erc.training.meld_record import MeldRecord
-from hlm12erc.training.meld_record_preprocessor_visual import (
-    MeldVisualPreprocessorFilepathToFaceOnlyImage,
-)
+from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreprocessorFilepathToFaceOnlyImage
 
 
 class TestMeldRecordReader(unittest.TestCase):

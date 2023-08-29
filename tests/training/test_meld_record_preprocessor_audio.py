@@ -3,9 +3,7 @@ import unittest
 import wave
 
 # My Packages and Modules
-from hlm12erc.training.meld_record_preprocessor_audio import (
-    MeldAudioPreprocessorToWaveform,
-)
+from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessorToWaveform
 
 
 class TestMeldAudioPreprocessor(unittest.TestCase):

@@ -13,12 +13,8 @@ from hlm12erc.modelling.erc_model import ERCModel
 from hlm12erc.modelling.erc_output import ERCOutput
 from hlm12erc.training.erc_data_collator import ERCDataCollator
 from hlm12erc.training.meld_record import MeldRecord
-from hlm12erc.training.meld_record_preprocessor_audio import (
-    MeldAudioPreprocessorToWaveform,
-)
-from hlm12erc.training.meld_record_preprocessor_visual import (
-    MeldVisualPreprocessorFilepathToResnet50,
-)
+from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessorToWaveform
+from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreprocessorFilepathToResnet50
 
 
 class TestERCModel(unittest.TestCase):

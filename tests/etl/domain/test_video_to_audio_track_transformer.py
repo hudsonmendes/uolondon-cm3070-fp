@@ -57,9 +57,7 @@ class TestVideoToAudioTrackTransformer(unittest.TestCase):
     def _create_subject(self, force):
         # local import to avoid etl dependencies becoming global requirements
         # My Packages and Modules
-        from hlm12erc.etl.domain.video_to_audio_track_transformer import (
-            VideoToAudioTrackTransformer,
-        )
+        from hlm12erc.etl.domain.video_to_audio_track_transformer import VideoToAudioTrackTransformer
 
         # create and return a transformer instance
         return VideoToAudioTrackTransformer(self.dest, force=force)

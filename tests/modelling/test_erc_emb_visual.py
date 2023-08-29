@@ -6,15 +6,9 @@ import torch
 from PIL import Image
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_emb_visual import (
-    ERCConfig,
-    ERCVisualEmbeddings,
-    ERCVisualEmbeddingType,
-)
+from hlm12erc.modelling.erc_emb_visual import ERCConfig, ERCVisualEmbeddings, ERCVisualEmbeddingType
 from hlm12erc.training.erc_data_collator import ERCDataCollator
-from hlm12erc.training.meld_record_preprocessor_visual import (
-    MeldVisualPreprocessorFilepathToResnet50,
-)
+from hlm12erc.training.meld_record_preprocessor_visual import MeldVisualPreprocessorFilepathToResnet50
 
 
 class TestERCResNet50VisualEmbeddings(unittest.TestCase):

@@ -6,15 +6,9 @@ import wave
 import torch
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_emb_audio import (
-    ERCAudioEmbeddings,
-    ERCAudioEmbeddingType,
-    ERCConfig,
-)
+from hlm12erc.modelling.erc_emb_audio import ERCAudioEmbeddings, ERCAudioEmbeddingType, ERCConfig
 from hlm12erc.training.erc_data_collator import ERCDataCollator
-from hlm12erc.training.meld_record_preprocessor_audio import (
-    MeldAudioPreprocessorToWaveform,
-)
+from hlm12erc.training.meld_record_preprocessor_audio import MeldAudioPreprocessorToWaveform
 
 
 class TestERCRawAudioEmbeddings(unittest.TestCase):

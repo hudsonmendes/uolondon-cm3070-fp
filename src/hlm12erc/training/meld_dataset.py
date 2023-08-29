@@ -9,18 +9,9 @@ from torch.utils.data import Dataset
 
 # Local Folders
 from .meld_record import MeldRecord
-from .meld_record_preprocessor_audio import (
-    MeldAudioPreprocessor,
-    MeldAudioPreprocessorToWaveform,
-)
-from .meld_record_preprocessor_text import (
-    MeldTextPreprocessor,
-    MeldTextPreprocessorToDialogPrompt,
-)
-from .meld_record_preprocessor_visual import (
-    MeldVisualPreprocessor,
-    MeldVisualPreprocessorFilepathToResnet50,
-)
+from .meld_record_preprocessor_audio import MeldAudioPreprocessor, MeldAudioPreprocessorToWaveform
+from .meld_record_preprocessor_text import MeldTextPreprocessor, MeldTextPreprocessorToDialogPrompt
+from .meld_record_preprocessor_visual import MeldVisualPreprocessor, MeldVisualPreprocessorFilepathToResnet50
 
 
 class MeldDataset(Dataset):
