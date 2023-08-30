@@ -46,7 +46,12 @@ class ERCFusion(ERCEmbeddings):
         assert config is not None
 
     @abstractmethod
-    def forward(self, *x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x_text: torch.Tensor | None,
+        x_visual: torch.Tensor | None,
+        x_audio: torch.Tensor | None,
+    ) -> torch.Tensor:
         """
         Defines the contract for the forward pass of the fusion network.
 
@@ -87,9 +92,9 @@ class ERCConcatFusion(ERCFusion):
 
     def forward(
         self,
-        x_text: torch.Tensor,
-        x_visual: torch.Tensor,
-        x_audio: torch.Tensor,
+        x_text: torch.Tensor | None,
+        x_visual: torch.Tensor | None,
+        x_audio: torch.Tensor | None,
     ) -> torch.Tensor:
         """
         Concatenates the input tensors along the feature dimension.
@@ -178,13 +183,14 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
             self.fc_visual = torch.nn.Linear(in_features=embed_visual.out_features, out_features=dims_dst_visual)
         if embed_audio is not None and dims_dst_audio is not None:
             self.fc_audio = torch.nn.Linear(in_features=embed_audio.out_features, out_features=dims_dst_audio)
+        logger.warn(f"FUSION: Attention Heads={heads_count}, for Embed Dim={dims_out} (from {dims_src_concat})")
         self.attn = torch.nn.MultiheadAttention(embed_dim=dims_out, num_heads=heads_count)
 
     def forward(
         self,
-        x_text: torch.Tensor,
-        x_visual: torch.Tensor,
-        x_audio: torch.Tensor,
+        x_text: torch.Tensor | None,
+        x_visual: torch.Tensor | None,
+        x_audio: torch.Tensor | None,
     ) -> torch.Tensor:
         """
         Performs Multiheaded Attention on the input tensors, through

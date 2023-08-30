@@ -2,7 +2,7 @@ classifier_name: fusion-mha-heads-dg4
 classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
-classifier_warmup_steps: 1000 # over V100, batch_size=4
+classifier_warmup_steps: 2000 # over A100, batch_size=8
 classifier_classes:
   - anger
   - disgust
