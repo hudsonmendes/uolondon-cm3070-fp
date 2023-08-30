@@ -95,28 +95,52 @@ class ERCConcatFusion(ERCFusion):
 class ERCMultiheadedAttentionFusion(ERCFusion):
     """
     Feature Fusion Mechanism based on Multiheaded Attention.
+
+    Using the Multiheaded Attention as a form of feature fusion is inspired
+    by the following paper:
+    >>> Vishal Chudasama, Purbayan Kar, Ashish Gudmalwar, Nirmesh Shah, Pankaj
+    ... Wasnik, and Naoyuki Onoe. 2022. M2FNet: Multi-modal Fusion Network for
+    ... Emotion Recognition in Conversation. In 2022 IEEE/CVF Conference on Computer
+    ... Vision and Pattern Recognition Workshops (CVPRW), 4651–4660. DOI:https://doi.org/10.1109/CVPRW56347.2022.00511
+
+    And using the Multiheaded Attention with a residual connection takes inspiration
+    in the following paper:
+    >>> Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+    ... Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. 2017. Attention is
+    ... All you Need. In Advances in Neural Information Processing Systems,
+    ... Curran Associates, Inc. Retrieved from https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
     """
 
+    hidden_size: int
+
     def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig, *args, **kwargs) -> None:
-        assert config.fusion_out_features
         super().__init__(embeddings, config, *args, **kwargs)
-        self.hidden_size = config.fusion_out_features
+        self.hidden_size = sum([e.out_features for e in embeddings])
         self.attn = torch.nn.MultiheadAttention(
-            embed_dim=sum([e.out_features for e in embeddings]),
+            embed_dim=self.hidden_size,
             num_heads=config.fusion_attention_heads,
         )
 
     def forward(self, *x: torch.Tensor) -> torch.Tensor:
         """
-        Performs Multiheaded Attention on the input tensors.
+        Performs Multiheaded Attention on the input tensors, through
+        concatenating the input, transforming the inputs using a
+        multi-headed attention layer, and then performing the element-wise
+        addition of the input and the attention output (residual connection).
 
-        :param x: List of tensors to be fused.
-        :return: Fused tensor.
+        :param x: List of tensors to be fused, one or more for each modality, all with shape[0] == batch_size
+        :return: Fused tensor, with dimensions (batch_size, concatenated_embedding_size)
         """
         y = torch.cat(x, dim=1)
-        y = self.attn(y, y, y, needs_weights=False)
+        attn, _ = self.attn.forward(query=y, key=y, value=y)
+        y = y + attn
         return y
 
     @property
     def out_features(self) -> int:
+        """
+        Returns the dimensionality of the vectors produced by the embedding fusion,
+        which is the same of the sum of the embedding dimensions, to allow for
+        element-wise addition of the embeddings (residual connection)
+        """
         return self.hidden_size

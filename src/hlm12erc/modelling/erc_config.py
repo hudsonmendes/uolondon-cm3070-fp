@@ -90,7 +90,6 @@ class ERCConfig:
     visual_out_features: int = -1  # defined by resnet50, get it from the embedding class
 
     fusion_attention_heads: int | None = None
-    fusion_out_features: int | None = None
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
 
