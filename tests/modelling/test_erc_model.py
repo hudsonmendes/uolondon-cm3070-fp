@@ -53,40 +53,98 @@ class TestERCModel(unittest.TestCase):
         out = self.model.forward(**self.x)
         self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
 
-    def test_forward_output_success_with_only_text(self):
-        out = ERCModel(
-            label_encoder=self.label_encoder,
-            config=ERCConfig(
-                feedforward_layers=self.ff_layers,
-                classifier_classes=self.classes,
+    def test_forward_fusion_concat_with_only_text(self):
+        config = dict(modules_fusion="concat", modules_visual_encoder="none", modules_audio_encoder="none")
+        self._test_forward_with_custom_config(config)
+
+    def test_forward_fusion_concat_with_only_visual(self):
+        config = dict(modules_fusion="concat", modules_text_encoder="none", modules_audio_encoder="none")
+        self._test_forward_with_custom_config(config)
+
+    def test_forward_fusion_concat_with_only_audio(self):
+        config = dict(modules_fusion="concat", modules_text_encoder="none", modules_visual_encoder="none")
+        self._test_forward_with_custom_config(config)
+
+    def test_forward_fusion_concat_with_text_and_visual(self):
+        config = dict(modules_fusion="concat", modules_audio_encoder="none")
+        self._test_forward_with_custom_config(config)
+
+    def test_forward_fusion_concat_with_text_and_audio(self):
+        config = dict(modules_fusion="concat", modules_visual_encoder="none")
+        self._test_forward_with_custom_config(config)
+
+    def test_forward_fusion_concat_with_audio_and_audio(self):
+        config = dict(modules_fusion="concat", modules_text_encoder="none")
+        self._test_forward_with_custom_config(config)
+
+    def test_forward_fusion_mha_with_only_text(self):
+        self._test_forward_with_custom_config(
+            dict(
+                modules_fusion="multi_headed_attn",
+                fusion_attention_heads_degree=2,
+                fusion_out_features=512,
                 modules_visual_encoder="none",
                 modules_audio_encoder="none",
-            ),
-        ).forward(**self.x)
-        self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
+            )
+        )
 
-    def test_forward_output_success_with_only_visual(self):
-        out = ERCModel(
-            label_encoder=self.label_encoder,
-            config=ERCConfig(
-                feedforward_layers=self.ff_layers,
-                classifier_classes=self.classes,
+    def test_forward_fusion_mha_with_only_visual(self):
+        self._test_forward_with_custom_config(
+            dict(
+                modules_fusion="multi_headed_attn",
+                fusion_attention_heads_degree=2,
+                fusion_out_features=512,
                 modules_text_encoder="none",
                 modules_audio_encoder="none",
-            ),
-        ).forward(**self.x)
-        self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
+            )
+        )
 
-    def test_forward_output_success_with_only_audio(self):
-        out = ERCModel(
-            label_encoder=self.label_encoder,
-            config=ERCConfig(
-                feedforward_layers=self.ff_layers,
-                classifier_classes=self.classes,
-                modules_visual_encoder="none",
+    def test_forward_fusion_mha_with_only_audio(self):
+        self._test_forward_with_custom_config(
+            dict(
+                modules_fusion="multi_headed_attn",
+                fusion_attention_heads_degree=2,
+                fusion_out_features=512,
                 modules_text_encoder="none",
-            ),
-        ).forward(**self.x)
+                modules_visual_encoder="none",
+            )
+        )
+
+    def test_forward_fusion_mha_with_text_and_visual(self):
+        self._test_forward_with_custom_config(
+            dict(
+                modules_fusion="multi_headed_attn",
+                fusion_attention_heads_degree=2,
+                fusion_out_features=512,
+                modules_audio_encoder="none",
+            )
+        )
+
+    def test_forward_fusion_mha_with_text_and_audio(self):
+        self._test_forward_with_custom_config(
+            dict(
+                modules_fusion="multi_headed_attn",
+                fusion_attention_heads_degree=2,
+                fusion_out_features=512,
+                modules_visual_encoder="none",
+            )
+        )
+
+    def test_forward_fusion_mha_with_audio_and_audio(self):
+        self._test_forward_with_custom_config(
+            dict(
+                modules_fusion="multi_headed_attn",
+                fusion_attention_heads_degree=2,
+                fusion_out_features=512,
+                modules_text_encoder="none",
+            )
+        )
+
+    def _test_forward_with_custom_config(self, updating_config: dict):
+        custom_config = self.config.to_dict()
+        custom_config.update(updating_config)
+        custom_model = ERCModel(ERCConfig(**custom_config), label_encoder=self.label_encoder)
+        out = custom_model.forward(**self.x)
         self.assertEqual(out.labels.shape, (len(self.x["x_text"]), len(self.classes)))
 
     def test_forward_output_logits_shape(self):

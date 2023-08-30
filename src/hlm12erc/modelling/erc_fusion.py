@@ -1,7 +1,7 @@
 # Python Built-in Modules
 import logging
 from abc import abstractmethod
-from typing import List, Type
+from typing import List, Tuple, Type
 
 # Third-Party Libraries
 import torch
@@ -10,7 +10,9 @@ from torch.nn.functional import normalize as l2_norm
 # Local Folders
 from .erc_config import ERCConfig, ERCFusionTechnique
 from .erc_emb import ERCEmbeddings
-from .erc_feedforward import ERCConfigFeedForwardLayer, ERCFeedForward
+from .erc_emb_audio import ERCAudioEmbeddings
+from .erc_emb_text import ERCTextEmbeddings
+from .erc_emb_visual import ERCVisualEmbeddings
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +28,17 @@ class ERCFusion(ERCEmbeddings):
         ...     pass
     """
 
-    def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        embeddings: Tuple[ERCTextEmbeddings | None, ERCVisualEmbeddings | None, ERCAudioEmbeddings | None],
+        config: ERCConfig,
+        *args,
+        **kwargs,
+    ) -> None:
         """
         Defines the constructor contract for fusion networks.
 
-        :param embeddings: List of embeddings to be fused.
+        :param embeddings: Tuple with the embeddings for the 3 modalities
         :param config: Configuration object.
         """
         super(ERCFusion, self).__init__(config=config, *args, **kwargs)
@@ -63,23 +71,33 @@ class ERCConcatFusion(ERCFusion):
 
     hidden_size: int
 
-    def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig) -> None:
+    def __init__(
+        self,
+        embeddings: Tuple[ERCTextEmbeddings | None, ERCVisualEmbeddings | None, ERCAudioEmbeddings | None],
+        config: ERCConfig,
+    ) -> None:
         """
         Constructs a feature fusion network based on concatenation of vectors.
 
-        :param embeddings: List of embeddings to be fused.
+        :param embeddings: Tuple with the embeddings for the 3 modalities
         :param config: Configuration object.
         """
         super().__init__(embeddings=embeddings, config=config)
-        self.hidden_size = sum([e.out_features for e in embeddings])
+        self.hidden_size = sum([e.out_features for e in embeddings if e is not None])
 
-    def forward(self, *x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x_text: torch.Tensor,
+        x_visual: torch.Tensor,
+        x_audio: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Concatenates the input tensors along the feature dimension.
 
         :param x: List of tensors to be fused.
         :return: Fused tensor.
         """
+        x = [x_modal for x_modal in (x_text, x_visual, x_audio) if x_modal is not None]
         y = torch.cat(x, dim=1)
         y = l2_norm(y, p=2, dim=1)
         return y
@@ -118,41 +136,56 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
     ... Curran Associates, Inc. Retrieved from https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
     """
 
-    def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        embeddings: Tuple[ERCTextEmbeddings | None, ERCVisualEmbeddings | None, ERCAudioEmbeddings | None],
+        config: ERCConfig,
+    ) -> None:
         """
         Constructs a feature fusion network based on Multiheaded Attention.
 
-        :param embeddings: List of embeddings to be fused.
+        :param embeddings: Tuple with the embeddings for the 3 modalities
         :param config: Configuration object.
         """
-        super().__init__(embeddings, config, *args, **kwargs)
+        super().__init__(embeddings, config)
 
         # prepare the configuration
+        embed_text, embed_visual, embed_audio = embeddings
         assert isinstance(config.fusion_attention_heads_degree, int)
         assert isinstance(config.fusion_out_features, int)
-        modal_dims_original = [e.out_features for e in embeddings]
-        modal_dims_original_cat = sum(modal_dims_original)
-        modal_dims_ratios = [dims / modal_dims_original_cat for dims in modal_dims_original]
-        modal_final_dims = [int(config.fusion_out_features * p) for p in modal_dims_ratios]
-        modal_final_diff = max(0, config.fusion_out_features - sum(modal_final_dims))
-        modal_final_dims[modal_final_dims.index(max(modal_final_dims))] += modal_final_diff
-        hidden_dims = sum(modal_final_dims)
-        heads_i = config.fusion_attention_heads_degree - 1
-        heads_candidates = [i for i in range(1, hidden_dims) if hidden_dims % i == 0]
-        heads_count = heads_candidates[heads_i] if heads_i < len(heads_candidates) else heads_candidates[-1]
-        logger.warn(f"FUSION: attn_heads={heads_count}, embed_dims={hidden_dims} (from {modal_dims_original_cat})")
+        assert embeddings[0] is None or isinstance(embeddings[0], ERCTextEmbeddings)
+        assert embeddings[1] is None or isinstance(embeddings[1], ERCVisualEmbeddings)
+        assert embeddings[2] is None or isinstance(embeddings[2], ERCAudioEmbeddings)
 
         # prepare the attention network
-        self.fc_per_modality = [
-            torch.nn.Linear(in_features=modal_dims_original[i], out_features=modal_final_dims[i])
-            for i in range(len(embeddings))
-        ]
-        self.attn = torch.nn.MultiheadAttention(
-            embed_dim=hidden_dims,
-            num_heads=heads_count,
-        )
+        dims_src_all = [e.out_features if e else None for e in embeddings]
+        dims_src_concat = sum([(dim or 0) for dim in dims_src_all])
+        dims_src_ratios = [(dim / dims_src_concat if dim else None) for dim in dims_src_all]
+        dims_dst_all = [(int(config.fusion_out_features * ratio) if ratio else None) for ratio in dims_src_ratios]
+        dims_dst_diff = config.fusion_out_features - sum([dim or 0 for dim in dims_dst_all if dim])
+        dims_dst_max = max([dim for dim in dims_dst_all if dim])
+        dims_dst_max_i = dims_dst_all.index(dims_dst_max)
+        dims_dst_all[dims_dst_max_i] = (dims_dst_all[dims_dst_max_i] or 0) + dims_dst_diff
+        dims_dst_text, dims_dst_visual, dims_dst_audio = dims_dst_all
+        dims_out = sum([dim or 0 for dim in dims_dst_all])
+        heads_candidates = [i for i in range(1, dims_out + 1) if dims_out % i == 0]
+        heads_i = config.fusion_attention_heads_degree - 1
+        heads_count = heads_candidates[heads_i] if heads_i < len(heads_candidates) else heads_candidates[-1]
+        self.fc_text, self.fc_visual, self.fc_audio = (None, None, None)
+        if embed_text is not None and dims_dst_text is not None:
+            self.fc_text = torch.nn.Linear(in_features=embed_text.out_features, out_features=dims_dst_text)
+        if embed_visual is not None and dims_dst_visual is not None:
+            self.fc_visual = torch.nn.Linear(in_features=embed_visual.out_features, out_features=dims_dst_visual)
+        if embed_audio is not None and dims_dst_audio is not None:
+            self.fc_audio = torch.nn.Linear(in_features=embed_audio.out_features, out_features=dims_dst_audio)
+        self.attn = torch.nn.MultiheadAttention(embed_dim=dims_out, num_heads=heads_count)
 
-    def forward(self, *x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x_text: torch.Tensor,
+        x_visual: torch.Tensor,
+        x_audio: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Performs Multiheaded Attention on the input tensors, through
         concatenating the input, transforming the inputs using a
@@ -169,17 +202,25 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
         Finally, the output of the attention mechanism is added to the input
         (residual connection), and the result is returned.
 
-        :param x: List of tensors to be fused, one or more for each modality, all with shape[0] == batch_size
+        :param x_text: Tensor with the text embeddings, with dimensions (batch_size, text_embedding_size)
+        :param x_visual: Tensor with the visual embeddings, with dimensions (batch_size, visual_embedding_size)
+        :param x_audio: Tensor with the audio embeddings, with dimensions (batch_size, audio_embedding_size)
         :return: Fused tensor, with dimensions (batch_size, concatenated_embedding_size)
         """
         # dimensionality reduction through mapping using a linear layer
-        x = tuple([self.fc_per_modality[i](x[i]) for i in range(len(x))])
+        x_all = []
+        if self.fc_text:
+            x_all.append(self.fc_text(x_text))
+        if self.fc_visual:
+            x_all.append(self.fc_visual(x_visual))
+        if self.fc_audio:
+            x_all.append(self.fc_audio(x_audio))
         # concatenate the mapped embeddings
-        y = torch.cat(x, dim=1)
+        x = torch.cat(x_all, dim=1)
         # perform the attention mechanism
-        attn, _ = self.attn.forward(query=y, key=y, value=y)
+        attn, _ = self.attn.forward(query=x, key=x, value=x)
         # residual connection
-        y = y + attn
+        y = x + attn
         # output
         return y
 

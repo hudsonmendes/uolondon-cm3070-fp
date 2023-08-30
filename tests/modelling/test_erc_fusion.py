@@ -7,6 +7,9 @@ import torch
 
 # My Packages and Modules
 from hlm12erc.modelling.erc_emb import ERCEmbeddings
+from hlm12erc.modelling.erc_emb_audio import ERCAudioEmbeddings
+from hlm12erc.modelling.erc_emb_text import ERCTextEmbeddings
+from hlm12erc.modelling.erc_emb_visual import ERCVisualEmbeddings
 from hlm12erc.modelling.erc_fusion import ERCConfig, ERCFusion, ERCFusionTechnique
 
 
@@ -26,7 +29,7 @@ class TestERCConcatFusion(unittest.TestCase):
     def test_forward_shape(self):
         batch_size = 3
         input_tensors = [torch.randn((batch_size, d)) for d in self.embedding_dims]
-        output_tensor = self.fusion.forward(*input_tensors)
+        output_tensor = self.fusion(*input_tensors)
         expected_shape = (batch_size, sum(self.embedding_dims))
         self.assertEqual(output_tensor.shape, expected_shape)
 
@@ -36,7 +39,7 @@ class TestERCConcatFusion(unittest.TestCase):
     def test_forward_normalization(self):
         batch_size = 3
         input_tensors = [torch.randn((batch_size, d)) for d in self.embedding_dims]
-        output_tensor = self.fusion.forward(*input_tensors)
+        output_tensor = self.fusion(*input_tensors)
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
@@ -45,36 +48,51 @@ class TestERCConcatFusion(unittest.TestCase):
 class TestERCMultiheadedAttentionFusion(unittest.TestCase):
     def setUp(self):
         self.config = ERCConfig(classifier_classes=["a", "b"], fusion_attention_heads_degree=3, fusion_out_features=768)
-        self.embedding_dims = [768, 768 * 2, 2048]
-        self.embeddings = [unittest.mock.create_autospec(ERCEmbeddings, out_features=f) for f in self.embedding_dims]
-        self.fusion = ERCFusion.resolve_type_from(ERCFusionTechnique.MULTI_HEADED_ATTENTION)(
-            embeddings=self.embeddings,
-            config=self.config,
+        self.embeddings = (
+            unittest.mock.create_autospec(ERCTextEmbeddings, out_features=768),
+            unittest.mock.create_autospec(ERCVisualEmbeddings, out_features=2048),
+            unittest.mock.create_autospec(ERCAudioEmbeddings, out_features=768 * 2),
         )
+        self.fusion_type = ERCFusion.resolve_type_from(ERCFusionTechnique.MULTI_HEADED_ATTENTION)
+        self.fusion = self.fusion_type(embeddings=self.embeddings, config=self.config)
 
     def tearDown(self):
         del self.fusion
 
+    def test_missing_embeddings_text(self):
+        self._test_missing_embedding(embeddings=(None, *self.embeddings[1:]))
+
+    def test_missing_embeddings_visual(self):
+        self._test_missing_embedding(embeddings=(self.embeddings[0], None, self.embeddings[2]))
+
+    def test_missing_embeddings_audio(self):
+        self._test_missing_embedding(embeddings=(*self.embeddings[0:2], None))
+
+    def _test_missing_embedding(self, embeddings: tuple, batch_size: int = 3):
+        input_tensors = [torch.randn((batch_size, e.out_features)) if e else None for e in embeddings]
+        custom_fusion = self.fusion_type(config=self.config, embeddings=embeddings)
+        output_tensor = custom_fusion(*input_tensors)
+        self.assertEqual(output_tensor.shape, (batch_size, self.config.fusion_out_features))
+
     def test_forward_shape(self):
         batch_size = 3
-        input_tensors = [torch.randn((batch_size, d)) for d in self.embedding_dims]
-        output_tensor = self.fusion.forward(*input_tensors)
-        expected_shape = (batch_size, self.config.fusion_out_features)
-        self.assertEqual(output_tensor.shape, expected_shape)
+        input_tensors = [torch.randn((batch_size, e.out_features)) for e in self.embeddings]
+        output_tensor = self.fusion(*input_tensors)
+        self.assertEqual(output_tensor.shape, (batch_size, self.config.fusion_out_features))
 
     def test_out_features(self):
         self.assertEqual(self.fusion.out_features, self.config.fusion_out_features)
 
     def test_forward_not_normalized(self):
         batch_size = 3
-        input_tensors = [torch.randn((batch_size, d)) for d in self.embedding_dims]
-        output_tensor = self.fusion.forward(*input_tensors)
+        input_tensors = [torch.randn((batch_size, e.out_features)) for e in self.embeddings]
+        output_tensor = self.fusion(*input_tensors)
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertNotAlmostEqual(norm.item(), 1.0, places=5)
 
     def test_attn_in_features_does_not_match_concat_embeds_dims(self):
-        self.assertNotEqual(self.fusion.attn.embed_dim, sum(self.embedding_dims))
+        self.assertNotEqual(self.fusion.attn.embed_dim, sum(e.out_features for e in self.embeddings))
 
     def test_attn_in_features_matches_fusion_out_features(self):
         self.assertEqual(self.fusion.attn.embed_dim, self.config.fusion_out_features)
