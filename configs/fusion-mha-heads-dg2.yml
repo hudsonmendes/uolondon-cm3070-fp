@@ -27,6 +27,7 @@ visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
 fusion_attention_heads_degree: 2 # 2nd common divisor
+fusion_out_features: 1024
 
 feedforward_layers:
   - out_features: 512

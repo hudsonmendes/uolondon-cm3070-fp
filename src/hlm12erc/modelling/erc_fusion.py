@@ -7,13 +7,10 @@ from typing import List, Type
 import torch
 from torch.nn.functional import normalize as l2_norm
 
-# My Packages and Modules
-from hlm12erc.modelling.erc_config import ERCConfig
-from hlm12erc.modelling.erc_emb import ERCEmbeddings
-
 # Local Folders
 from .erc_config import ERCConfig, ERCFusionTechnique
 from .erc_emb import ERCEmbeddings
+from .erc_feedforward import ERCConfigFeedForwardLayer, ERCFeedForward
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +96,13 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
     """
     Feature Fusion Mechanism based on Multiheaded Attention.
 
+    Due to the O(n^2) complexity of the attention mechanism, the input dimension
+    of each modality has to be reduced to a smaller dimensionality, which is
+    done through projection over linear layer with a smaller output dimension,
+    but with dimensionality proportional to the original input dimension.
+    These mapped embeddings are then concatenated and fed into the attention
+    mechanism, which outputs a tensor of the same dimensionality of the input.
+
     Using the Multiheaded Attention as a form of feature fusion is inspired
     by the following paper:
     >>> Vishal Chudasama, Purbayan Kar, Ashish Gudmalwar, Nirmesh Shah, Pankaj
@@ -115,33 +119,38 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
     """
 
     def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig, *args, **kwargs) -> None:
+        """
+        Constructs a feature fusion network based on Multiheaded Attention.
+
+        :param embeddings: List of embeddings to be fused.
+        :param config: Configuration object.
+        """
         super().__init__(embeddings, config, *args, **kwargs)
+
+        # prepare the configuration
         assert isinstance(config.fusion_attention_heads_degree, int)
-        concat_dims = sum([e.out_features for e in embeddings])
-        attn_heads_degree = config.fusion_attention_heads_degree
-        hidden_size = concat_dims
-        num_heads = ERCMultiheadedAttentionFusion._find_nth_divisor_of(number=concat_dims, n=attn_heads_degree)
-        logger.warn(f"Using {num_heads} attention heads for {concat_dims} embedding dims (concatenated).")
-        self.attn = torch.nn.MultiheadAttention(embed_dim=hidden_size, num_heads=num_heads)
+        assert isinstance(config.fusion_out_features, int)
+        modal_dims_original = [e.out_features for e in embeddings]
+        modal_dims_original_cat = sum(modal_dims_original)
+        modal_dims_ratios = [dims / modal_dims_original_cat for dims in modal_dims_original]
+        modal_final_dims = [int(config.fusion_out_features * p) for p in modal_dims_ratios]
+        modal_final_diff = max(0, config.fusion_out_features - sum(modal_final_dims))
+        modal_final_dims[modal_final_dims.index(max(modal_final_dims))] += modal_final_diff
+        hidden_dims = sum(modal_final_dims)
+        heads_i = config.fusion_attention_heads_degree - 1
+        heads_candidates = [i for i in range(1, hidden_dims) if hidden_dims % i == 0]
+        heads_count = heads_candidates[heads_i] if heads_i < len(heads_candidates) else heads_candidates[-1]
+        logger.warn(f"FUSION: attn_heads={heads_count}, embed_dims={hidden_dims} (from {modal_dims_original_cat})")
 
-    @staticmethod
-    def _find_nth_divisor_of(number: int, n: int) -> int:
-        """
-        Find the nth smallest divisor of a given number.
-
-        :param degree: Number to find the largest divisor.
-        :return: Largest divisor of the given number.
-        """
-        divisors = []
-        for candidate in range(1, number + 1):
-            if number % candidate == 0:
-                divisors.append(candidate)
-            if len(divisors) >= n:
-                break
-        last = divisors[-1]
-        if last >= number:
-            raise ValueError(f"The divisor {last} is greater than {number}, therefore not a divisor.")
-        return last
+        # prepare the attention network
+        self.fc_per_modality = [
+            torch.nn.Linear(in_features=modal_dims_original[i], out_features=modal_final_dims[i])
+            for i in range(len(embeddings))
+        ]
+        self.attn = torch.nn.MultiheadAttention(
+            embed_dim=hidden_dims,
+            num_heads=heads_count,
+        )
 
     def forward(self, *x: torch.Tensor) -> torch.Tensor:
         """
@@ -150,12 +159,28 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
         multi-headed attention layer, and then performing the element-wise
         addition of the input and the attention output (residual connection).
 
+        Each input X (for each modality) is projected over a linear representation
+        of output dimensionality proportional to the input dimensionality.
+
+        These projected representations are then concatenated and fed into the
+        attention mechanism, which outputs a tensor of the same dimensionality
+        of the input.
+
+        Finally, the output of the attention mechanism is added to the input
+        (residual connection), and the result is returned.
+
         :param x: List of tensors to be fused, one or more for each modality, all with shape[0] == batch_size
         :return: Fused tensor, with dimensions (batch_size, concatenated_embedding_size)
         """
+        # dimensionality reduction through mapping using a linear layer
+        x = tuple([self.fc_per_modality[i](x[i]) for i in range(len(x))])
+        # concatenate the mapped embeddings
         y = torch.cat(x, dim=1)
+        # perform the attention mechanism
         attn, _ = self.attn.forward(query=y, key=y, value=y)
+        # residual connection
         y = y + attn
+        # output
         return y
 
     @property
