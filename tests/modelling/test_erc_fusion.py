@@ -45,7 +45,7 @@ class TestERCConcatFusion(unittest.TestCase):
 class TestERCMultiheadedAttentionFusion(unittest.TestCase):
     def setUp(self):
         self.config = ERCConfig(classifier_classes=["a", "b"], fusion_attention_heads_degree=3)
-        self.embedding_dims = [100, 200, 300]
+        self.embedding_dims = [768, 768 * 2, 2048]
         self.embeddings = [unittest.mock.create_autospec(ERCEmbeddings, out_features=f) for f in self.embedding_dims]
         self.fusion = ERCFusion.resolve_type_from(ERCFusionTechnique.MULTI_HEADED_ATTENTION)(
             embeddings=self.embeddings,
@@ -72,3 +72,18 @@ class TestERCMultiheadedAttentionFusion(unittest.TestCase):
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertNotAlmostEqual(norm.item(), 1.0, places=5)
+
+    def test_num_heads_degree_2(self):
+        self._test_num_heads_degree_n(degree=2, expected=2)
+
+    def test_num_heads_degree_3(self):
+        self._test_num_heads_degree_n(degree=3, expected=4)
+
+    def test_num_heads_degree_4(self):
+        self._test_num_heads_degree_n(degree=4, expected=8)
+
+    def _test_num_heads_degree_n(self, degree, expected):
+        config = ERCConfig(classifier_classes=["a", "b"], fusion_attention_heads_degree=degree)
+        fusion_type = ERCFusion.resolve_type_from(ERCFusionTechnique.MULTI_HEADED_ATTENTION)
+        fusion_instance = fusion_type(self.embeddings, config=config)
+        self.assertEqual(fusion_instance.attn.num_heads, expected)

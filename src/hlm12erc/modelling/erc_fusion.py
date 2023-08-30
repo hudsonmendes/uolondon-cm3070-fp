@@ -133,9 +133,9 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
         :return: Largest divisor of the given number.
         """
         divisors = []
-        for _ in range(1, number + 1):
-            if number % _ == 0:
-                divisors.append(_)
+        for candidate in range(1, number + 1):
+            if number % candidate == 0:
+                divisors.append(candidate)
             if len(divisors) >= n:
                 break
         last = divisors[-1]
