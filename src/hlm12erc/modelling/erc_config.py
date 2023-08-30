@@ -75,7 +75,7 @@ class ERCConfig:
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
     modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET50
     modules_audio_encoder: str = ERCAudioEmbeddingType.WAVEFORM
-    modules_fusion: str = ERCFusionTechnique.MULTI_HEADED_ATTENTION
+    modules_fusion: str = ERCFusionTechnique.CONCATENATION
 
     text_in_features: int = 50  # 300 is the largest model
     text_out_features: int = 50  # must match in_features for GloVe
