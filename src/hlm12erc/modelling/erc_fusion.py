@@ -1,4 +1,5 @@
 # Python Built-in Modules
+import logging
 from abc import abstractmethod
 from typing import List, Type
 
@@ -13,6 +14,8 @@ from hlm12erc.modelling.erc_emb import ERCEmbeddings
 # Local Folders
 from .erc_config import ERCConfig, ERCFusionTechnique
 from .erc_emb import ERCEmbeddings
+
+logger = logging.getLogger(__name__)
 
 
 class ERCFusion(ERCEmbeddings):
@@ -111,15 +114,34 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
     ... Curran Associates, Inc. Retrieved from https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
     """
 
-    hidden_size: int
-
     def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig, *args, **kwargs) -> None:
         super().__init__(embeddings, config, *args, **kwargs)
-        self.hidden_size = sum([e.out_features for e in embeddings])
-        self.attn = torch.nn.MultiheadAttention(
-            embed_dim=self.hidden_size,
-            num_heads=config.fusion_attention_heads,
-        )
+        assert isinstance(config.fusion_attention_heads_degree, int)
+        concat_dims = sum([e.out_features for e in embeddings])
+        attn_heads_degree = config.fusion_attention_heads_degree
+        hidden_size = concat_dims
+        num_heads = ERCMultiheadedAttentionFusion._find_nth_divisor_of(number=concat_dims, n=attn_heads_degree)
+        logger.warn(f"Using {num_heads} attention heads for {concat_dims} embedding dims (concatenated).")
+        self.attn = torch.nn.MultiheadAttention(embed_dim=hidden_size, num_heads=num_heads)
+
+    @staticmethod
+    def _find_nth_divisor_of(number: int, n: int) -> int:
+        """
+        Find the nth smallest divisor of a given number.
+
+        :param degree: Number to find the largest divisor.
+        :return: Largest divisor of the given number.
+        """
+        divisors = []
+        for _ in range(1, number + 1):
+            if number % _ == 0:
+                divisors.append(_)
+            if len(divisors) >= n:
+                break
+        last = divisors[-1]
+        if last >= number:
+            raise ValueError(f"The divisor {last} is greater than {number}, therefore not a divisor.")
+        return last
 
     def forward(self, *x: torch.Tensor) -> torch.Tensor:
         """
@@ -143,4 +165,4 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
         which is the same of the sum of the embedding dimensions, to allow for
         element-wise addition of the embeddings (residual connection)
         """
-        return self.hidden_size
+        return self.attn.embed_dim

@@ -89,7 +89,7 @@ class ERCConfig:
     visual_in_features: Tuple[int, ...] = (3, 256, 721)  # required by resnet
     visual_out_features: int = -1  # defined by resnet50, get it from the embedding class
 
-    fusion_attention_heads: int | None = None
+    fusion_attention_heads_degree: int | None = None
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
 

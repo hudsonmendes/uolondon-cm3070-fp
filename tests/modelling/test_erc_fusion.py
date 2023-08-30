@@ -44,7 +44,7 @@ class TestERCConcatFusion(unittest.TestCase):
 
 class TestERCMultiheadedAttentionFusion(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig(classifier_classes=["a", "b"], fusion_attention_heads=3)
+        self.config = ERCConfig(classifier_classes=["a", "b"], fusion_attention_heads_degree=3)
         self.embedding_dims = [100, 200, 300]
         self.embeddings = [unittest.mock.create_autospec(ERCEmbeddings, out_features=f) for f in self.embedding_dims]
         self.fusion = ERCFusion.resolve_type_from(ERCFusionTechnique.MULTI_HEADED_ATTENTION)(

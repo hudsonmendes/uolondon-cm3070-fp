@@ -1,4 +1,4 @@
-classifier_name: fusion-mha-retinaface
+classifier_name: fusion-mha-heads-dg2
 classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
@@ -23,12 +23,10 @@ text_out_features: -1 # defined by the encoder output hidden state
 audio_in_features: 150000 # truncates the waveform after 150K samples
 audio_out_features: -1 #determined by wav2vec
 
-visual_preprocess_faceonly: true
-visual_preprocess_retinaface_weights_path: .weights_cache/retinaface_resnet50.pth
 visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
-fusion_attention_heads: 5
+fusion_attention_heads_degree: 2 # 2nd common divisor
 
 feedforward_layers:
   - out_features: 512

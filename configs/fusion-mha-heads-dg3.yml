@@ -1,4 +1,4 @@
-classifier_name: fusion-mha-3heads
+classifier_name: fusion-mha-heads-dg3
 classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
@@ -26,7 +26,7 @@ audio_out_features: -1 #determined by wav2vec
 visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
-fusion_attention_heads: 3
+fusion_attention_heads_degree: 3
 
 feedforward_layers:
   - out_features: 512
