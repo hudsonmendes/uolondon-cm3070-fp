@@ -30,6 +30,7 @@ class ERCFusionTechnique:
     """Enumerates all available fusion techniques for the model."""
 
     CONCATENATION = "concat"
+    MULTI_HEADED_ATTENTION = "multi_headed_attn"
 
 
 class ERCLossFunctions:
@@ -74,7 +75,7 @@ class ERCConfig:
     modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
     modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET50
     modules_audio_encoder: str = ERCAudioEmbeddingType.WAVEFORM
-    modules_fusion: str = ERCFusionTechnique.CONCATENATION
+    modules_fusion: str = ERCFusionTechnique.MULTI_HEADED_ATTENTION
 
     text_in_features: int = 50  # 300 is the largest model
     text_out_features: int = 50  # must match in_features for GloVe
@@ -87,6 +88,9 @@ class ERCConfig:
     visual_preprocess_retinaface_weights_path: str | None = None
     visual_in_features: Tuple[int, ...] = (3, 256, 721)  # required by resnet
     visual_out_features: int = -1  # defined by resnet50, get it from the embedding class
+
+    fusion_attention_heads: int | None = None
+    fusion_out_features: int | None = None
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
 

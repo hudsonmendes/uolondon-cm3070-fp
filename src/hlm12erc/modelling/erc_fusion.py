@@ -6,6 +6,10 @@ from typing import List, Type
 import torch
 from torch.nn.functional import normalize as l2_norm
 
+# My Packages and Modules
+from hlm12erc.modelling.erc_config import ERCConfig
+from hlm12erc.modelling.erc_emb import ERCEmbeddings
+
 # Local Folders
 from .erc_config import ERCConfig, ERCFusionTechnique
 from .erc_emb import ERCEmbeddings
@@ -47,6 +51,8 @@ class ERCFusion(ERCEmbeddings):
     def resolve_type_from(expression: str) -> Type["ERCFusion"]:
         if expression == ERCFusionTechnique.CONCATENATION:
             return ERCConcatFusion
+        elif expression == ERCFusionTechnique.MULTI_HEADED_ATTENTION:
+            return ERCMultiheadedAttentionFusion
         raise ValueError(f"The fusion '{expression}' is not supported.")
 
 
@@ -55,7 +61,7 @@ class ERCConcatFusion(ERCFusion):
     Simple implementation of feature fusion based on concatenation of vectors.
     """
 
-    concatenated_embedding_dims: int
+    hidden_size: int
 
     def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig) -> None:
         """
@@ -65,7 +71,7 @@ class ERCConcatFusion(ERCFusion):
         :param config: Configuration object.
         """
         super().__init__(embeddings=embeddings, config=config)
-        self.concatenated_embedding_dims = sum([e.out_features for e in embeddings])
+        self.hidden_size = sum([e.out_features for e in embeddings])
 
     def forward(self, *x: torch.Tensor) -> torch.Tensor:
         """
@@ -83,4 +89,34 @@ class ERCConcatFusion(ERCFusion):
         """
         Returns the dimensionality of the vectors produced by the embedding fusion.
         """
-        return self.concatenated_embedding_dims
+        return self.hidden_size
+
+
+class ERCMultiheadedAttentionFusion(ERCFusion):
+    """
+    Feature Fusion Mechanism based on Multiheaded Attention.
+    """
+
+    def __init__(self, embeddings: List[ERCEmbeddings], config: ERCConfig, *args, **kwargs) -> None:
+        assert config.fusion_out_features
+        super().__init__(embeddings, config, *args, **kwargs)
+        self.hidden_size = config.fusion_out_features
+        self.attn = torch.nn.MultiheadAttention(
+            embed_dim=sum([e.out_features for e in embeddings]),
+            num_heads=config.fusion_attention_heads,
+        )
+
+    def forward(self, *x: torch.Tensor) -> torch.Tensor:
+        """
+        Performs Multiheaded Attention on the input tensors.
+
+        :param x: List of tensors to be fused.
+        :return: Fused tensor.
+        """
+        y = torch.cat(x, dim=1)
+        y = self.attn(y, y, y, needs_weights=False)
+        return y
+
+    @property
+    def out_features(self) -> int:
+        return self.hidden_size
