@@ -33,5 +33,5 @@ class ERCOutput(ModelOutput):
             labels=labels,
             logits=logits,
             hidden_states=hidden_states,
-            attentions=attentions if attentions else (),
+            attentions=attentions if attentions is not None else (),
         )

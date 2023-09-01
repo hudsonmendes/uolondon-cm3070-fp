@@ -59,11 +59,7 @@ class ERCModel(torch.nn.Module):
         self.audio_embeddings = ERCAudioEmbeddings.resolve_type_from(config.modules_audio_encoder)(config)
         # Fusion Network
         self.fusion_network = ERCFusion.resolve_type_from(config.modules_fusion)(
-            embeddings=[
-                embedding
-                for embedding in [self.text_embeddings, self.visual_embeddings, self.audio_embeddings]
-                if embedding is not None
-            ],
+            embeddings=(self.text_embeddings, self.visual_embeddings, self.audio_embeddings),
             config=config,
         )
         # Feed Forward Transformation
@@ -115,35 +111,22 @@ class ERCModel(torch.nn.Module):
         # processing each modality independently, based on the presence
         # of the respective encoder module, which can be set to None in the
         # ERCConfig object.
-        y_embeddings = []
+        y_text, y_visual, y_audio = None, None, None
         if self.text_embeddings is not None:
             y_text = self.text_embeddings(x_text).to(self.device)
-            y_embeddings.append(y_text)
         if self.visual_embeddings is not None:
             y_visual = self.visual_embeddings(x_visual).to(self.device)
-            y_embeddings.append(y_visual)
         if self.audio_embeddings is not None:
             y_audio = self.audio_embeddings(x_audio).to(self.device)
-            y_embeddings.append(y_audio)
-
-        # if the model is on a GPU, we need to move the embeddings to the GPU as well
-        if self.device is not None:
-            new_y_embeddings = []
-            for y_embedding in y_embeddings:
-                new_y_embeddings.append(y_embedding.to(self.device))
-            y_embeddings = new_y_embeddings
 
         # fuse the embeddings from the different modalities
-        y_fusion = self.fusion_network(*y_embeddings)
-        y_attn = None
+        y_fusion, y_attn = self.fusion_network(y_text, y_visual, y_audio)
 
-        # transform the fused embeedings into the logits
+        # transform the fused embeddings into the output logits
         y_transformed = self.feedforward(y_fusion)
-        if self.device is not None:
-            y_transformed = y_transformed.to(self.device)
-        y_logits = self.logits(y_transformed)
 
-        # transform the logits into the softmax probability distribution
+        # transform the transformed fused into logits and then into softmax probabilities
+        y_logits = self.logits(y_transformed)
         y_pred = self.softmax(y_logits)
 
         # if the true labels are provided, calculate the loss

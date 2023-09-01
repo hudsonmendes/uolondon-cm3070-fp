@@ -30,6 +30,7 @@ class ERCFusionTechnique:
     """Enumerates all available fusion techniques for the model."""
 
     CONCATENATION = "concat"
+    MULTI_HEADED_ATTENTION = "multi_headed_attn"
 
 
 class ERCLossFunctions:
@@ -87,6 +88,9 @@ class ERCConfig:
     visual_preprocess_retinaface_weights_path: str | None = None
     visual_in_features: Tuple[int, ...] = (3, 256, 721)  # required by resnet
     visual_out_features: int = -1  # defined by resnet50, get it from the embedding class
+
+    fusion_attention_heads_degree: int | None = None
+    fusion_out_features: int | None = None  # must be none for concatenation, and must fit in memory for MHA
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
 
