@@ -176,7 +176,7 @@ class ERCTrainer:
         :param config: ERCConfig object containing the model configuration.
         :return: transformers.Trainer object to train the model.
         """
-        return _ERCHuggingfaceCustomTrainer(
+        return _HuggingfaceBatchTrainer(
             model=model,
             args=training_args,
             train_dataset=train_dataset,
@@ -193,7 +193,7 @@ class ERCTrainer:
         artifact.save()
 
 
-class _ERCHuggingfaceCustomTrainer(transformers.Trainer):
+class _HuggingfaceBatchTrainer(transformers.Trainer):
     """
     Overrides the Huggingface Trainer to add additional metrics to the training loop,
     such as accuracy, f1, precision, recall, but keeping the loss.
@@ -213,7 +213,7 @@ class _ERCHuggingfaceCustomTrainer(transformers.Trainer):
 
         :param compute_metrics: Callable object to calculate the metrics.
         """
-        super(_ERCHuggingfaceCustomTrainer, self).__init__(compute_metrics=compute_metrics, *args, **kwargs)
+        super(_HuggingfaceBatchTrainer, self).__init__(compute_metrics=compute_metrics, *args, **kwargs)
         self.custom_metric_computation = compute_metrics
 
     def compute_loss(self, model, inputs, return_outputs=False) -> Union[torch.Tensor, Tuple[torch.Tensor, Any]]:
