@@ -29,7 +29,7 @@ class TestERCConcatFusion(unittest.TestCase):
     def test_forward_shape(self):
         batch_size = 3
         input_tensors = [torch.randn((batch_size, d)) for d in self.embedding_dims]
-        output_tensor = self.fusion(*input_tensors)
+        output_tensor, _ = self.fusion(*input_tensors)
         expected_shape = (batch_size, sum(self.embedding_dims))
         self.assertEqual(output_tensor.shape, expected_shape)
 
@@ -39,7 +39,7 @@ class TestERCConcatFusion(unittest.TestCase):
     def test_forward_normalization(self):
         batch_size = 3
         input_tensors = [torch.randn((batch_size, d)) for d in self.embedding_dims]
-        output_tensor = self.fusion(*input_tensors)
+        output_tensor, _ = self.fusion(*input_tensors)
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
