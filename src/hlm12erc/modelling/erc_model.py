@@ -120,16 +120,13 @@ class ERCModel(torch.nn.Module):
             y_audio = self.audio_embeddings(x_audio).to(self.device)
 
         # fuse the embeddings from the different modalities
-        y_fusion = self.fusion_network(y_text, y_visual, y_audio)
-        y_attn = None
+        y_fusion, y_attn = self.fusion_network(y_text, y_visual, y_audio)
 
-        # transform the fused embeedings into the logits
+        # transform the fused embeddings into the output logits
         y_transformed = self.feedforward(y_fusion)
-        if self.device is not None:
-            y_transformed = y_transformed.to(self.device)
-        y_logits = self.logits(y_transformed)
 
-        # transform the logits into the softmax probability distribution
+        # transform the transformed fused into logits and then into softmax probabilities
+        y_logits = self.logits(y_transformed)
         y_pred = self.softmax(y_logits)
 
         # if the true labels are provided, calculate the loss

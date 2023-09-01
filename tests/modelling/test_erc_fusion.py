@@ -71,13 +71,13 @@ class TestERCMultiheadedAttentionFusion(unittest.TestCase):
     def _test_missing_embedding(self, embeddings: tuple, batch_size: int = 3):
         input_tensors = [torch.randn((batch_size, e.out_features)) if e else None for e in embeddings]
         custom_fusion = self.fusion_type(config=self.config, embeddings=embeddings)
-        output_tensor = custom_fusion(*input_tensors)
+        output_tensor, _ = custom_fusion(*input_tensors)
         self.assertEqual(output_tensor.shape, (batch_size, self.config.fusion_out_features))
 
     def test_forward_shape(self):
         batch_size = 3
         input_tensors = [torch.randn((batch_size, e.out_features)) for e in self.embeddings]
-        output_tensor = self.fusion(*input_tensors)
+        output_tensor, _ = self.fusion(*input_tensors)
         self.assertEqual(output_tensor.shape, (batch_size, self.config.fusion_out_features))
 
     def test_out_features(self):
@@ -86,7 +86,7 @@ class TestERCMultiheadedAttentionFusion(unittest.TestCase):
     def test_forward_not_normalized(self):
         batch_size = 3
         input_tensors = [torch.randn((batch_size, e.out_features)) for e in self.embeddings]
-        output_tensor = self.fusion(*input_tensors)
+        output_tensor, _ = self.fusion(*input_tensors)
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertNotAlmostEqual(norm.item(), 1.0, places=5)

@@ -51,12 +51,12 @@ class ERCFusion(ERCEmbeddings):
         x_text: torch.Tensor | None,
         x_visual: torch.Tensor | None,
         x_audio: torch.Tensor | None,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor | None]:
         """
         Defines the contract for the forward pass of the fusion network.
 
         :param x: List of tensors to be fused.
-        :return: Fused tensor.
+        :return: Tuple with fused tensor and attention weights.
         """
         raise NotImplementedError("Abstract method not implemented")
 
@@ -95,17 +95,17 @@ class ERCConcatFusion(ERCFusion):
         x_text: torch.Tensor | None,
         x_visual: torch.Tensor | None,
         x_audio: torch.Tensor | None,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor | None]:
         """
         Concatenates the input tensors along the feature dimension.
 
         :param x: List of tensors to be fused.
-        :return: Fused tensor.
+        :return: Tuple with fused tensor and attention weights.
         """
         x = [x_modal for x_modal in (x_text, x_visual, x_audio) if x_modal is not None]
         y = torch.cat(x, dim=1)
         y = l2_norm(y, p=2, dim=1)
-        return y
+        return y, None
 
     @property
     def out_features(self) -> int:
@@ -139,6 +139,11 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
     ... Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. 2017. Attention is
     ... All you Need. In Advances in Neural Information Processing Systems,
     ... Curran Associates, Inc. Retrieved from https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
+
+    Finally, past the residual connection, layer normalisation is applied, as
+    suggested in the following paper:
+    >>> Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E. Hinton. 2016. Layer Normalization.
+    ... Retrieved from https://arxiv.org/abs/1607.06450
     """
 
     def __init__(
@@ -185,6 +190,7 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
             self.fc_audio = torch.nn.Linear(in_features=embed_audio.out_features, out_features=dims_dst_audio)
         logger.warn(f"FUSION: Attention Heads={heads_count}, for Embed Dim={dims_out} (from {dims_src_concat})")
         self.attn = torch.nn.MultiheadAttention(embed_dim=dims_out, num_heads=heads_count)
+        self.layer_norm = torch.nn.LayerNorm(normalized_shape=dims_out)
 
     def forward(
         self,
@@ -206,12 +212,12 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
         of the input.
 
         Finally, the output of the attention mechanism is added to the input
-        (residual connection), and the result is returned.
+        (residual connection), and layer normalisation is applied.
 
         :param x_text: Tensor with the text embeddings, with dimensions (batch_size, text_embedding_size)
         :param x_visual: Tensor with the visual embeddings, with dimensions (batch_size, visual_embedding_size)
         :param x_audio: Tensor with the audio embeddings, with dimensions (batch_size, audio_embedding_size)
-        :return: Fused tensor, with dimensions (batch_size, concatenated_embedding_size)
+        :return: Tuple with fused tensor and attention weights.
         """
         # dimensionality reduction through mapping using a linear layer
         x_all = []
@@ -227,8 +233,10 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
         attn, _ = self.attn.forward(query=x, key=x, value=x)
         # residual connection
         y = x + attn
+        # layer normalisation
+        y = self.layer_norm(y)
         # output
-        return y
+        return y, attn
 
     @property
     def out_features(self) -> int:
