@@ -206,7 +206,9 @@ class TripletLoss(torch.nn.Module):
 
     def forward(
         self,
-        y_embeddings: Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        anchor: torch.Tensor,
+        positive: torch.Tensor,
+        negative: torch.Tensor,
     ) -> torch.Tensor:
         """
         Calculate and return the loss given the predicted and true labels
@@ -216,10 +218,11 @@ class TripletLoss(torch.nn.Module):
         ...    sum((exp(dot(a,p.T)) + exp(dot(a,n.T)))
         ... )
 
-        :param y_embeddings: Normalised l2-norm embeddings produced before logits are calculated.
+        :param anchor: Anchor embeddings, used as reference for the positive and negative embeddings
+        :param positive: Positive embeddings, used as a positive example for the anchor
+        :param negative: Negative embeddings, used as a negative example for the anchor
         :return: Loss value
         """
-        anchor, positive, negative = y_embeddings
         assert anchor.shape == positive.shape == negative.shape
         anchor_positive_dot = torch.dot(anchor, positive.T)
         anchor_negative_dot = torch.dot(anchor, negative.T)

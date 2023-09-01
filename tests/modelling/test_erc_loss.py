@@ -6,7 +6,7 @@ import torch
 
 # My Packages and Modules
 from hlm12erc.modelling.erc_config import ERCConfig, ERCLossFunctions
-from hlm12erc.modelling.erc_loss import ERCLoss
+from hlm12erc.modelling.erc_loss import ERCLoss, TripletLoss
 
 
 class TestCategoricalCrossEntropyLoss(unittest.TestCase):
@@ -46,3 +46,26 @@ class TestFocalMutiClassLogLoss(unittest.TestCase):
         loss_value = self.loss(y_pred, y_true)
         expected_loss_value = 0.31159278750419617
         self.assertAlmostEqual(loss_value.item(), expected_loss_value, places=4)
+
+
+class TestTripletLoss(unittest.TestCase):
+    def setUp(self):
+        self.anchor, self.positive = torch.tensor(
+            [[0.1, 0.8, 0.05, 0.05], [0.1, 0.8, 0.05, 0.05], [0.1, 0.6, 0.1, 0.2]]
+        )
+        self.negative = torch.random(self.anchor.shape)
+        self.loss = TripletLoss()
+
+    def test_call_best_better_than_indiferent_positive_or_reversed(self):
+        loss_xs = self.loss(anchor=self.anchor, positive=self.positive, negative=self.negative)
+        loss_md = self.loss(anchor=self.anchor, positive=self.positive, negative=self.positive)
+        loss_lg = self.loss(anchor=self.anchor, positive=self.negative, negative=self.positive)
+        self.assertLess(loss_xs, loss_md)
+        self.assertLess(loss_xs, loss_lg)
+
+    def test_call_best_better_than_indiferent_negative_or_reversed(self):
+        loss_xs = self.loss(anchor=self.anchor, positive=self.positive, negative=self.negative)
+        loss_md = self.loss(anchor=self.anchor, positive=self.negative, negative=self.negative)
+        loss_lg = self.loss(anchor=self.anchor, positive=self.negative, negative=self.positive)
+        self.assertLess(loss_xs, loss_md)
+        self.assertLess(loss_xs, loss_lg)
