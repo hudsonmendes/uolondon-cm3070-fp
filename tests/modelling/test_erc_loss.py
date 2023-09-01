@@ -12,7 +12,7 @@ from hlm12erc.modelling.erc_loss import ERCLoss
 class TestCategoricalCrossEntropyLoss(unittest.TestCase):
     def setUp(self):
         config = ERCConfig(classifier_classes=["a", "b", "c"])
-        self.loss = ERCLoss.resolve_type_from(ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY)(config)
+        self.loss = ERCLoss.resolve_type_from(ERCLossFunctions.CROSSENTROPY)(config)
 
     def test_call(self):
         y_pred = torch.tensor([[0.1, 0.9], [0.8, 0.2], [0.4, 0.6]])
@@ -25,7 +25,7 @@ class TestCategoricalCrossEntropyLoss(unittest.TestCase):
 class TestDiceCoefficientLoss(unittest.TestCase):
     def setUp(self):
         config = ERCConfig(classifier_classes=["a", "b", "c"])
-        self.loss = ERCLoss.resolve_type_from(ERCLossFunctions.DICE_COEFFICIENT)(config)
+        self.loss = ERCLoss.resolve_type_from(ERCLossFunctions.DICE)(config)
 
     def test_call(self):
         y_pred = torch.tensor([[0.1, 0.9], [0.8, 0.2], [0.4, 0.6]])
@@ -38,7 +38,7 @@ class TestDiceCoefficientLoss(unittest.TestCase):
 class TestFocalMutiClassLogLoss(unittest.TestCase):
     def setUp(self):
         config = ERCConfig(classifier_classes=["a", "b", "c", "d"], losses_focal_alpha=[0.25, 0.25, 0.25, 0.25])
-        self.loss = ERCLoss.resolve_type_from(ERCLossFunctions.FOCAL_MULTI_CLASS_LOG)(config)
+        self.loss = ERCLoss.resolve_type_from(ERCLossFunctions.FOCAL)(config)
 
     def test_call(self):
         y_pred = torch.tensor([[0.1, 0.8, 0.05, 0.05], [0.1, 0.8, 0.05, 0.05], [0.1, 0.6, 0.1, 0.2]])

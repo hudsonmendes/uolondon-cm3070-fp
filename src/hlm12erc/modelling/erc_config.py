@@ -36,9 +36,12 @@ class ERCFusionTechnique:
 class ERCLossFunctions:
     """Enumerates all available loss functions for the model."""
 
-    CATEGORICAL_CROSS_ENTROPY = "cce"
-    DICE_COEFFICIENT = "dice"
-    FOCAL_MULTI_CLASS_LOG = "focal"
+    CROSSENTROPY = "cce"
+    CROSSENTROPY_PLUS_TRIPLET = "cce+triplet"
+    DICE = "dice"
+    DICE_PLUS_TRIPET = "dice+triplet"
+    FOCAL = "focal"
+    FOCAL_PLUS_TRIPLET = "focal+triplet"
 
 
 @dataclass(frozen=True)
@@ -66,7 +69,7 @@ class ERCConfig:
     classifier_weight_decay: float = 0.1
     classifier_warmup_steps: int = 500
     classifier_epsilon: float = 1e-8
-    classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
+    classifier_loss_fn: str = ERCLossFunctions.CROSSENTROPY
 
     losses_focal_alpha: List[float] | None = None
     losses_focal_gamma: float | None = None

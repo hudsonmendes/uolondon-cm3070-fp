@@ -1,9 +1,10 @@
 # Python Built-in Modules
 from abc import ABC, abstractmethod
-from typing import Optional, Type
+from typing import Optional, Tuple, Type
 
 # Third-Party Libraries
 import torch
+import torch.nn.functional as F
 
 # Local Folders
 from .erc_config import ERCConfig, ERCLossFunctions
@@ -39,13 +40,19 @@ class ERCLoss(ABC, torch.nn.Module):
     @staticmethod
     def resolve_type_from(expression: str) -> Type["ERCLoss"]:
         """
-        Resolve a ERC Loss class from a string expression
+        Resolve a ERC Loss class from a string expression.
+        Some loss function configurations are a combination of a raw loss &
+        another contrastive loss, e.g. "cce+triplet".
+
+        In this case, the contrastive loss is ignored for the instantiation,
+        because the contrastive loss is processed at the trainer level and
+        has implications to the data loading process.
         """
-        if expression == ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY:
+        if expression == ERCLossFunctions.CROSSENTROPY or expression == ERCLossFunctions.CROSSENTROPY_PLUS_TRIPLET:
             return CategoricalCrossEntropyLoss
-        elif expression == ERCLossFunctions.DICE_COEFFICIENT:
+        elif expression == ERCLossFunctions.DICE or expression == ERCLossFunctions.DICE_PLUS_TRIPET:
             return DiceCoefficientLoss
-        elif expression == ERCLossFunctions.FOCAL_MULTI_CLASS_LOG:
+        elif expression == ERCLossFunctions.FOCAL or expression == ERCLossFunctions.FOCAL_PLUS_TRIPLET:
             return FocalMutiClassLogLoss
         else:
             raise ValueError(f"Unknown ERC Loss type {expression}")
@@ -160,3 +167,63 @@ class FocalMutiClassLogLoss(ERCLoss):
         focal_weights = alpha * (1.0 - safe_probs).pow(self.gamma)
         loss = focal_weights * -torch.log(safe_probs)
         return loss.mean() if self.reduction == "mean" else loss.sum()
+
+
+class TripletLoss(torch.nn.Module):
+    """
+    Triplet Loss function for ERC models, implemented using the equation designed
+    by the SimCSE model, introduced by Gao et al. (2021), given by the equation:
+    >>> -log(
+    ...    exp(sim(a,p)/temperature) /
+    ...    sum((exp(sim(a,p)/temperature) + exp(sim(a,n)/temperature))
+    ... )
+
+    However, the SimCSE paper fine-tunes a hyperparameter for the temperature,
+    which would require significant experimentation to find the optimal value,
+    however much more expensive due to the multi-modal nature of the model.
+
+    For that reason, instead of cosine similarity with a temperature, we use
+    the dot product, which will be made equivalent to cosine similarity by
+    changing the embeddings produced by the model prior to logits to be l2-norm.
+
+    As a consequence, the temperature hyperparameter is no longer required and
+    the triplet loss equation implemented here is:
+    >>> -log(
+    ...    exp(dot(a,p.T)) /
+    ...    sum((exp(dot(a,p.T)) + exp(dot(a,n.T)))
+    ... )
+
+    Reference:
+    >>> Tianyu Gao, Xingcheng Yao, and Danqi Chen. 2021. SimCSE: Simple Contrastive
+    ... Learning of Sentence Embeddings. In EMNLP 2021 - 2021 Conference on Empirical
+    ... Methods in Natural Language Processing, Proceedings (EMNLP 2021 - 2021
+    ... Conference on Empirical Methods in Natural Language Processing, Proceedings),
+    ... Association for Computational Linguistics (ACL), 6894–6910.
+    """
+
+    def __init__(self, config: ERCConfig):
+        super().__init__()
+
+    def forward(
+        self,
+        y_embeddings: Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+    ) -> torch.Tensor:
+        """
+        Calculate and return the loss given the predicted and true labels
+        using the Triplet Loss function defined in the SimCSE paper by the following equation:
+        >>> -log(
+        ...    exp(dot(a,p.T)) /
+        ...    sum((exp(dot(a,p.T)) + exp(dot(a,n.T)))
+        ... )
+
+        :param y_embeddings: Normalised l2-norm embeddings produced before logits are calculated.
+        :return: Loss value
+        """
+        anchor, positive, negative = y_embeddings
+        assert anchor.shape == positive.shape == negative.shape
+        anchor_positive_dot = torch.dot(anchor, positive.T)
+        anchor_negative_dot = torch.dot(anchor, negative.T)
+        numerator = torch.exp(anchor_positive_dot)
+        denominator = torch.exp(anchor_positive_dot) + torch.exp(anchor_negative_dot)
+        loss = -torch.log(numerator / denominator)
+        return loss.mean()
