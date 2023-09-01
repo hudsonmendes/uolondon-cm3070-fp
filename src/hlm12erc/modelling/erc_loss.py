@@ -201,9 +201,6 @@ class TripletLoss(torch.nn.Module):
     ... Association for Computational Linguistics (ACL), 6894–6910.
     """
 
-    def __init__(self, config: ERCConfig):
-        super().__init__()
-
     def forward(
         self,
         anchor: torch.Tensor,
@@ -224,8 +221,8 @@ class TripletLoss(torch.nn.Module):
         :return: Loss value
         """
         assert anchor.shape == positive.shape == negative.shape
-        anchor_positive_dot = torch.dot(anchor, positive.T)
-        anchor_negative_dot = torch.dot(anchor, negative.T)
+        anchor_positive_dot = torch.matmul(anchor, positive.T)
+        anchor_negative_dot = torch.matmul(anchor, negative.T)
         numerator = torch.exp(anchor_positive_dot)
         denominator = torch.exp(anchor_positive_dot) + torch.exp(anchor_negative_dot)
         loss = -torch.log(numerator / denominator)

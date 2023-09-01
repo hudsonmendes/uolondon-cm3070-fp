@@ -50,10 +50,14 @@ class TestFocalMutiClassLogLoss(unittest.TestCase):
 
 class TestTripletLoss(unittest.TestCase):
     def setUp(self):
-        self.anchor, self.positive = torch.tensor(
-            [[0.1, 0.8, 0.05, 0.05], [0.1, 0.8, 0.05, 0.05], [0.1, 0.6, 0.1, 0.2]]
+        self.anchor = self.positive = torch.tensor(
+            [
+                [0.1, 0.8, 0.05, 0.05],
+                [0.1, 0.8, 0.05, 0.05],
+                [0.1, 0.6, 0.1, 0.2],
+            ]
         )
-        self.negative = torch.random(self.anchor.shape)
+        self.negative = torch.rand(self.anchor.shape)
         self.loss = TripletLoss()
 
     def test_call_best_better_than_indiferent_positive_or_reversed(self):
