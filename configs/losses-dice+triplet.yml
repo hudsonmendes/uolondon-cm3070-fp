@@ -29,6 +29,7 @@ visual_out_features: -1 # defined automatically by resnet50
 fusion_attention_heads_degree: 3 # for 1024, degree 3 = 4 heads
 fusion_out_features: 1024
 
+feedforward_l2norm: true
 feedforward_layers:
   - out_features: 512
     dropout: 0.2

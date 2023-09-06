@@ -36,6 +36,7 @@ class ERCFusionTechnique:
 class ERCLossFunctions:
     """Enumerates all available loss functions for the model."""
 
+    TRIPLET = "triplet"
     CROSSENTROPY = "cce"
     CROSSENTROPY_PLUS_TRIPLET = "cce+triplet"
     DICE = "dice"
@@ -95,8 +96,8 @@ class ERCConfig:
     fusion_attention_heads_degree: int | None = None
     fusion_out_features: int | None = None  # must be none for concatenation, and must fit in memory for MHA
 
-    feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
     feedforward_l2norm: bool | None = None
+    feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return self.__dict__

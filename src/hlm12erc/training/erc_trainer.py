@@ -2,7 +2,7 @@
 import logging
 import pathlib
 import time
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 # Third-Party Libraries
 import torch
@@ -10,12 +10,14 @@ import transformers
 import wandb
 
 # My Packages and Modules
-from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel, ERCOutput, ERCStorage, ERCStorageLinks
+from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCLossFunctions, ERCModel, ERCStorage, ERCStorageLinks
 
 # Local Folders
 from .erc_config_formatter import ERCConfigFormatter
 from .erc_data_collator import ERCDataCollator
 from .erc_metric_calculator import ERCMetricCalculator
+from .erc_trainer_job_batch import ERCTrainerBatchJob
+from .erc_trainer_job_triplet import ERCTrainerTripletJob
 from .meld_dataset import MeldDataset
 
 logger = logging.getLogger(__name__)
@@ -176,14 +178,26 @@ class ERCTrainer:
         :param config: ERCConfig object containing the model configuration.
         :return: transformers.Trainer object to train the model.
         """
-        return _HuggingfaceBatchTrainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
-            compute_metrics=ERCMetricCalculator(config=config),
-        )
+        triplet_suffix = "+" + ERCLossFunctions.TRIPLET
+        triplet_loss_active = self.config is not None and self.config.classifier_loss_fn.endswith(triplet_suffix)
+        if not triplet_loss_active:
+            return ERCTrainerBatchJob(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
+                compute_metrics=ERCMetricCalculator(config=config),
+            )
+        else:
+            return ERCTrainerTripletJob(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
+                compute_metrics=ERCMetricCalculator(config=config),
+            )
 
     def _wanb_upload_artifact(self, model_name: str, links: ERCStorageLinks) -> None:
         artifact = wandb.Artifact(model_name, type="model")

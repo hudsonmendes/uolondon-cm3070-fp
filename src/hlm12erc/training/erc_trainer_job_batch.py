@@ -12,7 +12,7 @@ from hlm12erc.modelling import ERCOutput
 from .erc_data_collator import ERCDataCollator
 
 
-class _HuggingfaceBatchTrainer(transformers.Trainer):
+class ERCTrainerBatchJob(transformers.Trainer):
     """
     Overrides the Huggingface Trainer to add additional metrics to the training loop,
     such as accuracy, f1, precision, recall, but keeping the loss.
@@ -32,7 +32,7 @@ class _HuggingfaceBatchTrainer(transformers.Trainer):
 
         :param compute_metrics: Callable object to calculate the metrics.
         """
-        super(_HuggingfaceBatchTrainer, self).__init__(compute_metrics=compute_metrics, *args, **kwargs)
+        super(ERCTrainerBatchJob, self).__init__(compute_metrics=compute_metrics, *args, **kwargs)
         self.custom_metric_computation = compute_metrics
 
     def compute_loss(self, model, inputs, return_outputs=False) -> Union[torch.Tensor, Tuple[torch.Tensor, Any]]:
