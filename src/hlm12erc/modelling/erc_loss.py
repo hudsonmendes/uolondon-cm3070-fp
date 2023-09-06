@@ -1,10 +1,9 @@
 # Python Built-in Modules
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Type
+from typing import Optional, Type
 
 # Third-Party Libraries
 import torch
-import torch.nn.functional as F
 
 # Local Folders
 from .erc_config import ERCConfig, ERCLossFunctions
@@ -169,7 +168,7 @@ class FocalMutiClassLogLoss(ERCLoss):
         return loss.mean() if self.reduction == "mean" else loss.sum()
 
 
-class TripletLoss(torch.nn.Module):
+class ERCTripletLoss(torch.nn.Module):
     """
     Triplet Loss function for ERC models, implemented using the equation designed
     by the SimCSE model, introduced by Gao et al. (2021), given by the equation:
@@ -201,29 +200,53 @@ class TripletLoss(torch.nn.Module):
     ... Association for Computational Linguistics (ACL), 6894–6910.
     """
 
+    def __init__(self, config: ERCConfig, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.epsilon = config.classifier_epsilon
+
     def forward(
         self,
         anchor: torch.Tensor,
-        positive: torch.Tensor,
-        negative: torch.Tensor,
+        positives: torch.Tensor,
+        negatives: torch.Tensor,
     ) -> torch.Tensor:
         """
-        Calculate and return the loss given the predicted and true labels
-        using the Triplet Loss function defined in the SimCSE paper by the following equation:
-        >>> -log(
-        ...    exp(dot(a,p.T)) /
-        ...    sum((exp(dot(a,p.T)) + exp(dot(a,n.T)))
+        Calculate and return the loss given the predicted and true labels using
+        a losse equation inspired on the Triplet Loss function devised by the
+        SimCSE Paper, that can be described by the following equation.
+        >>> loss = -log(
+        ...     sum(sim(anchor, positives)) /
+        ...     sum(cat(sim(anchor, positives), sim(anchor, negatives))
         ... )
+
+        Reference:
+        >>> Tianyu Gao, Xingcheng Yao, and Danqi Chen. 2021. SimCSE: Simple
+        ... Contrastive Learning of Sentence Embeddings. In EMNLP 2021 - 2021
+        ... Conference on Empirical Methods in Natural Language Processing,
+        ... Proceedings (EMNLP 2021 - 2021 Conference on Empirical Methods in
+        ... Natural Language Processing, Proceedings), Association for
+        ... Computational Linguistics (ACL), 6894–6910.
 
         :param anchor: Anchor embeddings, used as reference for the positive and negative embeddings
         :param positive: Positive embeddings, used as a positive example for the anchor
         :param negative: Negative embeddings, used as a negative example for the anchor
         :return: Loss value
         """
-        assert anchor.shape == positive.shape == negative.shape
-        anchor_positive_dot = torch.matmul(anchor, positive.T)
-        anchor_negative_dot = torch.matmul(anchor, negative.T)
-        numerator = torch.exp(anchor_positive_dot)
-        denominator = torch.exp(anchor_positive_dot) + torch.exp(anchor_negative_dot)
-        loss = -torch.log(numerator / denominator)
-        return loss.mean()
+        p = self._sim(anchor, positives)
+        n = self._sim(anchor, negatives)
+        weighted_p = p / positives.shape[0]
+        weighted_n = n / negatives.shape[0]
+        weighted_all = torch.cat((weighted_p, weighted_n))
+        ratio = torch.sum(weighted_p) / (torch.sum(weighted_all) + self.epsilon)
+        return -torch.log(ratio)
+
+    def _sim(self, anchor: torch.Tensor, other: torch.Tensor) -> torch.Tensor:
+        """
+        Produces a normalised cosine similarity (ranging [0, 1]) between the
+        anchor and the other tensor.
+
+        :param anchor: Anchor tensor
+        :param other: Other tensor
+        :return: Normalised cosine similarity
+        """
+        return (1 + torch.cosine_similarity(anchor, other)) / 2

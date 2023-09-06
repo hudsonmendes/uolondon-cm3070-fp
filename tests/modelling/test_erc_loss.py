@@ -6,7 +6,7 @@ import torch
 
 # My Packages and Modules
 from hlm12erc.modelling.erc_config import ERCConfig, ERCLossFunctions
-from hlm12erc.modelling.erc_loss import ERCLoss, TripletLoss
+from hlm12erc.modelling.erc_loss import ERCLoss, ERCTripletLoss
 
 
 class TestCategoricalCrossEntropyLoss(unittest.TestCase):
@@ -58,7 +58,7 @@ class TestTripletLoss(unittest.TestCase):
             ]
         )
         self.negative = torch.rand(self.anchor.shape)
-        self.loss = TripletLoss()
+        self.loss = ERCTripletLoss()
 
     def test_call_best_better_than_indiferent_positive_or_reversed(self):
         loss_xs = self.loss(anchor=self.anchor, positive=self.positive, negative=self.negative)

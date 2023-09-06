@@ -6,14 +6,20 @@ from typing import Any
 import torch
 
 # My Packages and Modules
+from hlm12erc.modelling.erc_config import ERCConfig
+from hlm12erc.modelling.erc_loss import ERCTripletLoss
 from hlm12erc.modelling.erc_output import ERCOutput
 from hlm12erc.training.erc_trainer_job_triplet import ERCTrainerTripletJob
 
 
 class TestERCTrainerTripletJob(unittest.TestCase):
+    def setUp(self) -> None:
+        config = ERCConfig(classifier_classes=["anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"])
+        self.loss_fn = ERCTripletLoss(config=config)
+
     def test_tiplet_better_lower_than_worst(self):
         best = self._loss(t=["joy", "joy", "joy", "sadness", "sadness"], p=["joy", "joy", "joy", "sadness", "sadness"])
-        worst = self._loss(t=["joy", "joy", "joy", "sadness", "neutral"], p=["sadness", "sadness", "joy", "joy"])
+        worst = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["anger", "anger", "anger", "joy", "joy"])
         self.assertLess(best, worst)
 
     def test_tiplet_better_lower_than_medium(self):
@@ -30,6 +36,7 @@ class TestERCTrainerTripletJob(unittest.TestCase):
         return ERCTrainerTripletJob._compute_triplet_loss(
             outputs=_MockModel(return_labels=p)(labels=t),
             labels=_MockModel.tensor_for_label(labels=t),
+            loss_fn=self.loss_fn,
         )
 
 
@@ -39,7 +46,7 @@ class _MockModel:
 
     def __call__(self, labels: list, *args: Any, **kwds: Any) -> ERCOutput:
         unique_labels = set(self.return_labels + labels)
-        unique_vectors = {lbl: torch.randn(3) for lbl in unique_labels}
+        unique_vectors = {lbl: torch.randn(7) for lbl in unique_labels}
         y_embeddings = torch.stack([unique_vectors[lbl] for lbl in self.return_labels])
         y_embeddings = torch.nn.functional.normalize(y_embeddings, p=2, dim=1)
         y_pred = _MockModel.tensor_for_label(self.return_labels, positive=0.4, negative=0.1)
