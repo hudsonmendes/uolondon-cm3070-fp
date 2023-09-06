@@ -102,7 +102,7 @@ class ERCTrainerTripletJob(transformers.Trainer):
         which is given by the following equation.
         >>> triplet_loss = -log(
             exp(sim(anchor, positive)) /
-            (exp(sim(anchor, positive)) + exp(sim(anchor, negative)))
+            sum(exp(sim(anchor, positive)) + exp(sim(anchor, negative)))
         )
 
         Reference:
@@ -116,43 +116,38 @@ class ERCTrainerTripletJob(transformers.Trainer):
         # we must ensure that we have at least examples from 2 classes
         # and check wether there's at least 2 examples per class.
         argmax_labels = labels.detach().argmax(dim=1)
-        unique_labels, label_counts = torch.unique(argmax_labels, return_counts=True)
-        if unique_labels.size(dim=0) < 2:
-            raise ValueError("At least 2 classes are required to calculate the triplet loss.")
-        if label_counts.max() < 2:
-            raise ValueError("At least 2 examples per class are required to calculate the triplet loss.")
+        unique_labels = argmax_labels.unique()
 
         # each one of the rows of the outputs_hidden state is of a different class.
         # we now collect each embedding as separate tensors so that we can use them
         # as anchor, positive and negative examples.
-        embeddings_per_class = []
+        class_embeds = []
         for label_id in unique_labels:
-            embeddings_per_class.append(outputs.hidden_states[argmax_labels == label_id])
+            class_embeds.append(outputs.hidden_states[argmax_labels == label_id])
 
         # we now calculate the similarity between the anchor and the positive
         # examples, and the anchor and the negative examples. only examples
-        # with a positive can have their negatives calculated
-        positive_similarities, negative_similarities = [], []
-        for i in range(len(embeddings_per_class)):
-            if embeddings_per_class[i].size(dim=0) > 1:
-                for j in range(embeddings_per_class[i].size(dim=0) - 1):
-                    anchor = embeddings_per_class[i][j]
-                    positive = embeddings_per_class[i][j + 1]
-                    positive_similarities.append(torch.cosine_similarity(anchor, positive, dim=0))
-                for k in range(len(embeddings_per_class)):
-                    if k != i:
-                        for m in range(embeddings_per_class[k].size(dim=0)):
-                            anchor = embeddings_per_class[i][0]
-                            negative = embeddings_per_class[k][m]
-                            negative_similarities.append(torch.cosine_similarity(anchor, negative, dim=0))
+        # with a positive can have their negatives calculated.
+        #
+        # differently to the SimCSE implementation, the present approach does
+        # not use a dual encoder. Instead it uses simply a sliding window of
+        # positives to create the denominator of the triplet loss.
+        losses = []
+        for i in range(len(class_embeds)):
+            after_i = i + 1
+            for j in range(class_embeds[i].size(dim=0) - 1):
+                after_j, next_after_j = j + 1, j + 2
+                anchor = class_embeds[i][j]
+                positives = torch.cat((class_embeds[i][:after_j], class_embeds[i][next_after_j:]))
+                negatives = torch.cat((class_embeds[:i] + class_embeds[after_i:]))
+                similars = torch.cosine_similarity(anchor, positives, dim=1)
+                disimilars = torch.cosine_similarity(anchor, negatives, dim=1)
+                similarities = torch.cat((similars, disimilars))
+                ratio = torch.sum(similars) / torch.sum(similarities)
+                loss = -torch.log(ratio)
+                losses.append(loss)
 
         # once we have all positives and all negatives for the batch
         # we use an adaptation of the SimCSE loss function to calculate the loss
         # epsilon is added for numerical stability.
-        positives = torch.tensor(positive_similarities, device=outputs.hidden_states.device)
-        negatives = torch.tensor(negative_similarities, device=outputs.hidden_states.device)
-        sum_of_positives = torch.exp(torch.sum(positives))
-        sum_of_negatives = torch.exp(torch.sum(negatives))
-        numerator = sum_of_positives
-        denominator = sum_of_positives + sum_of_negatives + torch.finfo(torch.float32).eps
-        return -torch.log(numerator / denominator)
+        return torch.sum(torch.cat(losses))
