@@ -96,6 +96,7 @@ class ERCConfig:
     fusion_out_features: int | None = None  # must be none for concatenation, and must fit in memory for MHA
 
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
+    feedforward_l2norm: bool | None = None
 
     def to_dict(self) -> Dict[str, Any]:
         return self.__dict__
