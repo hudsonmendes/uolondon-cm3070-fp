@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Tuple, Union
 # Third-Party Libraries
 import torch
 import transformers
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 # My Packages and Modules
 from hlm12erc.modelling import ERCConfig, ERCOutput, ERCTripletLoss
@@ -68,9 +68,12 @@ class ERCTrainerTripletJob(transformers.Trainer):
 
         if labels is not None:
             classifier_metrics = self._compute_metrics(labels, outputs, loss=classifier_loss.item())
-            triplet_loss = self._compute_triplet_loss(outputs=outputs, labels=labels, loss_fn=self.triplet_loss)
-            total_loss += triplet_loss
-            classifier_metrics.update(dict(triplet_loss=triplet_loss.item(), total_loss=total_loss.item()))
+
+            # if we are training using the triplet loss, we must compute the triplet loss
+            if self.is_in_train:
+                triplet_loss = self._compute_triplet_loss(outputs=outputs, labels=labels, loss_fn=self.triplet_loss)
+                total_loss += triplet_loss
+                classifier_metrics.update(dict(triplet_loss=triplet_loss.item(), total_loss=total_loss.item()))
 
         if classifier_metrics:
             self.log(classifier_metrics)
@@ -108,34 +111,37 @@ class ERCTrainerTripletJob(transformers.Trainer):
         # otherwise the triplet loss can't be effectively calculated
         argmax_labels = labels.detach().argmax(dim=1)
         unique_labels, count_per_label = argmax_labels.unique(return_counts=True)
-        if not torch.any(count_per_label > 2):
-            raise ValueError("At least one class must have 2+ examples, to form a triplet.")
+        if torch.any(count_per_label > 1):
+            # we segregate the embeddings based on the labels
+            # so that we can create anchors, positives and negative exampels
+            class_embeds = []
+            for label_id in unique_labels:
+                indices = argmax_labels == label_id
+                class_embeds.append(outputs.hidden_states[indices])
 
-        # we segregate the embeddings based on the labels
-        # so that we can create anchors, positives and negative exampels
-        class_embeds = []
-        for label_id in unique_labels:
-            indices = argmax_labels == label_id
-            class_embeds.append(outputs.hidden_states[indices])
+            # the tripplet losses are calculated and acculuated.
+            losses = []
+            for i in range(len(class_embeds)):
+                # we can only process classes with at least 2 examples in the batch
+                # because we need at least 1 positive and 1 negative example. however
+                # classes without a 2nd example can still be processed as negatives
+                if class_embeds[i].shape[0] > 1:
+                    after_i = i + 1
+                    anchor = class_embeds[i][0]
+                    positives = class_embeds[i][1:]
+                    negatives = torch.cat((class_embeds[:i] + class_embeds[after_i:]))
+                    loss = loss_fn(anchor=anchor, positives=positives, negatives=negatives)
+                    losses.append(loss)
 
-        # the tripplet losses are calculated and acculuated.
-        losses = []
-        for i in range(len(class_embeds)):
-            # we can only process classes with at least 2 examples in the batch
-            # because we need at least 1 positive and 1 negative example. however
-            # classes without a 2nd example can still be processed as negatives
-            if class_embeds[i].shape[0] > 1:
-                after_i = i + 1
-                anchor = class_embeds[i][0]
-                positives = class_embeds[i][1:]
-                negatives = torch.cat((class_embeds[:i] + class_embeds[after_i:]))
-                loss = loss_fn(anchor=anchor, positives=positives, negatives=negatives)
-                losses.append(loss)
+            # once we have all positives and all negatives for the batch
+            # we use an adaptation of the SimCSE loss function to calculate the loss
+            # epsilon is added for numerical stability.
+            if losses:
+                return torch.mean(torch.stack(losses))
 
-        # once we have all positives and all negatives for the batch
-        # we use an adaptation of the SimCSE loss function to calculate the loss
-        # epsilon is added for numerical stability.
-        return torch.mean(torch.stack(losses)) if losses else torch.tensor(0.0)
+        # for edge cases where the triplet loss cannot be calculated,
+        # simply return 0.0
+        return torch.tensor(0.0)
 
     def get_train_dataloader(self) -> DataLoader:
         """
@@ -143,48 +149,12 @@ class ERCTrainerTripletJob(transformers.Trainer):
 
         :return: DataLoader for the dataset.
         """
-        return self._create_data_loader(self.train_dataset, self.args.train_batch_size)
-
-    def get_eval_dataloader(self, eval_dataset: Dataset | None = None) -> DataLoader:
-        """
-        Overrides the get_eval_dataloader method to use the ERCDataSampler.
-
-        :param eval_dataset: Dataset to create the data loader for.
-        :return: DataLoader for the dataset.
-        """
-        if eval_dataset is None:
-            eval_dataset = self.eval_dataset
-        assert isinstance(eval_dataset, MeldDataset)
-        return self._create_data_loader(eval_dataset, self.args.eval_batch_size)
-
-    def get_test_dataloader(self, test_dataset: Dataset) -> DataLoader:
-        """
-        Overrides the get_test_dataloader method to use the ERCDataSampler.
-
-        :param test_dataset: Dataset to create the data loader for.
-        :return: DataLoader for the dataset.
-        """
-        if test_dataset is None:
-            test_dataset = self.test_dataset
-        assert isinstance(test_dataset, MeldDataset)
-        return self._create_data_loader(test_dataset, batch_size=1)
-
-    def _create_data_loader(self, dataset: MeldDataset, batch_size: int) -> torch.utils.data.DataLoader:
-        """
-        Provides a customiser data loader that uses the ERCDataSampler, responsible
-        for creating pairs of examples of each class.
-
-        :param dataset: Dataset to create the data loader for.
-        :return: DataLoader for the dataset.
-        """
-        # ensure the dataset exists and is of the correct type
-        if not isinstance(dataset, MeldDataset):
-            raise ValueError("Trainer: training requires datasets to be of type MeldDataset.")
-
+        assert isinstance(self.train_dataset, MeldDataset)
+        sampler = ERCDataSampler(self.train_dataset.labels, batch_size=self.args.train_batch_size, config=self.config)
         return torch.utils.data.DataLoader(
-            dataset,
+            self.train_dataset,
             batch_size=self.args.train_batch_size,
-            sampler=ERCDataSampler(dataset.labels, batch_size=batch_size, config=self.config),
+            sampler=sampler,
             collate_fn=self.data_collator,
             drop_last=self.args.dataloader_drop_last,
             num_workers=self.args.dataloader_num_workers,
