@@ -238,12 +238,13 @@ class ERCTripletLoss(torch.nn.Module):
         weighted_n = n / negatives.shape[0]
         weighted_all = torch.cat((weighted_p, weighted_n))
         ratio = torch.sum(weighted_p) / (torch.sum(weighted_all) + self.epsilon)
-        return -torch.log(ratio)
+        loss = -torch.log(ratio)
+        return loss
 
     def _sim(self, anchor: torch.Tensor, other: torch.Tensor) -> torch.Tensor:
         """
-        Produces a normalised cosine similarity (ranging [0, 1]) between the
-        anchor and the other tensor.
+        Produces a normalised cosine similarity ranging [0, 1] between the
+        anchor and the other tensor/matrix.
 
         :param anchor: Anchor tensor
         :param other: Other tensor

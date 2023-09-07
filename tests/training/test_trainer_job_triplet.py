@@ -19,17 +19,17 @@ class TestERCTrainerTripletJob(unittest.TestCase):
 
     def test_tiplet_better_lower_than_worst(self):
         best = self._loss(t=["joy", "joy", "joy", "sadness", "sadness"], p=["joy", "joy", "joy", "sadness", "sadness"])
-        worst = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["anger", "anger", "anger", "joy", "joy"])
+        worst = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["anger", "neutral", "fear", "disgust", "fear"])
         self.assertLess(best, worst)
 
     def test_tiplet_better_lower_than_medium(self):
         best = self._loss(t=["joy", "joy", "joy", "sadness", "sadness"], p=["joy", "joy", "joy", "sadness", "sadness"])
-        medium = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["joy", "joy", "joy", "anger", "sadness"])
+        medium = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["joy", "joy", "fear", "anger", "sadness"])
         self.assertLess(best, medium)
 
     def test_tiplet_medium_lower_than_worst(self):
-        medium = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["joy", "joy", "joy", "anger", "sadness"])
-        worst = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["anger", "anger", "anger", "joy", "joy"])
+        medium = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["joy", "joy", "fear", "anger", "sadness"])
+        worst = self._loss(t=["joy", "joy", "joy", "anger", "anger"], p=["anger", "neutral", "fear", "disgust", "fear"])
         self.assertLess(medium, worst)
 
     def _loss(self, t, p) -> float | torch.Tensor:

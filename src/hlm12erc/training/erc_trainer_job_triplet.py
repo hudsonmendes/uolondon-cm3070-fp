@@ -100,11 +100,16 @@ class ERCTrainerTripletJob(transformers.Trainer):
         :param labels: Labels of the inputs.
         :param loss_fn: TripletLoss object.
         """
+        # ensures that there are at least 2 examples of each class present as label
+        # otherwise the triplet loss can't be effectively calculated
+        argmax_labels = labels.detach().argmax(dim=1)
+        unique_labels, count_per_label = argmax_labels.unique(return_counts=True)
+        if torch.any(count_per_label < 2):
+            raise ValueError("There must be at least 2 examples of each class to calculate the triplet loss")
+
         # we segregate the embeddings based on the labels
         # so that we can create anchors, positives and negative exampels
         class_embeds = []
-        argmax_labels = labels.detach().argmax(dim=1)
-        unique_labels = argmax_labels.unique()
         for label_id in unique_labels:
             indices = argmax_labels == label_id
             class_embeds.append(outputs.hidden_states[indices])
@@ -113,15 +118,13 @@ class ERCTrainerTripletJob(transformers.Trainer):
         losses = []
         for i in range(len(class_embeds)):
             after_i = i + 1
-            for j in range(class_embeds[i].size(dim=0) - 1):
-                after_j, next_after_j = j + 1, j + 2
-                anchor = class_embeds[i][j]
-                positives = torch.cat((class_embeds[i][:after_j], class_embeds[i][next_after_j:]))
-                negatives = torch.cat((class_embeds[:i] + class_embeds[after_i:]))
-                loss = loss_fn(anchor=anchor, positives=positives, negatives=negatives)
-                losses.append(loss)
+            anchor = class_embeds[i][0]
+            positives = class_embeds[i][1:]
+            negatives = torch.cat((class_embeds[:i] + class_embeds[after_i:]))
+            loss = loss_fn(anchor=anchor, positives=positives, negatives=negatives)
+            losses.append(loss)
 
         # once we have all positives and all negatives for the batch
         # we use an adaptation of the SimCSE loss function to calculate the loss
         # epsilon is added for numerical stability.
-        return torch.sum(torch.stack(losses))
+        return torch.mean(torch.stack(losses))
