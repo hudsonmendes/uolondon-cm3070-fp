@@ -30,11 +30,11 @@
             "args": [
                 "erc",
                 "train",
-                "--config", "./configs/baseline.yml",
+                "--config", "./configs/losses-dice+triplet.yml",
                 "--train_dataset", "./data/sample.csv",
                 "--valid_dataset", "./data/sample.csv",
                 "--n_epochs", "1",
-                "--batch_size", "4",
+                "--batch_size", "5",
                 "--out", "./target",
             ],
             "env": {

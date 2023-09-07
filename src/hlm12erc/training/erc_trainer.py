@@ -192,6 +192,7 @@ class ERCTrainer:
         else:
             return ERCTrainerTripletJob(
                 model=model,
+                config=config,
                 args=training_args,
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,

@@ -179,3 +179,13 @@ class MeldDataset(Dataset):
         :return: A list of the classes in the dataset
         """
         return self.classes_
+
+    @property
+    def labels(self) -> List[str]:
+        """
+        Returns a list of the labels in the dataset, based on the unique
+        labels in the dataframe.
+
+        :return: A list of the labels in the dataset
+        """
+        return list(self.df.label)

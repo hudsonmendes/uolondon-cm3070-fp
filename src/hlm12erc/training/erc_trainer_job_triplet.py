@@ -4,12 +4,15 @@ from typing import Any, Callable, Dict, Tuple, Union
 # Third-Party Libraries
 import torch
 import transformers
+from torch.utils.data import DataLoader, Dataset
 
 # My Packages and Modules
 from hlm12erc.modelling import ERCConfig, ERCOutput, ERCTripletLoss
 
 # Local Folders
 from .erc_data_collator import ERCDataCollator
+from .erc_data_sampler import ERCDataSampler
+from .meld_dataset import MeldDataset
 
 
 class ERCTrainerTripletJob(transformers.Trainer):
@@ -39,6 +42,7 @@ class ERCTrainerTripletJob(transformers.Trainer):
         :param compute_metrics: Callable object to calculate the metrics.
         """
         super(ERCTrainerTripletJob, self).__init__(compute_metrics=compute_metrics, *args, **kwargs)
+        self.config = config
         self.custom_metric_computation = compute_metrics
         self.triplet_loss = ERCTripletLoss(config=config)
 
@@ -104,8 +108,8 @@ class ERCTrainerTripletJob(transformers.Trainer):
         # otherwise the triplet loss can't be effectively calculated
         argmax_labels = labels.detach().argmax(dim=1)
         unique_labels, count_per_label = argmax_labels.unique(return_counts=True)
-        if torch.any(count_per_label < 2):
-            raise ValueError("There must be at least 2 examples of each class to calculate the triplet loss")
+        if not torch.any(count_per_label > 2):
+            raise ValueError("At least one class must have 2+ examples, to form a triplet.")
 
         # we segregate the embeddings based on the labels
         # so that we can create anchors, positives and negative exampels
@@ -131,4 +135,58 @@ class ERCTrainerTripletJob(transformers.Trainer):
         # once we have all positives and all negatives for the batch
         # we use an adaptation of the SimCSE loss function to calculate the loss
         # epsilon is added for numerical stability.
-        return torch.mean(torch.stack(losses))
+        return torch.mean(torch.stack(losses)) if losses else torch.tensor(0.0)
+
+    def get_train_dataloader(self) -> DataLoader:
+        """
+        Overrides the get_train_dataloader method to use the ERCDataSampler.
+
+        :return: DataLoader for the dataset.
+        """
+        return self._create_data_loader(self.train_dataset, self.args.train_batch_size)
+
+    def get_eval_dataloader(self, eval_dataset: Dataset | None = None) -> DataLoader:
+        """
+        Overrides the get_eval_dataloader method to use the ERCDataSampler.
+
+        :param eval_dataset: Dataset to create the data loader for.
+        :return: DataLoader for the dataset.
+        """
+        if eval_dataset is None:
+            eval_dataset = self.eval_dataset
+        assert isinstance(eval_dataset, MeldDataset)
+        return self._create_data_loader(eval_dataset, self.args.eval_batch_size)
+
+    def get_test_dataloader(self, test_dataset: Dataset) -> DataLoader:
+        """
+        Overrides the get_test_dataloader method to use the ERCDataSampler.
+
+        :param test_dataset: Dataset to create the data loader for.
+        :return: DataLoader for the dataset.
+        """
+        if test_dataset is None:
+            test_dataset = self.test_dataset
+        assert isinstance(test_dataset, MeldDataset)
+        return self._create_data_loader(test_dataset, batch_size=1)
+
+    def _create_data_loader(self, dataset: MeldDataset, batch_size: int) -> torch.utils.data.DataLoader:
+        """
+        Provides a customiser data loader that uses the ERCDataSampler, responsible
+        for creating pairs of examples of each class.
+
+        :param dataset: Dataset to create the data loader for.
+        :return: DataLoader for the dataset.
+        """
+        # ensure the dataset exists and is of the correct type
+        if not isinstance(dataset, MeldDataset):
+            raise ValueError("Trainer: training requires datasets to be of type MeldDataset.")
+
+        return torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.args.train_batch_size,
+            sampler=ERCDataSampler(dataset.labels, batch_size=batch_size, config=self.config),
+            collate_fn=self.data_collator,
+            drop_last=self.args.dataloader_drop_last,
+            num_workers=self.args.dataloader_num_workers,
+            pin_memory=self.args.dataloader_pin_memory,
+        )
