@@ -117,12 +117,16 @@ class ERCTrainerTripletJob(transformers.Trainer):
         # the tripplet losses are calculated and acculuated.
         losses = []
         for i in range(len(class_embeds)):
-            after_i = i + 1
-            anchor = class_embeds[i][0]
-            positives = class_embeds[i][1:]
-            negatives = torch.cat((class_embeds[:i] + class_embeds[after_i:]))
-            loss = loss_fn(anchor=anchor, positives=positives, negatives=negatives)
-            losses.append(loss)
+            # we can only process classes with at least 2 examples in the batch
+            # because we need at least 1 positive and 1 negative example. however
+            # classes without a 2nd example can still be processed as negatives
+            if class_embeds[i].shape[0] > 1:
+                after_i = i + 1
+                anchor = class_embeds[i][0]
+                positives = class_embeds[i][1:]
+                negatives = torch.cat((class_embeds[:i] + class_embeds[after_i:]))
+                loss = loss_fn(anchor=anchor, positives=positives, negatives=negatives)
+                losses.append(loss)
 
         # once we have all positives and all negatives for the batch
         # we use an adaptation of the SimCSE loss function to calculate the loss
