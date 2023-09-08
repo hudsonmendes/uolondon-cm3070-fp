@@ -1,4 +1,4 @@
-classifier_name: losses-dice+triplet
+classifier_name: losses-dice_triplet
 classifier_loss_fn: dice+triplet
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
