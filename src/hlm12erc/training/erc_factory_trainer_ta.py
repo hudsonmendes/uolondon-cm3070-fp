@@ -1,4 +1,5 @@
 # Python Built-in Modules
+import logging
 import pathlib
 import time
 
@@ -10,6 +11,8 @@ from hlm12erc.modelling import ERCConfig
 
 # Local Folders
 from .erc_data_collator import ERCDataCollator
+
+logger = logging.getLogger(__name__)
 
 
 class ERCTrainerJobTrainingArgsFactory:
@@ -42,6 +45,12 @@ class ERCTrainerJobTrainingArgsFactory:
         :param workspace: Path to the workspace to store the model and logs.
         :return: transformers.TrainingArguments object containing the training
         """
+        if (
+            self.config.classifier_metric_for_best_model is not None
+            and self.config.classifier_metric_for_best_model != "loss"
+        ):
+            logger.warn(f"Trainer: metric_for_best_model='{self.config.classifier_metric_for_best_model}'")
+
         return transformers.TrainingArguments(
             run_name=f"run-{int(time.time())}-model-{model_name}",
             label_names=[ERCDataCollator.LABEL_NAME],

@@ -1,3 +1,6 @@
+# Python Built-in Modules
+import logging
+
 # Third-Party Libraries
 import transformers
 
@@ -10,6 +13,8 @@ from .erc_metric_calculator import ERCMetricCalculator
 from .erc_trainer_job_batch import ERCTrainerBatchJob
 from .erc_trainer_job_triplet import ERCTrainerTripletJob
 from .meld_dataset import MeldDataset
+
+logger = logging.getLogger(__name__)
 
 
 class ERCTrainerJobFactory:
@@ -72,6 +77,7 @@ class ERCTrainerJobFactory:
             self.config.classifier_early_stopping_patience is not None
             and self.config.classifier_early_stopping_patience > 0
         ):
+            logger.warn(f"Trainer: Early Stopping on, patience {self.config.classifier_early_stopping_patience}")
             callbacks.append(
                 transformers.EarlyStoppingCallback(
                     early_stopping_patience=self.config.classifier_early_stopping_patience,
