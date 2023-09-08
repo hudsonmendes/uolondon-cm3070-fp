@@ -1,8 +1,10 @@
 classifier_name: mock
-classifier_loss_fn: cce+triplet
+classifier_loss_fn: cce
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
 classifier_warmup_steps: 4
+classifier_metric_for_best_model: f1_weighted
+classifier_early_stopping_patience: 1
 classifier_classes:
   - fear
   - neutral

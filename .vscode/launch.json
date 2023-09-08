@@ -33,7 +33,7 @@
                 "--config", "./configs/mock.yml",
                 "--train_dataset", "./data/sample.csv",
                 "--valid_dataset", "./data/sample.csv",
-                "--n_epochs", "3",
+                "--n_epochs", "10" /* should stop at 3 with the early_stop config*/,
                 "--batch_size", "7",
                 "--out", "./target",
             ],
@@ -41,7 +41,7 @@
                 "WANDB_PROJECT": "hlm12erc_local",
                 "WANDB_MODE": "offline"
             },
-            "justMyCode": true
+            "justMyCode": false
         },
     ]
 }
