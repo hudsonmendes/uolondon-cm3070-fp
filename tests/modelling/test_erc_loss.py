@@ -58,18 +58,18 @@ class TestTripletLoss(unittest.TestCase):
             ]
         )
         self.negative = torch.rand(self.anchor.shape)
-        self.loss = ERCTripletLoss()
+        self.loss = ERCTripletLoss(config=ERCConfig(classifier_classes=["a", "b", "c"]))
 
     def test_call_best_better_than_indiferent_positive_or_reversed(self):
-        loss_xs = self.loss(anchor=self.anchor, positive=self.positive, negative=self.negative)
-        loss_md = self.loss(anchor=self.anchor, positive=self.positive, negative=self.positive)
-        loss_lg = self.loss(anchor=self.anchor, positive=self.negative, negative=self.positive)
+        loss_xs = self.loss(anchor=self.anchor, positives=self.positive, negatives=self.negative)
+        loss_md = self.loss(anchor=self.anchor, positives=self.positive, negatives=self.positive)
+        loss_lg = self.loss(anchor=self.anchor, positives=self.negative, negatives=self.positive)
         self.assertLess(loss_xs, loss_md)
         self.assertLess(loss_xs, loss_lg)
 
     def test_call_best_better_than_indiferent_negative_or_reversed(self):
-        loss_xs = self.loss(anchor=self.anchor, positive=self.positive, negative=self.negative)
-        loss_md = self.loss(anchor=self.anchor, positive=self.negative, negative=self.negative)
-        loss_lg = self.loss(anchor=self.anchor, positive=self.negative, negative=self.positive)
+        loss_xs = self.loss(anchor=self.anchor, positives=self.positive, negatives=self.negative)
+        loss_md = self.loss(anchor=self.anchor, positives=self.negative, negatives=self.negative)
+        loss_lg = self.loss(anchor=self.anchor, positives=self.negative, negatives=self.positive)
         self.assertLess(loss_xs, loss_md)
         self.assertLess(loss_xs, loss_lg)
