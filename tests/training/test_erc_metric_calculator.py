@@ -12,7 +12,7 @@ from hlm12erc.training.erc_metric_calculator import ERCMetricCalculator
 
 class TestERCMetricCalculator(unittest.TestCase):
     def setUp(self):
-        loss_fn = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
+        loss_fn = ERCLossFunctions.CROSSENTROPY
         config = ERCConfig(classifier_classes=["a", "b", "c"], classifier_loss_fn=loss_fn)
         self.metric_calculator = ERCMetricCalculator(config)
         self.eval_pred = EvalPrediction(
@@ -43,7 +43,7 @@ class TestERCMetricCalculator(unittest.TestCase):
         metric_calculator = ERCMetricCalculator(
             ERCConfig(
                 classifier_classes=["a", "b", "c"],
-                classifier_loss_fn=ERCLossFunctions.DICE_COEFFICIENT,
+                classifier_loss_fn=ERCLossFunctions.DICE,
             )
         )
         output = metric_calculator(self.eval_pred)

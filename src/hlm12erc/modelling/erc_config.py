@@ -1,5 +1,5 @@
 # Python Built-in Modules
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 
@@ -36,9 +36,13 @@ class ERCFusionTechnique:
 class ERCLossFunctions:
     """Enumerates all available loss functions for the model."""
 
-    CATEGORICAL_CROSS_ENTROPY = "cce"
-    DICE_COEFFICIENT = "dice"
-    FOCAL_MULTI_CLASS_LOG = "focal"
+    TRIPLET = "triplet"
+    CROSSENTROPY = "cce"
+    CROSSENTROPY_PLUS_TRIPLET = "cce+triplet"
+    DICE = "dice"
+    DICE_PLUS_TRIPET = "dice+triplet"
+    FOCAL = "focal"
+    FOCAL_PLUS_TRIPLET = "focal+triplet"
 
 
 @dataclass(frozen=True)
@@ -60,39 +64,41 @@ class ERCConfig:
     - surprise
     """
 
-    classifier_classes: List[str]
-    classifier_name: str = "untagged"
-    classifier_learning_rate: float = 5e-5
-    classifier_weight_decay: float = 0.1
-    classifier_warmup_steps: int = 500
-    classifier_epsilon: float = 1e-8
-    classifier_loss_fn: str = ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY
+    classifier_classes: List[str] = field()
+    classifier_name: str = field(default="untagged")
+    classifier_learning_rate: float = field(default=5e-5)
+    classifier_weight_decay: float = field(default=0.1)
+    classifier_warmup_steps: int = field(default=500)
+    classifier_epsilon: float = field(default=1e-8)
+    classifier_loss_fn: str = field(default=ERCLossFunctions.CROSSENTROPY)
+    classifier_seed: int = field(default=42)
 
-    losses_focal_alpha: List[float] | None = None
-    losses_focal_gamma: float | None = None
-    losses_focal_reduction: str | None = None
+    losses_focal_alpha: List[float] | None = field(default=None)
+    losses_focal_gamma: float | None = field(default=None)
+    losses_focal_reduction: str | None = field(default=None)
 
-    modules_text_encoder: str = ERCTextEmbeddingType.GLOVE
-    modules_visual_encoder: str = ERCVisualEmbeddingType.RESNET50
-    modules_audio_encoder: str = ERCAudioEmbeddingType.WAVEFORM
-    modules_fusion: str = ERCFusionTechnique.CONCATENATION
+    modules_text_encoder: str = field(default=ERCTextEmbeddingType.GLOVE)
+    modules_visual_encoder: str = field(default=ERCVisualEmbeddingType.RESNET50)
+    modules_audio_encoder: str = field(default=ERCAudioEmbeddingType.WAVEFORM)
+    modules_fusion: str = field(default=ERCFusionTechnique.CONCATENATION)
 
-    text_in_features: int = 50  # 300 is the largest model
-    text_out_features: int = 50  # must match in_features for GloVe
-    text_limit_to_n_last_tokens: int | None = None  # truncation to most recent dialogue
+    text_in_features: int = field(default=50)  # 300 is the largest model
+    text_out_features: int = field(default=50)  # must match in_features for GloVe
+    text_limit_to_n_last_tokens: int | None = field(default=None)  # truncation to most recent dialogue
 
-    audio_in_features: int = 100_000  # 300_000 fits the all audio files
-    audio_out_features: int = 512
+    audio_in_features: int = field(default=100_000)  # 300_000 fits the all audio files
+    audio_out_features: int = field(default=512)
 
-    visual_preprocess_faceonly: bool | None = None
-    visual_preprocess_retinaface_weights_path: str | None = None
-    visual_in_features: Tuple[int, ...] = (3, 256, 721)  # required by resnet
-    visual_out_features: int = -1  # defined by resnet50, get it from the embedding class
+    visual_preprocess_faceonly: bool | None = field(default=None)
+    visual_preprocess_retinaface_weights_path: str | None = field(default=None)
+    visual_in_features: Tuple[int, ...] = field(default=(3, 256, 721))  # required by resnet
+    visual_out_features: int = field(default=-1)  # defined by resnet50, get it from the embedding class
 
-    fusion_attention_heads_degree: int | None = None
-    fusion_out_features: int | None = None  # must be none for concatenation, and must fit in memory for MHA
+    fusion_attention_heads_degree: int | None = field(default=None)
+    fusion_out_features: int | None = field(default=None)  # none for concat, fit RAM for mha
 
-    feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = None
+    feedforward_l2norm: bool = field(default=False)
+    feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = field(default=None)
 
     def to_dict(self) -> Dict[str, Any]:
         return self.__dict__

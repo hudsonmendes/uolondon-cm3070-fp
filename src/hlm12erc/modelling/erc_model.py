@@ -5,6 +5,7 @@ from wave import Wave_read as Wave
 # Third-Party Libraries
 import torch
 from PIL.Image import Image
+from torch.nn.functional import normalize as l2_norm
 
 # Local Folders
 from .erc_config import ERCConfig
@@ -124,6 +125,8 @@ class ERCModel(torch.nn.Module):
 
         # transform the fused embeddings into the output logits
         y_transformed = self.feedforward(y_fusion)
+        if self.config.feedforward_l2norm:
+            y_transformed = l2_norm(y_transformed, p=2, dim=1)
 
         # transform the transformed fused into logits and then into softmax probabilities
         y_logits = self.logits(y_transformed)

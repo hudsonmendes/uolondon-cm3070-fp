@@ -1,8 +1,8 @@
 classifier_name: mock
-classifier_loss_fn: cce
-classifier_learning_rate: 5e-5
-classifier_weight_decay: 1e-1
-classifier_warmup_steps: 5
+classifier_loss_fn: cce+triplet
+classifier_learning_rate: 0.00005
+classifier_weight_decay: 0.1
+classifier_warmup_steps: 4
 classifier_classes:
   - fear
   - neutral
@@ -20,11 +20,12 @@ text_out_features: 50
 audio_in_features: 150000 # truncates the waveform after 150K samples
 audio_out_features: 32
 
-visual_in_features: [3, 256, 721]
+visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
+feedforward_l2norm: true
 feedforward_layers:
-  - out_features: 512
+  - out_features: 64
     dropout: 0.2
   - out_features: 32
     dropout: 0

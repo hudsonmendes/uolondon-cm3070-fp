@@ -39,13 +39,19 @@ class ERCLoss(ABC, torch.nn.Module):
     @staticmethod
     def resolve_type_from(expression: str) -> Type["ERCLoss"]:
         """
-        Resolve a ERC Loss class from a string expression
+        Resolve a ERC Loss class from a string expression.
+        Some loss function configurations are a combination of a raw loss &
+        another contrastive loss, e.g. "cce+triplet".
+
+        In this case, the contrastive loss is ignored for the instantiation,
+        because the contrastive loss is processed at the trainer level and
+        has implications to the data loading process.
         """
-        if expression == ERCLossFunctions.CATEGORICAL_CROSS_ENTROPY:
+        if expression == ERCLossFunctions.CROSSENTROPY or expression == ERCLossFunctions.CROSSENTROPY_PLUS_TRIPLET:
             return CategoricalCrossEntropyLoss
-        elif expression == ERCLossFunctions.DICE_COEFFICIENT:
+        elif expression == ERCLossFunctions.DICE or expression == ERCLossFunctions.DICE_PLUS_TRIPET:
             return DiceCoefficientLoss
-        elif expression == ERCLossFunctions.FOCAL_MULTI_CLASS_LOG:
+        elif expression == ERCLossFunctions.FOCAL or expression == ERCLossFunctions.FOCAL_PLUS_TRIPLET:
             return FocalMutiClassLogLoss
         else:
             raise ValueError(f"Unknown ERC Loss type {expression}")
@@ -160,3 +166,88 @@ class FocalMutiClassLogLoss(ERCLoss):
         focal_weights = alpha * (1.0 - safe_probs).pow(self.gamma)
         loss = focal_weights * -torch.log(safe_probs)
         return loss.mean() if self.reduction == "mean" else loss.sum()
+
+
+class ERCTripletLoss(torch.nn.Module):
+    """
+    Triplet Loss function for ERC models, implemented using the equation designed
+    by the SimCSE model, introduced by Gao et al. (2021), given by the equation:
+    >>> -log(
+    ...    exp(sim(a,p)/temperature) /
+    ...    sum((exp(sim(a,p)/temperature) + exp(sim(a,n)/temperature))
+    ... )
+
+    However, the SimCSE paper fine-tunes a hyperparameter for the temperature,
+    which would require significant experimentation to find the optimal value,
+    however much more expensive due to the multi-modal nature of the model.
+
+    For that reason, instead of cosine similarity with a temperature, we use
+    the dot product, which will be made equivalent to cosine similarity by
+    changing the embeddings produced by the model prior to logits to be l2-norm.
+
+    As a consequence, the temperature hyperparameter is no longer required and
+    the triplet loss equation implemented here is:
+    >>> -log(
+    ...    exp(dot(a,p.T)) /
+    ...    sum((exp(dot(a,p.T)) + exp(dot(a,n.T)))
+    ... )
+
+    Reference:
+    >>> Tianyu Gao, Xingcheng Yao, and Danqi Chen. 2021. SimCSE: Simple Contrastive
+    ... Learning of Sentence Embeddings. In EMNLP 2021 - 2021 Conference on Empirical
+    ... Methods in Natural Language Processing, Proceedings (EMNLP 2021 - 2021
+    ... Conference on Empirical Methods in Natural Language Processing, Proceedings),
+    ... Association for Computational Linguistics (ACL), 6894–6910.
+    """
+
+    def __init__(self, config: ERCConfig, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.epsilon = config.classifier_epsilon
+
+    def forward(
+        self,
+        anchor: torch.Tensor,
+        positives: torch.Tensor,
+        negatives: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Calculate and return the loss given the predicted and true labels using
+        a losse equation inspired on the Triplet Loss function devised by the
+        SimCSE Paper, that can be described by the following equation.
+        >>> loss = -log(
+        ...     sum(sim(anchor, positives)) /
+        ...     sum(cat(sim(anchor, positives), sim(anchor, negatives))
+        ... )
+
+        Reference:
+        >>> Tianyu Gao, Xingcheng Yao, and Danqi Chen. 2021. SimCSE: Simple
+        ... Contrastive Learning of Sentence Embeddings. In EMNLP 2021 - 2021
+        ... Conference on Empirical Methods in Natural Language Processing,
+        ... Proceedings (EMNLP 2021 - 2021 Conference on Empirical Methods in
+        ... Natural Language Processing, Proceedings), Association for
+        ... Computational Linguistics (ACL), 6894–6910.
+
+        :param anchor: Anchor embeddings, used as reference for the positive and negative embeddings
+        :param positive: Positive embeddings, used as a positive example for the anchor
+        :param negative: Negative embeddings, used as a negative example for the anchor
+        :return: Loss value
+        """
+        p = self._sim(anchor, positives)
+        n = self._sim(anchor, negatives)
+        weighted_p = p / positives.shape[0]
+        weighted_n = n / negatives.shape[0]
+        weighted_all = torch.cat((weighted_p, weighted_n))
+        ratio = torch.sum(weighted_p) / (torch.sum(weighted_all) + self.epsilon)
+        loss = -torch.log(ratio)
+        return loss
+
+    def _sim(self, anchor: torch.Tensor, other: torch.Tensor) -> torch.Tensor:
+        """
+        Produces a normalised cosine similarity ranging [0, 1] between the
+        anchor and the other tensor/matrix.
+
+        :param anchor: Anchor tensor
+        :param other: Other tensor
+        :return: Normalised cosine similarity
+        """
+        return (1 + torch.cosine_similarity(anchor, other)) / 2

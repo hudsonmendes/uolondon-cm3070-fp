@@ -30,11 +30,11 @@
             "args": [
                 "erc",
                 "train",
-                "--config", "./configs/baseline.yml",
+                "--config", "./configs/mock.yml",
                 "--train_dataset", "./data/sample.csv",
                 "--valid_dataset", "./data/sample.csv",
-                "--n_epochs", "1",
-                "--batch_size", "4",
+                "--n_epochs", "3",
+                "--batch_size", "7",
                 "--out", "./target",
             ],
             "env": {

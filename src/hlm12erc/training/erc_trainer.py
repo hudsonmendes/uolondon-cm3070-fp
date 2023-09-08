@@ -2,7 +2,7 @@
 import logging
 import pathlib
 import time
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 # Third-Party Libraries
 import torch
@@ -10,12 +10,14 @@ import transformers
 import wandb
 
 # My Packages and Modules
-from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel, ERCOutput, ERCStorage, ERCStorageLinks
+from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCLossFunctions, ERCModel, ERCStorage, ERCStorageLinks
 
 # Local Folders
 from .erc_config_formatter import ERCConfigFormatter
 from .erc_data_collator import ERCDataCollator
 from .erc_metric_calculator import ERCMetricCalculator
+from .erc_trainer_job_batch import ERCTrainerBatchJob
+from .erc_trainer_job_triplet import ERCTrainerTripletJob
 from .meld_dataset import MeldDataset
 
 logger = logging.getLogger(__name__)
@@ -176,14 +178,27 @@ class ERCTrainer:
         :param config: ERCConfig object containing the model configuration.
         :return: transformers.Trainer object to train the model.
         """
-        return _ERCHuggingfaceCustomTrainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
-            compute_metrics=ERCMetricCalculator(config=config),
-        )
+        triplet_suffix = "+" + ERCLossFunctions.TRIPLET
+        triplet_loss_active = self.config is not None and self.config.classifier_loss_fn.endswith(triplet_suffix)
+        if not triplet_loss_active:
+            return ERCTrainerBatchJob(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
+                compute_metrics=ERCMetricCalculator(config=config),
+            )
+        else:
+            return ERCTrainerTripletJob(
+                model=model,
+                config=config,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
+                compute_metrics=ERCMetricCalculator(config=config),
+            )
 
     def _wanb_upload_artifact(self, model_name: str, links: ERCStorageLinks) -> None:
         artifact = wandb.Artifact(model_name, type="model")
@@ -191,63 +206,3 @@ class ERCTrainer:
         artifact.add_file(str(links.training_args))
         artifact.add_file(str(links.config))
         artifact.save()
-
-
-class _ERCHuggingfaceCustomTrainer(transformers.Trainer):
-    """
-    Overrides the Huggingface Trainer to add additional metrics to the training loop,
-    such as accuracy, f1, precision, recall, but keeping the loss.
-    """
-
-    custom_metric_computation: Optional[Callable[[transformers.EvalPrediction], Dict[str, Any]]] = None
-
-    def __init__(
-        self,
-        compute_metrics: Optional[transformers.EvalPrediction] = None,
-        *args,
-        **kwargs,
-    ):
-        """
-        Constructs a Custom Trainer keeping the `compute_metrics` object to
-        be used to calculate the metrics within the `compute_loss` function.
-
-        :param compute_metrics: Callable object to calculate the metrics.
-        """
-        super(_ERCHuggingfaceCustomTrainer, self).__init__(compute_metrics=compute_metrics, *args, **kwargs)
-        self.custom_metric_computation = compute_metrics
-
-    def compute_loss(self, model, inputs, return_outputs=False) -> Union[torch.Tensor, Tuple[torch.Tensor, Any]]:
-        """
-        Uses the model to calculate outputs over the inputs, and then calculates
-        both the loss, accuracy, f1, precision and recall.
-
-        :param model: ERCModel object containing the model to train.
-        :param inputs: Dictionary containing the inputs to the model.
-        :param return_outputs: Whether to return the outputs of the model.
-        :return: Tuple containing the loss and the outputs of the model.
-        """
-        outputs = model(**inputs)
-        loss = outputs.loss
-        labels = inputs.get(ERCDataCollator.LABEL_NAME)
-        if labels is not None:
-            metrics = self._compute_metrics(labels, outputs, loss=loss.item())
-            self.log(metrics)
-        return (loss, outputs) if return_outputs else loss
-
-    def _compute_metrics(self, labels: torch.Tensor, outputs: ERCOutput, loss: float) -> Dict[str, Any]:
-        """
-        Runs the `custom_metric_computation` procedure to calculate the metrics
-        that we want to track, and then updates the metrics dictionary with the
-        loss and the custom metrics.
-
-        :param labels: Labels of the inputs.
-        :param outputs: Outputs of the model.
-        :param loss: Loss of the model, float format (tensor.item())
-        :return: Dictionary containing the metrics.
-        """
-        metrics = dict(loss=loss)
-        if self.custom_metric_computation is not None:
-            eval_pred = transformers.EvalPrediction(predictions=outputs.labels, label_ids=labels)
-            custom_metrics = self.custom_metric_computation(eval_pred)
-            metrics.update(custom_metrics)
-        return metrics

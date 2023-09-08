@@ -22,7 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pre-commit>=3.3.3", "black[jupyter]>=23.7.0", "isort>=5.12.0"]
-test = ["pytest>=7.4.0"]
+test = ["pytest>=7.4.0", "hypothesis>=6.84.2"]
 etl = [
     "kaggle>=1.5.13",
     "tqdm>=4.65.0",
