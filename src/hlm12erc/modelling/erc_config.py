@@ -72,6 +72,8 @@ class ERCConfig:
     classifier_epsilon: float = field(default=1e-8)
     classifier_loss_fn: str = field(default=ERCLossFunctions.CROSSENTROPY)
     classifier_seed: int = field(default=42)
+    classifier_early_stopping_patience: int | None = field(default=None)
+    classifier_metric_for_best_model: str = field(default="loss")
 
     losses_focal_alpha: List[float] | None = field(default=None)
     losses_focal_gamma: float | None = field(default=None)

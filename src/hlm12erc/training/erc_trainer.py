@@ -1,23 +1,19 @@
 # Python Built-in Modules
 import logging
 import pathlib
-import time
 from typing import Optional, Tuple
 
 # Third-Party Libraries
 import torch
-import transformers
 import wandb
 
 # My Packages and Modules
-from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCLossFunctions, ERCModel, ERCStorage, ERCStorageLinks
+from hlm12erc.modelling import ERCConfig, ERCLabelEncoder, ERCModel, ERCStorage, ERCStorageLinks
 
 # Local Folders
 from .erc_config_formatter import ERCConfigFormatter
-from .erc_data_collator import ERCDataCollator
-from .erc_metric_calculator import ERCMetricCalculator
-from .erc_trainer_job_batch import ERCTrainerBatchJob
-from .erc_trainer_job_triplet import ERCTrainerTripletJob
+from .erc_factory_trainer_job import ERCTrainerJobFactory
+from .erc_factory_trainer_ta import ERCTrainerJobTrainingArgsFactory
 from .meld_dataset import MeldDataset
 
 logger = logging.getLogger(__name__)
@@ -82,23 +78,19 @@ class ERCTrainer:
         logger.info(f"Model created in device {model.device}")
         workspace = save_to / model_name
         logger.info(f"Training workspace set to: {workspace}")
-        training_args = self._create_training_args(
+        training_args = ERCTrainerJobTrainingArgsFactory(config).create(
             n_epochs=n_epochs,
             batch_size=batch_size,
             model_name=model_name,
             workspace=workspace,
-            learning_rate=config.classifier_learning_rate,
-            weight_decay=config.classifier_weight_decay,
-            warmup_steps=config.classifier_warmup_steps,
         )
         logger.info(f"TrainingArgs created with {n_epochs} epochs and batch size {batch_size}")
-        trainer = self._create_trainer(
+        trainer = ERCTrainerJobFactory(config).create(
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             model=model,
             training_args=training_args,
             label_encoder=label_encoder,
-            config=config,
         )
         logger.info(f"Trainer, train={len(train_dataset)}, valid={len(eval_dataset)}, device={model.device}")
         logger.info("Training starting now, don't wait standing up...")
@@ -112,93 +104,6 @@ class ERCTrainer:
             wandb.finish()
             logger.info("W&B run marked as completed.")
         return model_name, model
-
-    def _create_training_args(
-        self,
-        n_epochs: int,
-        batch_size: int,
-        model_name: str,
-        workspace: pathlib.Path,
-        learning_rate: float,
-        weight_decay: float,
-        warmup_steps: int,
-    ) -> transformers.TrainingArguments:
-        """
-        Create the training arguments for the transformers.Trainer class.
-
-        :param n_epochs: Number of epochs to train the model for.
-        :param batch_size: Batch size to use for training.
-        :param model_name: A representative model name that distiguishes its architecture.
-        :param workspace: Path to the workspace to store the model and logs.
-        :param learning_rate: Learning rate to use for training.
-        :param weight_decay: Weight decay to use for training.
-        :param warmup_steps: Number of warmup steps to use for training.
-        :return: transformers.TrainingArguments object containing the training
-        """
-        return transformers.TrainingArguments(
-            run_name=f"run-{int(time.time())}-model-{model_name}",
-            label_names=[ERCDataCollator.LABEL_NAME],
-            do_train=True,
-            do_eval=True,
-            num_train_epochs=n_epochs,
-            per_device_train_batch_size=batch_size,
-            per_device_eval_batch_size=batch_size,
-            learning_rate=learning_rate,
-            weight_decay=weight_decay,
-            warmup_steps=warmup_steps,
-            output_dir=str(workspace / "models"),
-            evaluation_strategy="epoch",
-            save_strategy="epoch",
-            save_total_limit=3,
-            load_best_model_at_end=True,
-            logging_dir=str(workspace / "logs"),
-            logging_strategy="steps",
-            logging_steps=10,
-            disable_tqdm=False,
-            report_to=["wandb"],
-        )
-
-    def _create_trainer(
-        self,
-        train_dataset: MeldDataset,
-        eval_dataset: MeldDataset,
-        model: ERCModel,
-        training_args: transformers.TrainingArguments,
-        label_encoder: ERCLabelEncoder,
-        config: ERCConfig,
-    ) -> transformers.Trainer:
-        """
-        Create the transformers.Trainer object to train the model.
-
-        :param train_dataset: Training dataset to use for training.
-        :param eval_dataset: Validation dataset to use for evaluation.
-        :param model: ERCModel object containing the model to train.
-        :param training_args: transformers.TrainingArguments object containing the training arguments.
-        :param label_encoder: ERCLabelEncoder object containing the label encoder to use for training.
-        :param config: ERCConfig object containing the model configuration.
-        :return: transformers.Trainer object to train the model.
-        """
-        triplet_suffix = "+" + ERCLossFunctions.TRIPLET
-        triplet_loss_active = self.config is not None and self.config.classifier_loss_fn.endswith(triplet_suffix)
-        if not triplet_loss_active:
-            return ERCTrainerBatchJob(
-                model=model,
-                args=training_args,
-                train_dataset=train_dataset,
-                eval_dataset=eval_dataset,
-                data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
-                compute_metrics=ERCMetricCalculator(config=config),
-            )
-        else:
-            return ERCTrainerTripletJob(
-                model=model,
-                config=config,
-                args=training_args,
-                train_dataset=train_dataset,
-                eval_dataset=eval_dataset,
-                data_collator=ERCDataCollator(config=config, label_encoder=label_encoder),
-                compute_metrics=ERCMetricCalculator(config=config),
-            )
 
     def _wanb_upload_artifact(self, model_name: str, links: ERCStorageLinks) -> None:
         artifact = wandb.Artifact(model_name, type="model")
