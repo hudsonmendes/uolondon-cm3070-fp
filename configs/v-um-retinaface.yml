@@ -1,8 +1,8 @@
-classifier_name: adv-text-gpt2-lr-5e-4
+classifier_name: v-um-retinaface
 classifier_loss_fn: dice
-classifier_learning_rate: 0.0005
+classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
-classifier_warmup_steps: 2000 # over A100, batch_size=16
+classifier_warmup_steps: 500 # @ ~15% => 9989 (examples) / 32 (batch) = 313 (step) x 10 (epochs) = 3130 steps
 classifier_classes:
   - anger
   - disgust
@@ -12,22 +12,22 @@ classifier_classes:
   - sadness
   - surprise
 
-modules_text_encoder: gpt2
-modules_visual_encoder: resnet50
-modules_audio_encoder: waveform
+modules_text_encoder: none
+modules_visual_encoder: resnet50 # see `visual_preprocess_faceonly=True`
+modules_audio_encoder: none
 modules_fusion: concat
 
 text_in_features: -1 # defined by tokenizer & padding
 text_out_features: -1 # defined by the encoder output hidden state
 
 audio_in_features: 150000 # truncates the waveform after 150K samples
-audio_out_features: 32
+audio_out_features: 768
 
+visual_preprocess_faceonly: true
+visual_preprocess_retinaface_weights_path: .weights_cache/retinaface_resnet50.pth
 visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
 feedforward_layers:
-  - out_features: 512
+  - out_features: 256
     dropout: 0.2
-  - out_features: 32
-    dropout: 0

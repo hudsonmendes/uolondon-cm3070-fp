@@ -1,8 +1,8 @@
-classifier_name: losses-focal
-classifier_loss_fn: focal
+classifier_name: a-mm-wav2vec2
+classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
-classifier_warmup_steps: 500
+classifier_warmup_steps: 1000 # @ ~15% => 9989 (examples) / 16 (batch) = 625 (step) x 10 (epochs) = 6250 steps
 classifier_classes:
   - anger
   - disgust
@@ -12,33 +12,20 @@ classifier_classes:
   - sadness
   - surprise
 
-losses_focal_gamma: 2.0
-losses_focal_reduction: mean
-losses_focal_alpha:
- -  9.01 # anger    => 9989/1109
- - 36.86 # disgust  => 9989/271
- - 37.27 # fear     => 9989/268
- -  5.73 # joy      => 9989/1743
- -  2.12 # neutral  => 9989/4710
- - 14.63 # sadness  => 9989/683
- -  8.29 # surprise => 9989/1205
-
 modules_text_encoder: glove
 modules_visual_encoder: resnet50
-modules_audio_encoder: waveform
+modules_audio_encoder: wav2vec2
 modules_fusion: concat
 
 text_in_features: 50
 text_out_features: 50
 
 audio_in_features: 150000 # truncates the waveform after 150K samples
-audio_out_features: 32
+audio_out_features: -1 #determined by wav2vec
 
 visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
 feedforward_layers:
-  - out_features: 512
+  - out_features: 256
     dropout: 0.2
-  - out_features: 32
-    dropout: 0

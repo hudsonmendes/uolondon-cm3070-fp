@@ -1,8 +1,10 @@
-classifier_name: baseline-v
+classifier_name: baseline-cce
 classifier_loss_fn: cce
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
-classifier_warmup_steps: 500
+classifier_warmup_steps: 250 # @ ~15% => 9989 (examples) / 64 (batch) = 157 (step) x 10 (epochs) = 1570 steps
+classifier_metric_for_best_model: f1_weighted
+classifier_early_stopping_patience: 5
 classifier_classes:
   - anger
   - disgust
@@ -12,22 +14,20 @@ classifier_classes:
   - sadness
   - surprise
 
-modules_text_encoder: none
+modules_text_encoder: glove
 modules_visual_encoder: resnet50
-modules_audio_encoder: none
+modules_audio_encoder: waveform
 modules_fusion: concat
 
-text_in_features: 50
-text_out_features: 50
+text_in_features: 50 # smallest GloVe
+text_out_features: 50 # smallest GloVe
 
 audio_in_features: 150000 # truncates the waveform after 150K samples
-audio_out_features: 32
+audio_out_features: 768
 
 visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
 feedforward_layers:
-  - out_features: 512
+  - out_features: 256
     dropout: 0.2
-  - out_features: 32
-    dropout: 0
