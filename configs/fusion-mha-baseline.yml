@@ -19,11 +19,14 @@ modules_visual_encoder: resnet50
 modules_audio_encoder: waveform
 modules_fusion: multi_headed_attn
 
-text_in_features: -1 # defined by tokenizer & padding
-text_out_features: -1 # defined by the encoder output hidden state
+text_in_features: 50 # smallest GloVe
+text_out_features: 50 # smallest GloVe
 
 audio_in_features: 150000 # truncates the waveform after 150K samples
 audio_out_features: 768
+
+visual_in_features: [3, 256, 721] # input required for resnet50
+visual_out_features: -1 # defined automatically by resnet50
 
 fusion_out_features: 512
 fusion_attention_heads_degree: 3 # for 512, degree 3 = 4 heads

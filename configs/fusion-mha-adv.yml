@@ -15,7 +15,7 @@ classifier_classes:
   - surprise
 
 modules_text_encoder: gpt2
-modules_visual_encoder: resnet50 # see `visual_preprocess_faceonly=True`
+modules_visual_encoder: resnet50
 modules_audio_encoder: wav2vec2
 modules_fusion: multi_headed_attn
 
@@ -23,10 +23,8 @@ text_in_features: -1 # defined by tokenizer & padding
 text_out_features: -1 # defined by the encoder output hidden state
 
 audio_in_features: 150000 # truncates the waveform after 150K samples
-audio_out_features: 768
+audio_out_features: -1 #determined by wav2vec
 
-visual_preprocess_faceonly: true
-visual_preprocess_retinaface_weights_path: .weights_cache/retinaface_resnet50.pth
 visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 

@@ -19,8 +19,8 @@ modules_visual_encoder: resnet50
 modules_audio_encoder: wav2vec2
 modules_fusion: concat
 
-text_in_features: 50
-text_out_features: 50
+text_in_features: 50 # smallest GloVe
+text_out_features: 50 # smallest GloVe
 
 audio_in_features: 150000 # truncates the waveform after 150K samples
 audio_out_features: -1 #determined by wav2vec
