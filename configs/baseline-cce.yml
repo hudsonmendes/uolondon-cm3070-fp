@@ -1,6 +1,6 @@
 classifier_name: baseline-cce
 classifier_loss_fn: cce
-classifier_learning_rate: 0.00005
+classifier_learning_rate: 0.0005
 classifier_weight_decay: 0.1
 classifier_warmup_steps: 250 # @ ~15% => 9989 (examples) / 64 (batch) = 157 (step) x 10 (epochs) = 1570 steps
 classifier_metric_for_best_model: f1_weighted
