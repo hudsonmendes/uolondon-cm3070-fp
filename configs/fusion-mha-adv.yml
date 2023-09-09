@@ -32,5 +32,6 @@ fusion_out_features: 512
 fusion_attention_heads_degree: 3 # for 512, degree 3 = 4 heads
 
 feedforward_layers:
-  - out_features: 256
+  - out_features: 64
     dropout: 0.2
+

@@ -23,5 +23,5 @@ text_in_features: -1 # defined by tokenizer & padding
 text_out_features: -1 # defined by the encoder output hidden state
 
 feedforward_layers:
-  - out_features: 256
+  - out_features: 64
     dropout: 0.2

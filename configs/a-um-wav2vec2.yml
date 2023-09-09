@@ -23,5 +23,5 @@ audio_in_features: 150000 # truncates the waveform after 150K samples
 audio_out_features: -1 #determined by wav2vec
 
 feedforward_layers:
-  - out_features: 256
+  - out_features: 64
     dropout: 0.2

@@ -25,5 +25,5 @@ visual_in_features: [3, 256, 721] # input required for resnet50
 visual_out_features: -1 # defined automatically by resnet50
 
 feedforward_layers:
-  - out_features: 256
+  - out_features: 64
     dropout: 0.2

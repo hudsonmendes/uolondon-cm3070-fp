@@ -20,8 +20,9 @@ modules_audio_encoder: waveform
 modules_fusion: concat
 
 audio_in_features: 150000 # truncates the waveform after 150K samples
-audio_out_features: 768
+audio_out_features: 50
 
 feedforward_layers:
-  - out_features: 256
+  - out_features: 64
     dropout: 0.2
+
