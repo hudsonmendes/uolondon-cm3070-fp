@@ -16,7 +16,7 @@ from hlm12erc.training.meld_record_preprocessor_visual import (
 
 class TestMeldVisualPreprocessorFilepathToResnet50(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig(classifier_classes=["a", "b", "c"])
+        self.config = ERCConfig(classifier_classes=["a", "b", "c"], visual_in_features=(3, 256, 721))
         self.preprocessor = MeldVisualPreprocessorFilepathToResnet50()
 
     def tearDown(self):

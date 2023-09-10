@@ -62,11 +62,11 @@ class ERCDataCollator:
 
         x_visual = None
         if self.config.modules_visual_encoder != ERCVisualEmbeddingType.NONE:
-            self._visual_to_stacked_tensor([r.visual for r in batch])
+            x_visual = self._visual_to_stacked_tensor([r.visual for r in batch])
 
         x_audio = None
         if self.config.modules_audio_encoder != ERCAudioEmbeddingType.NONE:
-            self._audio_to_stacked_tensor([r.audio for r in batch])
+            x_audio = self._audio_to_stacked_tensor([r.audio for r in batch])
 
         if device is not None:
             y_label = y_label.to(device)

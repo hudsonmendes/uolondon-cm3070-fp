@@ -116,9 +116,9 @@ class ERCConfig:
     losses_focal_gamma: float | None = field(default=None)
     losses_focal_reduction: str | None = field(default=None)
 
-    modules_text_encoder: str = field(default=ERCTextEmbeddingType.GLOVE)
-    modules_visual_encoder: str = field(default=ERCVisualEmbeddingType.RESNET50)
-    modules_audio_encoder: str = field(default=ERCAudioEmbeddingType.WAVEFORM)
+    modules_text_encoder: str = field(default=ERCTextEmbeddingType.NONE)
+    modules_visual_encoder: str = field(default=ERCVisualEmbeddingType.NONE)
+    modules_audio_encoder: str = field(default=ERCAudioEmbeddingType.NONE)
     modules_fusion: str = field(default=ERCFusionTechnique.CONCATENATION)
 
     text_in_features: int | None = field(default=None)
