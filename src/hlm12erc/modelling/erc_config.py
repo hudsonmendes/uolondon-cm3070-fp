@@ -62,6 +62,44 @@ class ERCConfig:
     - neutral
     - sadness
     - surprise
+
+    Attributes:
+        classifier_classes: The list of emotion classes to be predicted by the classifier.
+        classifier_name: The name of the classifier.
+        classifier_learning_rate: The learning rate of the classifier.
+        classifier_weight_decay: The weight decay of the classifier.
+        classifier_warmup_steps: The number of warmup steps of the classifier.
+        classifier_epsilon: The epsilon of the classifier.
+        classifier_loss_fn: The loss function of the classifier.
+        classifier_early_stopping_patience: The early stopping patience of the classifier.
+        classifier_metric_for_best_model: The metric for the best model of the classifier.
+
+        losses_focal_alpha: The alpha of the focal loss.
+        losses_focal_gamma: The gamma of the focal loss.
+        losses_focal_reduction: The reduction of the focal loss.
+
+        modules_text_encoder: The text encoder module.
+        modules_visual_encoder: The visual encoder module.
+        modules_audio_encoder: The audio encoder module.
+        modules_fusion: The fusion module.
+
+        text_in_features: The input features of the text encoder.
+        text_out_features: The output features of the text encoder.
+        text_limit_to_n_last_tokens: The number of last tokens to be considered in the text encoder.
+
+        audio_in_features: The input features of the audio encoder, 300_000 fits all audio files.
+        audio_out_features: The output features of the audio encoder.
+
+        visual_preprocess_faceonly: Whether to preprocess the visual input to only include faces.
+        visual_preprocess_retinaface_weights_path: The path to the retinaface weights.
+        visual_in_features: The input features of the visual encoder, resnet requires (3, 256, 721)
+        visual_out_features: The output features of the visual encoder.
+
+        fusion_attention_heads_degree: The number of attention heads in the fusion module.
+        fusion_out_features: The output features of the fusion module.
+
+        feedforward_l2norm: Whether to apply l2 normalization to the feedforward network.
+        feedforward_layers: The layers of the feedforward network.
     """
 
     classifier_classes: List[str] = field()
@@ -83,20 +121,20 @@ class ERCConfig:
     modules_audio_encoder: str = field(default=ERCAudioEmbeddingType.WAVEFORM)
     modules_fusion: str = field(default=ERCFusionTechnique.CONCATENATION)
 
-    text_in_features: int = field(default=50)  # 300 is the largest model
-    text_out_features: int = field(default=50)  # must match in_features for GloVe
-    text_limit_to_n_last_tokens: int | None = field(default=None)  # truncation to most recent dialogue
+    text_in_features: int | None = field(default=None)
+    text_out_features: int | None = field(default=None)
+    text_limit_to_n_last_tokens: int | None = field(default=None)
 
-    audio_in_features: int = field(default=100_000)  # 300_000 fits the all audio files
-    audio_out_features: int = field(default=512)
+    audio_in_features: int | None = field(default=None)
+    audio_out_features: int | None = field(default=None)
 
     visual_preprocess_faceonly: bool | None = field(default=None)
     visual_preprocess_retinaface_weights_path: str | None = field(default=None)
-    visual_in_features: Tuple[int, ...] = field(default=(3, 256, 721))  # required by resnet
-    visual_out_features: int = field(default=-1)  # defined by resnet50, get it from the embedding class
+    visual_in_features: Tuple[int, ...] | None = field(default=None)
+    visual_out_features: int | None = field(default=None)
 
     fusion_attention_heads_degree: int | None = field(default=None)
-    fusion_out_features: int | None = field(default=None)  # none for concat, fit RAM for mha
+    fusion_out_features: int | None = field(default=None)
 
     feedforward_l2norm: bool = field(default=False)
     feedforward_layers: Optional[List["ERCConfigFeedForwardLayer"]] = field(default=None)

@@ -5,7 +5,13 @@ from typing import List
 import torch
 
 # My Packages and Modules
-from hlm12erc.modelling import ERCConfig, ERCLabelEncoder
+from hlm12erc.modelling import (
+    ERCAudioEmbeddingType,
+    ERCConfig,
+    ERCLabelEncoder,
+    ERCTextEmbeddingType,
+    ERCVisualEmbeddingType,
+)
 
 # Local Folders
 from .meld_record import MeldRecord
@@ -48,14 +54,26 @@ class ERCDataCollator:
         :param device: if provided, send tensors to device
         :return: The collated data
         """
-        x_text = [r.text for r in batch]
-        x_visual = self._visual_to_stacked_tensor([r.visual for r in batch])
-        x_audio = self._audio_to_stacked_tensor([r.audio for r in batch])
         y_label = self.label_encoder([r.label for r in batch])
+
+        x_text = None
+        if self.config.modules_text_encoder != ERCTextEmbeddingType.NONE:
+            x_text = [r.text for r in batch]
+
+        x_visual = None
+        if self.config.modules_visual_encoder != ERCVisualEmbeddingType.NONE:
+            self._visual_to_stacked_tensor([r.visual for r in batch])
+
+        x_audio = None
+        if self.config.modules_audio_encoder != ERCAudioEmbeddingType.NONE:
+            self._audio_to_stacked_tensor([r.audio for r in batch])
+
         if device is not None:
-            x_visual = x_visual.to(device)
-            x_audio = x_audio.to(device)
             y_label = y_label.to(device)
+            if x_visual is not None:
+                x_visual = x_visual.to(device)
+            if x_audio is not None:
+                x_audio = x_audio.to(device)
         return {
             "x_text": x_text,
             "x_visual": x_visual,
