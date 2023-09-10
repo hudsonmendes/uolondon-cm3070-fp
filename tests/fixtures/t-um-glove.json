@@ -1,0 +1,44 @@
+{
+    "classifier_classes": [
+        "anger",
+        "disgust",
+        "fear",
+        "joy",
+        "neutral",
+        "sadness",
+        "surprise"
+    ],
+    "classifier_name": "t-um-glove",
+    "classifier_learning_rate": 0.0005,
+    "classifier_weight_decay": 0.1,
+    "classifier_warmup_steps": 250,
+    "classifier_epsilon": 1e-08,
+    "classifier_loss_fn": "dice",
+    "classifier_early_stopping_patience": 5,
+    "classifier_metric_for_best_model": "f1_weighted",
+    "losses_focal_alpha": null,
+    "losses_focal_gamma": null,
+    "losses_focal_reduction": null,
+    "modules_text_encoder": "glove",
+    "modules_visual_encoder": "none",
+    "modules_audio_encoder": "none",
+    "modules_fusion": "concat",
+    "text_in_features": 50,
+    "text_out_features": 50,
+    "text_limit_to_n_last_tokens": null,
+    "audio_in_features": null,
+    "audio_out_features": null,
+    "visual_preprocess_faceonly": null,
+    "visual_preprocess_retinaface_weights_path": null,
+    "visual_in_features": null,
+    "visual_out_features": null,
+    "fusion_attention_heads_degree": null,
+    "fusion_out_features": null,
+    "feedforward_l2norm": false,
+    "feedforward_layers": [
+        {
+            "out_features": 64,
+            "dropout": 0.2
+        }
+    ]
+}
