@@ -30,7 +30,7 @@
             "args": [
                 "erc",
                 "train",
-                "--config", "./configs/mock.yml",
+                "--config", "./configs/t-um-glove.yml",
                 "--train_dataset", "./data/sample.csv",
                 "--valid_dataset", "./data/sample.csv",
                 "--n_epochs", "10" /* should stop at 3 with the early_stop config*/,
