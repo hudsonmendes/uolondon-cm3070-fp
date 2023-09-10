@@ -142,6 +142,15 @@ class ERCConfig:
     def to_dict(self) -> Dict[str, Any]:
         return self.__dict__
 
+    def is_text_modality_enabled(self) -> bool:
+        return self.modules_text_encoder is not None and self.modules_text_encoder != ERCTextEmbeddingType.NONE
+
+    def is_visual_modality_enabled(self) -> bool:
+        return self.modules_visual_encoder is not None and self.modules_visual_encoder != ERCVisualEmbeddingType.NONE
+
+    def is_audio_modality_enabled(self) -> bool:
+        return self.modules_audio_encoder is not None and self.modules_audio_encoder != ERCAudioEmbeddingType.NONE
+
 
 @dataclass(frozen=True)
 class ERCConfigFeedForwardLayer:
