@@ -46,6 +46,9 @@ class MeldDataset(Dataset):
         preprocessors_text: List[MeldTextPreprocessor] | None = None,
         preprocessors_visual: List[MeldVisualPreprocessor] | None = None,
         preprocessors_audio: List[MeldAudioPreprocessor] | None = None,
+        inhibit_text: bool = False,
+        inhibit_visual: bool = False,
+        inhibit_audio: bool = False,
     ):
         """
         Creates a new instance of the MeldDataset for a split
@@ -53,10 +56,13 @@ class MeldDataset(Dataset):
         :param filepath: The dataframe containing the data for the split
         :param filedir: The directory where the files are located, None leads to default
         :param df: The dataframe containing the data for the split
+        :param classes: the list of classes in the dataset, None leads to default
         :param preprocessors_text: the list of text preprocessors to be applied, None leads to default
         :param preprocessors_visual: the list of visual preprocessors to be applied, None leads to default
         :param preprocessors_audio: the list of audio preprocessors to be applied, None leads to default
-        :param classes: the list of classes in the dataset, None leads to default
+        :param inhibit_text: Whether to inhibit the text preprocessing
+        :param inhibit_visual: Whether to inhibit the visual preprocessing
+        :param inhibit_audio: Whether to inhibit the audio preprocessing
         """
         self.filepath = filepath
         self.filedir = filedir or filepath.parent
@@ -71,6 +77,9 @@ class MeldDataset(Dataset):
         self.preprocessors_text = preprocessors_text or [MeldTextPreprocessorToDialogPrompt(df=self.df)]
         self.preprocessors_visual = preprocessors_visual or [MeldVisualPreprocessorFilepathToResnet50()]
         self.preprocessors_audio = preprocessors_audio or [MeldAudioPreprocessorToWaveform()]
+        self.inhibit_text = inhibit_text
+        self.inhibit_visual = inhibit_visual
+        self.inhibit_audio = inhibit_audio
 
     def __len__(self) -> int:
         """
