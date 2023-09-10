@@ -76,15 +76,24 @@ class TestMeldRecordReader(unittest.TestCase):
         self.assertTrue(clone.inhibit_text)
         self.assertFalse(clone.inhibit_visual)
         self.assertFalse(clone.inhibit_audio)
+        self.assertIsNone(clone[0].text)
+        self.assertIsNotNone(clone[0].visual)
+        self.assertIsNotNone(clone[0].audio)
 
     def test_clone_inhibiting_visual(self):
         clone = self.dataset.clone_inhibiting(text=False, visual=True, audio=False)
         self.assertFalse(clone.inhibit_text)
         self.assertTrue(clone.inhibit_visual)
         self.assertFalse(clone.inhibit_audio)
+        self.assertIsNotNone(clone[0].text)
+        self.assertIsNone(clone[0].visual)
+        self.assertIsNotNone(clone[0].audio)
 
     def test_clone_inhibiting_audio(self):
         clone = self.dataset.clone_inhibiting(text=False, visual=False, audio=True)
         self.assertFalse(clone.inhibit_text)
         self.assertFalse(clone.inhibit_visual)
         self.assertTrue(clone.inhibit_audio)
+        self.assertIsNotNone(clone[0].text)
+        self.assertIsNotNone(clone[0].visual)
+        self.assertIsNone(clone[0].audio)

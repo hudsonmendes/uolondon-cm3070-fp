@@ -128,7 +128,7 @@ class MeldDataset(Dataset):
                 visual = self._preprocess_visual(row)
             audio = None
             if not self.inhibit_audio:
-                self._preprocess_audio(row)
+                audio = self._preprocess_audio(row)
             return MeldRecord(text=text, visual=visual, audio=audio, label=row.label)
         elif not out_of_range_ok:
             raise IndexError(f"Index {index} out of range for dataset of size {len(self.df)}")
