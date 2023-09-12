@@ -80,6 +80,14 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         assert config.audio_out_features is not None
         self.config = config
         self.in_features = config.audio_in_features
+        self.mha, self.layer_norm = None, None
+        if config.audio_attention_heads_degree is not None:
+            dims_out = config.audio_out_features
+            heads_candidates = [i for i in range(1, dims_out + 1) if dims_out % i == 0]
+            heads_i = config.audio_attention_heads_degree - 1
+            heads_count = heads_candidates[heads_i] if heads_i < len(heads_candidates) else heads_candidates[-1]
+            self.mha = torch.nn.MultiheadAttention(embed_dim=dims_out, num_heads=heads_count)
+            self.layer_norm = torch.nn.LayerNorm(dims_out)
         self.ff = ERCFeedForward(
             in_features=config.audio_in_features,
             layers=[
@@ -106,9 +114,17 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         :param x: stacked vectors representing audio waveforms
         :return: matrix of tensors (batch_size, out_features)
         """
+        # transform the raw audio into a lower dimensional representation
         y = self.ff(x)
-        y = l2_norm(y, p=2, dim=1)
-        return y
+        # if multi-headed attention is enabled, apply it to the output
+        # and add the attention output to the original output (residual connection)
+        # and normalize the output vector to have unit norm
+        if self.mha is not None:
+            attn, _ = self.mha(y, y, y)[0]
+            y = y + attn
+            y = self.layer_norm(y)
+        # normalize the output vector to have unit norm
+        return l2_norm(y, p=2, dim=1)
 
     @property
     def out_features(self) -> int:
@@ -155,6 +171,7 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
         :param config: configuration for the model
         """
         super(ERCWave2Vec2Embeddings, self).__init__(config=config)
+        assert config is not None
         self.config = config
         self.in_features = config.audio_in_features
         self.hidden_size = config.audio_out_features

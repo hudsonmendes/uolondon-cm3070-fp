@@ -89,6 +89,7 @@ class ERCConfig:
 
         audio_in_features: The input features of the audio encoder, 300_000 fits all audio files.
         audio_out_features: The output features of the audio encoder.
+        audio_waveform_attention_heads_degree: The number of attention heads in the audio encoder.
 
         visual_preprocess_faceonly: Whether to preprocess the visual input to only include faces.
         visual_preprocess_retinaface_weights_path: The path to the retinaface weights.
@@ -127,6 +128,7 @@ class ERCConfig:
 
     audio_in_features: int | None = field(default=None)
     audio_out_features: int | None = field(default=None)
+    audio_waveform_attention_heads_degree: int | None = field(default=None)
 
     visual_preprocess_faceonly: bool | None = field(default=None)
     visual_preprocess_retinaface_weights_path: str | None = field(default=None)
