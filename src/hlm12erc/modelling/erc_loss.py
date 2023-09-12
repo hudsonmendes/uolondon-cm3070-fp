@@ -82,9 +82,11 @@ class DiceCoefficientLoss(ERCLoss):
     Dice Coefficient Loss function for ERC models.
 
     Reference:
-    >>> Peiqing Lv, Jinke Wang, Xiangyang Zhang, Chunlei Ji, Lubiao Zhou, and Haiying Wang. 2022.
-    ... An improved residual U-Net with morphological-based loss function for automatic liver
-    ... segmentation in computed tomography. Math. Biosci. Eng. 19, 2 (January 2022), 1426–1447.
+    >>> Peiqing Lv, Jinke Wang, Xiangyang Zhang, Chunlei Ji,
+    ... Lubiao Zhou, and Haiying Wang. 2022. An improved residual
+    ... U-Net with morphological-based loss function for automatic
+    ... liver segmentation in computed tomography. Math. Biosci.
+    ... Eng. 19, 2 (January 2022), 1426–1447.
     """
 
     def __init__(self, config: ERCConfig):

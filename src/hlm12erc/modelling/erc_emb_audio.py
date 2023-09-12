@@ -75,14 +75,26 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         :param config: configuration for the model
         """
         super(ERCRawAudioEmbeddings, self).__init__(config=config)
+        assert config is not None
+        assert config.audio_in_features is not None
+        assert config.audio_out_features is not None
         self.config = config
         self.in_features = config.audio_in_features
         self.ff = ERCFeedForward(
             in_features=config.audio_in_features,
             layers=[
-                ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 3, dropout=0.1),
-                ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 2, dropout=0.1),
-                ERCConfigFeedForwardLayer(out_features=config.audio_out_features, dropout=0.1),
+                ERCConfigFeedForwardLayer(
+                    out_features=config.audio_out_features * 3,
+                    dropout=0.1,
+                ),
+                ERCConfigFeedForwardLayer(
+                    out_features=config.audio_out_features * 2,
+                    dropout=0.1,
+                ),
+                ERCConfigFeedForwardLayer(
+                    out_features=config.audio_out_features,
+                    dropout=0.1,
+                ),
             ],
         )
 
