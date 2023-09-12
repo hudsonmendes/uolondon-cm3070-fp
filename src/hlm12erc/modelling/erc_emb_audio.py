@@ -81,10 +81,10 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         self.config = config
         self.in_features = config.audio_in_features
         self.mha, self.layer_norm = None, None
-        if config.audio_attention_heads_degree is not None:
+        if config.audio_waveform_attention_heads_degree is not None:
             dims_out = config.audio_out_features
             heads_candidates = [i for i in range(1, dims_out + 1) if dims_out % i == 0]
-            heads_i = config.audio_attention_heads_degree - 1
+            heads_i = config.audio_waveform_attention_heads_degree - 1
             heads_count = heads_candidates[heads_i] if heads_i < len(heads_candidates) else heads_candidates[-1]
             self.mha = torch.nn.MultiheadAttention(embed_dim=dims_out, num_heads=heads_count)
             self.layer_norm = torch.nn.LayerNorm(dims_out)
@@ -119,7 +119,7 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         # if multi-headed attention is enabled, apply it to the output
         # and add the attention output to the original output (residual connection)
         # and normalize the output vector to have unit norm
-        if self.mha is not None:
+        if self.mha is not None and self.layer_norm is not None:
             attn, _ = self.mha(y, y, y)[0]
             y = y + attn
             y = self.layer_norm(y)
