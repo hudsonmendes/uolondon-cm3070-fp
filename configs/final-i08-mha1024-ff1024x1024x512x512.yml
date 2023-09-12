@@ -2,7 +2,7 @@ classifier_name: final-i08-mha1024-ff1024x1024x512x512
 classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
-classifier_warmup_steps: 1000 # @ ~15% => 9989 (examples) / 16 (batch) = 625 (step) x 10 (epochs) = 6250 steps
+classifier_warmup_steps: 2000 # @ ~15% => 9989 (examples) / 8 (batch) = 1,249 (step) x 10 (epochs) = 12,490 steps
 classifier_metric_for_best_model: f1_weighted
 classifier_early_stopping_patience: 5
 classifier_classes:
