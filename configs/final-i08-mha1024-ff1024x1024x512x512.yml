@@ -22,8 +22,8 @@ modules_fusion: multi_headed_attn
 text_in_features: -1 # defined by tokenizer & padding
 text_out_features: -1 # defined by the encoder output hidden state
 
-audio_in_features: 300000 # truncates the waveform after 300K samples
-audio_out_features: 768
+audio_in_features: 200000 # truncates the waveform after 200K samples
+audio_out_features: 256
 audio_attention_heads_degree: 3 # for 768, degree 3 = 4 heads
 
 fusion_out_features: 1024

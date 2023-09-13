@@ -1,4 +1,4 @@
-classifier_name: final-i06-mha1024-ff512x512
+classifier_name: final-i03-waveform-300Kx768
 classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
@@ -24,13 +24,12 @@ text_out_features: -1 # defined by the encoder output hidden state
 
 audio_in_features: 200000 # truncates the waveform after 200K samples
 audio_out_features: 256
-audio_attention_heads_degree: 3 # for 768, degree 3 = 4 heads
 
-fusion_out_features: 1024
-fusion_attention_heads_degree: 3 # for 1024, degree 3 = 4 heads
+fusion_out_features: 512
+fusion_attention_heads_degree: 3 # for 512, degree 3 = 4 heads
 
 feedforward_layers:
-  - out_features: 512
+  - out_features: 256
     dropout: 0.2
-  - out_features: 512
+  - out_features: 128
     dropout: 0.2
