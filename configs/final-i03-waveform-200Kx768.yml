@@ -1,4 +1,4 @@
-classifier_name: final-i04-waveform-200Kx256mha
+classifier_name: final-i03-waveform-200Kx768
 classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
@@ -24,7 +24,6 @@ text_out_features: -1 # defined by the encoder output hidden state
 
 audio_in_features: 200000 # truncates the waveform after 200K samples
 audio_out_features: 256
-audio_waveform_attention_heads_degree: 3 # for 768, degree 3 = 4 heads
 
 fusion_out_features: 512
 fusion_attention_heads_degree: 3 # for 512, degree 3 = 4 heads

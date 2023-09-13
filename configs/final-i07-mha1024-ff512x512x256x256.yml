@@ -24,7 +24,7 @@ text_out_features: -1 # defined by the encoder output hidden state
 
 audio_in_features: 200000 # truncates the waveform after 200K samples
 audio_out_features: 256
-audio_attention_heads_degree: 3 # for 768, degree 3 = 4 heads
+audio_waveform_attention_heads_degree: 3 # for 768, degree 3 = 4 heads
 
 fusion_out_features: 1024
 fusion_attention_heads_degree: 3 # for 2048, degree 3 = 4 heads

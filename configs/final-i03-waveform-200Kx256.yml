@@ -1,4 +1,4 @@
-classifier_name: final-i03-waveform-300Kx768
+classifier_name: final-i03-waveform-200Kx256
 classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1

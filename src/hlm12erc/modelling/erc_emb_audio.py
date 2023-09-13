@@ -120,7 +120,7 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         # and add the attention output to the original output (residual connection)
         # and normalize the output vector to have unit norm
         if self.mha is not None and self.layer_norm is not None:
-            attn, _ = self.mha(y, y, y)[0]
+            attn, _ = self.mha(y, y, y)
             y = y + attn
             y = self.layer_norm(y)
         # normalize the output vector to have unit norm
