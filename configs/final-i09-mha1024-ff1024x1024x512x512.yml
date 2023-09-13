@@ -1,4 +1,4 @@
-classifier_name: final-i06-mha1024-ff512x512
+classifier_name: final-i08-mha1024-ff1024x1024x512x512
 classifier_loss_fn: dice
 classifier_learning_rate: 0.00005
 classifier_weight_decay: 0.1
@@ -16,21 +16,25 @@ classifier_classes:
 
 modules_text_encoder: gpt2
 modules_visual_encoder: resnet50
-modules_audio_encoder: waveform
+modules_audio_encoder: wave2vec2
 modules_fusion: multi_headed_attn
 
 text_in_features: -1 # defined by tokenizer & padding
 text_out_features: -1 # defined by the encoder output hidden state
 
 audio_in_features: 200000 # truncates the waveform after 200K samples
-audio_out_features: 256
-audio_waveform_attention_heads_degree: 3 # for 768, degree 3 = 4 heads
+audio_out_features: -1 # defined by wav2vec2
 
 fusion_out_features: 1024
-fusion_attention_heads_degree: 3 # for 1024, degree 3 = 4 heads
+fusion_attention_heads_degree: 3 # for 512, degree 3 = 4 heads
 
 feedforward_layers:
-  - out_features: 512
+  - out_features: 1024
+    dropout: 0.2
+  - out_features: 1024
     dropout: 0.2
   - out_features: 512
     dropout: 0.2
+  - out_features: 512
+    dropout: 0.2
+

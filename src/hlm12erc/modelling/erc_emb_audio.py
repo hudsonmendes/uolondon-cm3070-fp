@@ -1,4 +1,5 @@
 # Python Built-in Modules
+import logging
 from abc import abstractmethod
 from typing import Callable, Optional, Type
 
@@ -11,6 +12,8 @@ from torch.nn.functional import normalize as l2_norm
 from .erc_config import ERCAudioEmbeddingType, ERCConfig, ERCConfigFeedForwardLayer
 from .erc_emb import ERCEmbeddings
 from .erc_feedforward import ERCFeedForward
+
+logger = logging.getLogger(__name__)
 
 
 class ERCAudioEmbeddings(ERCEmbeddings):
@@ -86,6 +89,7 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
             heads_candidates = [i for i in range(1, dims_out + 1) if dims_out % i == 0]
             heads_i = config.audio_waveform_attention_heads_degree - 1
             heads_count = heads_candidates[heads_i] if heads_i < len(heads_candidates) else heads_candidates[-1]
+            logger.warn(f"AUDIO: Attention Heads={heads_count}, for Embed Dim={dims_out}")
             self.mha = torch.nn.MultiheadAttention(embed_dim=dims_out, num_heads=heads_count)
             self.layer_norm = torch.nn.LayerNorm(dims_out)
         self.ff = ERCFeedForward(
@@ -198,7 +202,8 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
         # concatenate the mean and max pooling of the hidden states
         # to generate a fixed size vector that can be used as input
         # to the classifier
-        h = self.wav2vec2(x).last_hidden_state
+        h = self.wav2vec2(x)
+        h = h.last_hidden_state
         h_mean = torch.mean(h, dim=1)
         h_max = torch.max(h, dim=1)[0]
         y = torch.cat((h_mean, h_max), dim=1)

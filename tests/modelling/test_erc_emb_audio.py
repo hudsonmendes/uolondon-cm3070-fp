@@ -59,7 +59,7 @@ class TestERCRawAudioEmbeddings(unittest.TestCase):
 
 class TestERCWave2Vec2Embeddings(unittest.TestCase):
     def setUp(self):
-        self.config = ERCConfig(audio_in_features=16000, audio_out_features=32, classifier_classes=["a", "b"])
+        self.config = ERCConfig(audio_in_features=30000, audio_out_features=32, classifier_classes=["a", "b"])
         self.embeddings = ERCAudioEmbeddings.resolve_type_from(ERCAudioEmbeddingType.WAV2VEC2)(self.config)
         self.data_collator = ERCDataCollator(config=self.config, label_encoder=None)
         preprocessor = MeldAudioPreprocessorToWaveform()
