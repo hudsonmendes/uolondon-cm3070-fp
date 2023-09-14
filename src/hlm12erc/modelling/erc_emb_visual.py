@@ -90,7 +90,8 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         :return: matrix of tensors (batch_size, out_features)
         """
         y = self.resnet50(x)
-        y = l2_norm(y, p=2, dim=1)
+        if self.config.visual_l2norm:
+            y = l2_norm(y, p=2, dim=1)
         return y
 
     @property

@@ -78,10 +78,6 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         :param config: configuration for the model
         """
         super(ERCRawAudioEmbeddings, self).__init__(config=config)
-        assert config is not None
-        assert config.audio_in_features is not None
-        assert config.audio_out_features is not None
-        self.config = config
         self.in_features = config.audio_in_features
         self.mha, self.layer_norm = None, None
         if config.audio_waveform_attention_heads_degree is not None:
@@ -128,7 +124,10 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
             y = y + attn
             y = self.layer_norm(y)
         # normalize the output vector to have unit norm
-        return l2_norm(y, p=2, dim=1)
+        if self.config.audio_l2norm:
+            y = l2_norm(y, p=2, dim=1)
+        # return the embeddings
+        return y
 
     @property
     def out_features(self) -> int:
@@ -175,8 +174,6 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
         :param config: configuration for the model
         """
         super(ERCWave2Vec2Embeddings, self).__init__(config=config)
-        assert config is not None
-        self.config = config
         self.in_features = config.audio_in_features
         self.hidden_size = config.audio_out_features
         self.wav2vec2 = transformers.Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base")
@@ -213,7 +210,10 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
             y = self.fc(y)
 
         # normalize the output vector to have unit norm
-        return l2_norm(y, p=2, dim=1)
+        if self.config.audio_l2norm:
+            y = l2_norm(y, p=2, dim=1)
+        # return the embeddings
+        return y
 
     @property
     def out_features(self) -> int:

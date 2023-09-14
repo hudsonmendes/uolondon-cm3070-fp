@@ -86,15 +86,18 @@ class ERCConfig:
         text_in_features: The input features of the text encoder.
         text_out_features: The output features of the text encoder.
         text_limit_to_n_last_tokens: The number of last tokens to be considered in the text encoder.
+        text_l2norm: Whether to apply l2 normalization to the text encoder.
 
         audio_in_features: The input features of the audio encoder, 300_000 fits all audio files.
         audio_out_features: The output features of the audio encoder.
         audio_waveform_attention_heads_degree: The number of attention heads in the audio encoder.
+        audio_l2norm: Whether to apply l2 normalization to the audio encoder.
 
         visual_preprocess_faceonly: Whether to preprocess the visual input to only include faces.
         visual_preprocess_retinaface_weights_path: The path to the retinaface weights.
         visual_in_features: The input features of the visual encoder, resnet requires (3, 256, 721)
         visual_out_features: The output features of the visual encoder.
+        visual_l2norm: Whether to apply l2 normalization to the visual encoder.
 
         fusion_attention_heads_degree: The number of attention heads in the fusion module.
         fusion_out_features: The output features of the fusion module.
@@ -125,15 +128,18 @@ class ERCConfig:
     text_in_features: int | None = field(default=None)
     text_out_features: int | None = field(default=None)
     text_limit_to_n_last_tokens: int | None = field(default=None)
+    text_l2norm: bool = field(default=True)
 
     audio_in_features: int | None = field(default=None)
     audio_out_features: int | None = field(default=None)
     audio_waveform_attention_heads_degree: int | None = field(default=None)
+    audio_l2norm: bool = field(default=True)
 
     visual_preprocess_faceonly: bool | None = field(default=None)
     visual_preprocess_retinaface_weights_path: str | None = field(default=None)
     visual_in_features: Tuple[int, ...] | None = field(default=None)
     visual_out_features: int | None = field(default=None)
+    visual_l2norm: bool = field(default=True)
 
     fusion_attention_heads_degree: int | None = field(default=None)
     fusion_out_features: int | None = field(default=None)
