@@ -36,3 +36,11 @@ class TestERCResNet50VisualEmbeddings(unittest.TestCase):
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
+
+    def test_forward_non_normalization_when_l2norm_is_disabled(self):
+        config = ERCConfig(classifier_classes=["a", "b"], visual_l2norm=False)
+        embeddings = ERCVisualEmbeddings.resolve_type_from(ERCVisualEmbeddingType.RESNET50)(config)
+        output_tensor = embeddings(self.images)
+        norms = torch.norm(output_tensor, dim=1)
+        for norm in norms:
+            self.assertNotAlmostEqual(norm.item(), 1.0, places=5)

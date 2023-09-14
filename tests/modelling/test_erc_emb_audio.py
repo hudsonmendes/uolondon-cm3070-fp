@@ -50,6 +50,20 @@ class TestERCRawAudioEmbeddings(unittest.TestCase):
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
 
+    def test_forward_nonmha_non_normalization_when_l2norm_disabled(self):
+        embeddings = self._create_embeddings(audio_waveform_attention_heads_degree=None, audio_l2norm=False)
+        output_tensor = embeddings(self.audios)
+        norms = torch.norm(output_tensor, dim=1)
+        for norm in norms:
+            self.assertNotAlmostEqual(norm.item(), 1.0, places=5)
+
+    def test_forward_non_normalization_when_l2norm_disabled(self):
+        embeddings = self._create_embeddings(audio_waveform_attention_heads_degree=3, audio_l2norm=False)
+        output_tensor = embeddings(self.audios)
+        norms = torch.norm(output_tensor, dim=1)
+        for norm in norms:
+            self.assertNotAlmostEqual(norm.item(), 1.0, places=5)
+
     def _create_embeddings(self, **kwargs) -> ERCAudioEmbeddings:
         config_dict = self.config.to_dict()
         config_dict.update(kwargs)
@@ -91,3 +105,12 @@ class TestERCWave2Vec2Embeddings(unittest.TestCase):
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
+
+    def test_forward_not_normalised_when_l2norm_disabled(self):
+        config = ERCConfig(audio_in_features=100, audio_out_features=32, audio_l2norm=False, classifier_classes=["a"])
+        embeddings = ERCAudioEmbeddings.resolve_type_from(ERCAudioEmbeddingType.WAV2VEC2)(config)
+        output_tensor = embeddings(self.audios)
+        norms = torch.norm(output_tensor, dim=1)
+        for norm in norms:
+            self.assertNotAlmostEqual(norm.item(), 1.0, places=5)
+        del embeddings

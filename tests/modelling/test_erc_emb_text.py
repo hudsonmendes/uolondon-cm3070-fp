@@ -39,6 +39,15 @@ class TestERCGloveTextEmbeddings(unittest.TestCase):
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
 
+    def test_forward_non_normalization_when_l2norm_is_disabled(self):
+        config = ERCConfig(text_in_features=50, text_out_features=50, text_l2norm=False, classifier_classes=["a", "b"])
+        embeddings = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GLOVE)(config)
+        input_list = ["here a test sentence", "this is another test sentence"]
+        output_tensor = embeddings(input_list)
+        norms = torch.norm(output_tensor, dim=1)
+        for norm in norms:
+            self.assertNotAlmostEqual(norm.item(), 1.0, places=5)
+
 
 class TestERCGpt2TextEmbeddings(unittest.TestCase):
     def setUp(self):
@@ -66,6 +75,15 @@ class TestERCGpt2TextEmbeddings(unittest.TestCase):
         norms = torch.norm(output_tensor, dim=1)
         for norm in norms:
             self.assertAlmostEqual(norm.item(), 1.0, places=5)
+
+    def test_forward_non_normalization_when_l2norm_is_disabled(self):
+        config = ERCConfig(text_in_features=50, text_out_features=50, text_l2norm=False, classifier_classes=["a", "b"])
+        embeddings = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GPT2)(config)
+        input_list = ["here a test sentence", "this is another test sentence"]
+        output_tensor = embeddings(input_list)
+        norms = torch.norm(output_tensor, dim=1)
+        for norm in norms:
+            self.assertNotAlmostEqual(norm.item(), 1.0, places=5)
 
     def test_token_limitation(self):
         embedding1 = ERCTextEmbeddings.resolve_type_from(ERCTextEmbeddingType.GPT2)(
