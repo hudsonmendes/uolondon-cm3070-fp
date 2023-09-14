@@ -16,7 +16,7 @@ classifier_classes:
 
 modules_text_encoder: gpt2
 modules_visual_encoder: resnet50
-modules_audio_encoder: wave2vec2
+modules_audio_encoder: wav2vec2
 modules_fusion: multi_headed_attn
 
 text_in_features: -1 # defined by tokenizer & padding
