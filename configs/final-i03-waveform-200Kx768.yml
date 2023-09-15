@@ -25,6 +25,9 @@ text_out_features: -1 # defined by the encoder output hidden state
 audio_in_features: 200000 # truncates the waveform after 200K samples
 audio_out_features: 256
 
+visual_in_features: [3, 256, 721] # input required for resnet50
+visual_out_features: -1 # defined automatically by resnet50
+
 fusion_out_features: 512
 fusion_attention_heads_degree: 3 # for 512, degree 3 = 4 heads
 
