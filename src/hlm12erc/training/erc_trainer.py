@@ -93,16 +93,20 @@ class ERCTrainer:
             label_encoder=label_encoder,
         )
         logger.info(f"Trainer, train={len(train_dataset)}, valid={len(eval_dataset)}, device={model.device}")
-        logger.info("Training starting now, don't wait standing up...")
-        trainer.train()
-        logger.info("Training complete, saving model...")
-        links = ERCStorage(workspace).save(model=model, ta=training_args)
-        logger.info(f"Model saved into disk {links.pth}")
-        if wandb.run is not None:
-            logger.info("Uploading Metrics & Artifacts to W&B, ...")
-            self._wanb_upload_artifact(model_name=model_name, links=links)
-            wandb.finish()
-            logger.info("W&B run marked as completed.")
+        links: ERCStorageLinks | None = None
+        try:
+            logger.info("Training starting now, don't wait standing up...")
+            trainer.train()
+            logger.info("Training complete, saving model...")
+            links = ERCStorage(workspace).save(model=model, ta=training_args)
+            logger.info(f"Model saved into disk {links.pth}")
+        finally:
+            if wandb.run is not None:
+                if links is not None:
+                    logger.info("Uploading Metrics & Artifacts to W&B, ...")
+                    self._wanb_upload_artifact(model_name=model_name, links=links)
+                wandb.finish()
+                logger.info("W&B run marked as completed.")
         return model_name, model
 
     def _wanb_upload_artifact(self, model_name: str, links: ERCStorageLinks) -> None:

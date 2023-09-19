@@ -33,6 +33,9 @@ class MeldDataset(Dataset):
     preprocessors_text: List[MeldTextPreprocessor]
     preprocessors_visual: List[MeldVisualPreprocessor]
     preprocessors_audio: List[MeldAudioPreprocessor]
+    inhibit_text: bool = False
+    inhibit_visual: bool = False
+    inhibit_audio: bool = False
 
     def __init__(
         self,
@@ -43,6 +46,9 @@ class MeldDataset(Dataset):
         preprocessors_text: List[MeldTextPreprocessor] | None = None,
         preprocessors_visual: List[MeldVisualPreprocessor] | None = None,
         preprocessors_audio: List[MeldAudioPreprocessor] | None = None,
+        inhibit_text: bool = False,
+        inhibit_visual: bool = False,
+        inhibit_audio: bool = False,
     ):
         """
         Creates a new instance of the MeldDataset for a split
@@ -50,15 +56,20 @@ class MeldDataset(Dataset):
         :param filepath: The dataframe containing the data for the split
         :param filedir: The directory where the files are located, None leads to default
         :param df: The dataframe containing the data for the split
+        :param classes: the list of classes in the dataset, None leads to default
         :param preprocessors_text: the list of text preprocessors to be applied, None leads to default
         :param preprocessors_visual: the list of visual preprocessors to be applied, None leads to default
         :param preprocessors_audio: the list of audio preprocessors to be applied, None leads to default
-        :param classes: the list of classes in the dataset, None leads to default
+        :param inhibit_text: Whether to inhibit the text preprocessing
+        :param inhibit_visual: Whether to inhibit the visual preprocessing
+        :param inhibit_audio: Whether to inhibit the audio preprocessing
         """
         self.filepath = filepath
         self.filedir = filedir or filepath.parent
         self.df = df
-        self.classes_ = classes
+        self.classes_ = []
+        if classes is not None:
+            self.classes_ = classes
         if self.df is None:
             self.df = pd.read_csv(self.filepath).sort_values(by=["dialogue", "sequence"], ascending=[True, True])
         if self.classes_ is None:
@@ -66,6 +77,9 @@ class MeldDataset(Dataset):
         self.preprocessors_text = preprocessors_text or [MeldTextPreprocessorToDialogPrompt(df=self.df)]
         self.preprocessors_visual = preprocessors_visual or [MeldVisualPreprocessorFilepathToResnet50()]
         self.preprocessors_audio = preprocessors_audio or [MeldAudioPreprocessorToWaveform()]
+        self.inhibit_text = inhibit_text
+        self.inhibit_visual = inhibit_visual
+        self.inhibit_audio = inhibit_audio
 
     def __len__(self) -> int:
         """
@@ -106,12 +120,40 @@ class MeldDataset(Dataset):
         # when the index is precise, we return the record at that index
         if index < len(self.df):
             row = self.df.iloc[index]
-            text = self._preprocess_text(row)
-            visual = self._preprocess_visual(row)
-            audio = self._preprocess_audio(row)
+            text = None
+            if not self.inhibit_text:
+                text = self._preprocess_text(row)
+            visual = None
+            if not self.inhibit_visual:
+                visual = self._preprocess_visual(row)
+            audio = None
+            if not self.inhibit_audio:
+                audio = self._preprocess_audio(row)
             return MeldRecord(text=text, visual=visual, audio=audio, label=row.label)
         elif not out_of_range_ok:
             raise IndexError(f"Index {index} out of range for dataset of size {len(self.df)}")
+
+    def clone_inhibiting(self, text: bool = False, visual: bool = False, audio: bool = False) -> "MeldDataset":
+        """
+        Clones the preset dataset, inhibiting the preprocessing of one or more modalities,
+        optimising for processing with less modalities than the 3 available.
+
+        :param text: Whether to inhibit the text preprocessing
+        :param visual: Whether to inhibit the visual preprocessing
+        :param audio: Whether to inhibit the audio preprocessing
+        """
+        return MeldDataset(
+            filepath=self.filepath,
+            filedir=self.filedir,
+            df=self.df,
+            classes=self.classes_,
+            preprocessors_text=self.preprocessors_text,
+            preprocessors_visual=self.preprocessors_visual,
+            preprocessors_audio=self.preprocessors_audio,
+            inhibit_text=text,
+            inhibit_visual=visual,
+            inhibit_audio=audio,
+        )
 
     def preprocessing_with(self, *preprocessors: list) -> "MeldDataset":
         """

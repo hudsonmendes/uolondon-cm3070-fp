@@ -26,8 +26,10 @@ class ERCConfigLoader:
         Loads the ERCConfig from the json file.
         """
         raw = self._read_as_dict()
-        raw["feedforward_layers"] = self._convert_ff_layers_dict(raw["feedforward_layers"])
-        raw["visual_in_features"] = tuple(raw["visual_in_features"])
+        if "feedforward_layers" in raw and raw["feedforward_layers"]:
+            raw["feedforward_layers"] = self._convert_ff_layers_dict(raw["feedforward_layers"])
+        if "visual_in_features" in raw and raw["visual_in_features"]:
+            raw["visual_in_features"] = tuple(raw["visual_in_features"])
         return ERCConfig(**raw)
 
     def _read_as_dict(self):

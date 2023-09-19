@@ -7,7 +7,6 @@ import torch
 import torchtext
 import transformers
 from torch.nn import Embedding
-from torch.nn import functional as F
 from torch.nn.functional import normalize as l2_norm
 from torch.nn.utils.rnn import pad_sequence
 from torchtext.data.utils import get_tokenizer
@@ -97,7 +96,8 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         v = [[vii for vii in vi if torch.any(vii != 0)] for vi in v]
         y = pad_sequence([torch.stack(seq).squeeze() for seq in v], batch_first=True)
         y = torch.mean(y, dim=1)
-        y = F.normalize(y, p=2, dim=1)
+        if self.config.text_l2norm:
+            y = l2_norm(y, p=2, dim=1)
         return y
 
     @property
@@ -159,7 +159,8 @@ class ERCGpt2TextEmbeddings(ERCTextEmbeddings):
         y = y[torch.arange(y.size(0), device=device), last_token_pos]
 
         # normalize the representation
-        y = l2_norm(y, p=2, dim=1)
+        if self.config.text_l2norm:
+            y = l2_norm(y, p=2, dim=1)
         return y
 
     @property

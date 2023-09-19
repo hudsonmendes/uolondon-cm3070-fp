@@ -33,19 +33,9 @@ class ERCDataSampler(Sampler):
         :param batch_size: The batch_size if available, defaults to None
         """
         classes = sorted(set(labels))
-        self.random = self._init_random(config)
         self.indices_per_class = self._init_indices_per_class(labels=labels, classes=classes)
         self.balanced_size = max(len(indices) for indices in self.indices_per_class.values()) * len(classes)
         self.n_examples_per_class = self._init_n_examples_per_class(batch_size=batch_size, classes=classes)
-
-    @staticmethod
-    def _init_random(config) -> random.Random:
-        random_seed = config.classifier_seed if config else None
-        if random_seed is None:
-            logger.warn("Sampler: random seed is RECOMMENDED, but not provided, using default None")
-        else:
-            logger.warn(f"Sampler: random seed provided, '{random_seed}'")
-        return random.Random(random_seed)
 
     @staticmethod
     def _init_indices_per_class(labels: List[str], classes: List[str]) -> Dict[str, List[int]]:
@@ -99,7 +89,7 @@ class ERCDataSampler(Sampler):
         :return: List of indices per class.
         """
         pairs = list(self.indices_per_class.items())
-        self.random.shuffle(pairs)
+        random.shuffle(pairs)
         return pairs
 
     def __len__(self):

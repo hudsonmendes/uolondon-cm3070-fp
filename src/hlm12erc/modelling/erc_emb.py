@@ -20,6 +20,7 @@ class ERCEmbeddings(ABC, torch.nn.Module):
         >>>     pass
     """
 
+    config: ERCConfig
     _device: torch.device | None
 
     def __init__(self, config: ERCConfig, *args, **kwargs) -> None:
@@ -33,6 +34,7 @@ class ERCEmbeddings(ABC, torch.nn.Module):
         """
         super(ERCEmbeddings, self).__init__(*args, **kwargs)
         self._device = None
+        self.config = config
         assert config is not None
 
     def cache_or_get_same_device_as(self, module: torch.nn.Module) -> torch.device | None:

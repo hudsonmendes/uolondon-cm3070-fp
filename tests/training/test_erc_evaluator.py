@@ -4,7 +4,7 @@ import pathlib
 import unittest
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_config import ERCConfig
+from hlm12erc.modelling.erc_config import ERCConfig, ERCTextEmbeddingType
 from hlm12erc.modelling.erc_label_encoder import ERCLabelEncoder
 from hlm12erc.modelling.erc_model import ERCModel
 from hlm12erc.training.erc_evaluator import ERCEvaluator
@@ -14,7 +14,12 @@ from hlm12erc.training.meld_dataset import MeldDataset
 class TestERCEvaluator(unittest.TestCase):
     def setUp(self):
         self.device = None
-        self.config = ERCConfig(classifier_classes=["neutral", "joy"])
+        self.config = ERCConfig(
+            classifier_classes=["neutral", "joy"],
+            modules_text_encoder=ERCTextEmbeddingType.GLOVE,
+            text_in_features=50,
+            text_out_features=50,
+        )
         self.label_encoder = ERCLabelEncoder(classes=self.config.classifier_classes)
         self.model = ERCModel(config=self.config, label_encoder=self.label_encoder)
         self.evaluator = ERCEvaluator(model=self.model)

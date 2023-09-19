@@ -1,0 +1,27 @@
+classifier_name: a-um-wav2vec2
+classifier_loss_fn: dice
+classifier_learning_rate: 0.00005
+classifier_weight_decay: 0.1
+classifier_warmup_steps: 1000 # @ ~15% => 9989 (examples) / 16 (batch) = 625 (step) x 10 (epochs) = 6250 steps
+classifier_metric_for_best_model: f1_weighted
+classifier_early_stopping_patience: 5
+classifier_classes:
+  - anger
+  - disgust
+  - fear
+  - joy
+  - neutral
+  - sadness
+  - surprise
+
+modules_text_encoder: none
+modules_visual_encoder: none
+modules_audio_encoder: wav2vec2
+modules_fusion: concat
+
+audio_in_features: 150000 # truncates the waveform after 150K samples
+audio_out_features: -1 #determined by wav2vec
+
+feedforward_layers:
+  - out_features: 64
+    dropout: 0.2

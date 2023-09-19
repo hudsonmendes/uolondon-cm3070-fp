@@ -197,22 +197,25 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
         x_text: torch.Tensor | None,
         x_visual: torch.Tensor | None,
         x_audio: torch.Tensor | None,
-    ) -> torch.Tensor:
+    ) -> (torch.Tensor, torch.Tensor | None):
         """
-        Performs Multiheaded Attention on the input tensors, through
-        concatenating the input, transforming the inputs using a
-        multi-headed attention layer, and then performing the element-wise
-        addition of the input and the attention output (residual connection).
+        Performs Multiheaded Attention on the input tensors,
+        through concatenating the input, transforming the inputs
+        using a multi-headed attention layer, and then performing
+        the element-wise addition of the input and the attention
+        output (residual connection).
 
-        Each input X (for each modality) is projected over a linear representation
-        of output dimensionality proportional to the input dimensionality.
+        Each input X (for each modality) is projected over a linear
+        representation of output dimensionality proportional to the
+        input dimensionality.
 
-        These projected representations are then concatenated and fed into the
-        attention mechanism, which outputs a tensor of the same dimensionality
-        of the input.
+        These projected representations are then concatenated and fed
+        into the attention mechanism, which outputs a tensor of the
+        same dimensionality of the input.
 
-        Finally, the output of the attention mechanism is added to the input
-        (residual connection), and layer normalisation is applied.
+        Finally, the output of the attention mechanism is added to
+        the input (residual connection), and layer normalisation is
+        applied.
 
         :param x_text: Tensor with the text embeddings, with dimensions (batch_size, text_embedding_size)
         :param x_visual: Tensor with the visual embeddings, with dimensions (batch_size, visual_embedding_size)

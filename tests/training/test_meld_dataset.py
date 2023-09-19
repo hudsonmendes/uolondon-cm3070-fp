@@ -63,3 +63,37 @@ class TestMeldRecordReader(unittest.TestCase):
         actual = self.dataset.preprocessing_with(pp)[0]
         self.assertIsInstance(actual.visual, torch.Tensor)
         self.assertEqual(actual.visual.shape, (3, 256, 721))
+
+    def test_clone_inhibiting_generates_different_instance(self):
+        clone = self.dataset.clone_inhibiting(text=True, visual=True, audio=True)
+        self.assertNotEqual(clone, self.dataset)
+        self.assertNotEqual(self.dataset.inhibit_text, clone.inhibit_text)
+        self.assertNotEqual(self.dataset.inhibit_visual, clone.inhibit_visual)
+        self.assertNotEqual(self.dataset.inhibit_audio, clone.inhibit_audio)
+
+    def test_clone_inhibiting_text(self):
+        clone = self.dataset.clone_inhibiting(text=True, visual=False, audio=False)
+        self.assertTrue(clone.inhibit_text)
+        self.assertFalse(clone.inhibit_visual)
+        self.assertFalse(clone.inhibit_audio)
+        self.assertIsNone(clone[0].text)
+        self.assertIsNotNone(clone[0].visual)
+        self.assertIsNotNone(clone[0].audio)
+
+    def test_clone_inhibiting_visual(self):
+        clone = self.dataset.clone_inhibiting(text=False, visual=True, audio=False)
+        self.assertFalse(clone.inhibit_text)
+        self.assertTrue(clone.inhibit_visual)
+        self.assertFalse(clone.inhibit_audio)
+        self.assertIsNotNone(clone[0].text)
+        self.assertIsNone(clone[0].visual)
+        self.assertIsNotNone(clone[0].audio)
+
+    def test_clone_inhibiting_audio(self):
+        clone = self.dataset.clone_inhibiting(text=False, visual=False, audio=True)
+        self.assertFalse(clone.inhibit_text)
+        self.assertFalse(clone.inhibit_visual)
+        self.assertTrue(clone.inhibit_audio)
+        self.assertIsNotNone(clone[0].text)
+        self.assertIsNotNone(clone[0].visual)
+        self.assertIsNone(clone[0].audio)

@@ -11,7 +11,7 @@ class MeldRecord:
     Represents each record of the MELD datset.
     """
 
-    audio: torch.Tensor
-    visual: torch.Tensor
-    text: str
+    text: str | None
+    visual: torch.Tensor | None
+    audio: torch.Tensor | None
     label: str

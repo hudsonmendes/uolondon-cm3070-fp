@@ -1,0 +1,27 @@
+classifier_name: v-um-resnet50
+classifier_loss_fn: dice
+classifier_learning_rate: 0.00005
+classifier_weight_decay: 0.1
+classifier_warmup_steps: 250 # @ ~15% => 9989 (examples) / 64 (batch) = 157 (step) x 10 (epochs) = 1570 steps
+classifier_metric_for_best_model: f1_weighted
+classifier_early_stopping_patience: 5
+classifier_classes:
+  - anger
+  - disgust
+  - fear
+  - joy
+  - neutral
+  - sadness
+  - surprise
+
+modules_text_encoder: none
+modules_visual_encoder: resnet50
+modules_audio_encoder: none
+modules_fusion: concat
+
+visual_in_features: [3, 256, 721] # input required for resnet50
+visual_out_features: -1 # defined automatically by resnet50
+
+feedforward_layers:
+  - out_features: 64
+    dropout: 0.2

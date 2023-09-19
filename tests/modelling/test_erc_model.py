@@ -7,7 +7,13 @@ import torch
 from PIL import Image
 
 # My Packages and Modules
-from hlm12erc.modelling.erc_config import ERCConfig, ERCConfigFeedForwardLayer
+from hlm12erc.modelling.erc_config import (
+    ERCAudioEmbeddingType,
+    ERCConfig,
+    ERCConfigFeedForwardLayer,
+    ERCTextEmbeddingType,
+    ERCVisualEmbeddingType,
+)
 from hlm12erc.modelling.erc_label_encoder import ERCLabelEncoder
 from hlm12erc.modelling.erc_model import ERCModel
 from hlm12erc.modelling.erc_output import ERCOutput
@@ -21,7 +27,19 @@ class TestERCModel(unittest.TestCase):
     def setUp(self):
         self.ff_layers = [ERCConfigFeedForwardLayer(out_features=14, dropout=0.5)]
         self.classes = ["neutral", "surprise", "fear", "sadness", "joy", "disgust", "anger"]
-        self.config = ERCConfig(feedforward_layers=self.ff_layers, classifier_classes=self.classes)
+        self.config = ERCConfig(
+            classifier_classes=self.classes,
+            modules_text_encoder=ERCTextEmbeddingType.GLOVE,
+            modules_visual_encoder=ERCVisualEmbeddingType.RESNET50,
+            modules_audio_encoder=ERCAudioEmbeddingType.WAVEFORM,
+            text_in_features=50,
+            text_out_features=50,
+            visual_in_features=(3, 256, 721),
+            visual_out_features=512,
+            audio_in_features=100_000,
+            audio_out_features=512,
+            feedforward_layers=self.ff_layers,
+        )
 
         self.label_encoder = ERCLabelEncoder(classes=self.classes)
         self.data_collator = ERCDataCollator(config=self.config, label_encoder=self.label_encoder)

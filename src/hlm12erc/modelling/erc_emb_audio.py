@@ -1,4 +1,5 @@
 # Python Built-in Modules
+import logging
 from abc import abstractmethod
 from typing import Callable, Optional, Type
 
@@ -11,6 +12,8 @@ from torch.nn.functional import normalize as l2_norm
 from .erc_config import ERCAudioEmbeddingType, ERCConfig, ERCConfigFeedForwardLayer
 from .erc_emb import ERCEmbeddings
 from .erc_feedforward import ERCFeedForward
+
+logger = logging.getLogger(__name__)
 
 
 class ERCAudioEmbeddings(ERCEmbeddings):
@@ -75,14 +78,31 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         :param config: configuration for the model
         """
         super(ERCRawAudioEmbeddings, self).__init__(config=config)
-        self.config = config
         self.in_features = config.audio_in_features
+        self.mha, self.layer_norm = None, None
+        if config.audio_waveform_attention_heads_degree is not None:
+            dims_out = config.audio_out_features
+            heads_candidates = [i for i in range(1, dims_out + 1) if dims_out % i == 0]
+            heads_i = config.audio_waveform_attention_heads_degree - 1
+            heads_count = heads_candidates[heads_i] if heads_i < len(heads_candidates) else heads_candidates[-1]
+            logger.warn(f"AUDIO: Attention Heads={heads_count}, for Embed Dim={dims_out}")
+            self.mha = torch.nn.MultiheadAttention(embed_dim=dims_out, num_heads=heads_count)
+            self.layer_norm = torch.nn.LayerNorm(dims_out)
         self.ff = ERCFeedForward(
             in_features=config.audio_in_features,
             layers=[
-                ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 3, dropout=0.1),
-                ERCConfigFeedForwardLayer(out_features=config.audio_out_features * 2, dropout=0.1),
-                ERCConfigFeedForwardLayer(out_features=config.audio_out_features, dropout=0.1),
+                ERCConfigFeedForwardLayer(
+                    out_features=config.audio_out_features * 3,
+                    dropout=0.1,
+                ),
+                ERCConfigFeedForwardLayer(
+                    out_features=config.audio_out_features * 2,
+                    dropout=0.1,
+                ),
+                ERCConfigFeedForwardLayer(
+                    out_features=config.audio_out_features,
+                    dropout=0.1,
+                ),
             ],
         )
 
@@ -94,8 +114,19 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         :param x: stacked vectors representing audio waveforms
         :return: matrix of tensors (batch_size, out_features)
         """
+        # transform the raw audio into a lower dimensional representation
         y = self.ff(x)
-        y = l2_norm(y, p=2, dim=1)
+        # if multi-headed attention is enabled, apply it to the output
+        # and add the attention output to the original output (residual connection)
+        # and normalize the output vector to have unit norm
+        if self.mha is not None and self.layer_norm is not None:
+            attn, _ = self.mha(y, y, y)
+            y = y + attn
+            y = self.layer_norm(y)
+        # normalize the output vector to have unit norm
+        if self.config.audio_l2norm:
+            y = l2_norm(y, p=2, dim=1)
+        # return the embeddings
         return y
 
     @property
@@ -143,7 +174,6 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
         :param config: configuration for the model
         """
         super(ERCWave2Vec2Embeddings, self).__init__(config=config)
-        self.config = config
         self.in_features = config.audio_in_features
         self.hidden_size = config.audio_out_features
         self.wav2vec2 = transformers.Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base")
@@ -169,7 +199,8 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
         # concatenate the mean and max pooling of the hidden states
         # to generate a fixed size vector that can be used as input
         # to the classifier
-        h = self.wav2vec2(x).last_hidden_state
+        h = self.wav2vec2(x)
+        h = h.last_hidden_state
         h_mean = torch.mean(h, dim=1)
         h_max = torch.max(h, dim=1)[0]
         y = torch.cat((h_mean, h_max), dim=1)
@@ -179,7 +210,10 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
             y = self.fc(y)
 
         # normalize the output vector to have unit norm
-        return l2_norm(y, p=2, dim=1)
+        if self.config.audio_l2norm:
+            y = l2_norm(y, p=2, dim=1)
+        # return the embeddings
+        return y
 
     @property
     def out_features(self) -> int:

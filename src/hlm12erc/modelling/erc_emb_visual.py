@@ -44,11 +44,15 @@ class ERCVisualEmbeddings(ERCEmbeddings):
 
 class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
     """
-    ERCResNet50VisualEmbeddings is a class that implements the visual embedding
-    layer using ResNet50 and simply returning the output of the final layer. The
-    embeddings transformation is based on the paper:
-    "Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016. Deep residual learning for image recognition.
-    In Proceedings of the IEEE conference on computer vision and pattern recognition, 770–778."
+    ERCResNet50VisualEmbeddings is a class that implements the visual
+    embedding layer using ResNet50 and simply returning the output of
+    the final layer.
+
+    References:
+        >>> Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016.
+        ... Deepresidual learning for image recognition. In Proceedings
+        ... of the IEEE conference on computer vision and pattern
+        ... recognition, 770–778."
 
     Example:
         >>> from hlm12erc.modelling import ERCConfig, ERCVisualEmbeddingType
@@ -86,7 +90,8 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         :return: matrix of tensors (batch_size, out_features)
         """
         y = self.resnet50(x)
-        y = l2_norm(y, p=2, dim=1)
+        if self.config.visual_l2norm:
+            y = l2_norm(y, p=2, dim=1)
         return y
 
     @property
