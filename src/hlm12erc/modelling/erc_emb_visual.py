@@ -89,9 +89,14 @@ class ERCResNet50VisualEmbeddings(ERCVisualEmbeddings):
         :param x: stacked vectors representing images
         :return: matrix of tensors (batch_size, out_features)
         """
+        # sends in the raw (preprocessed) batch of images into
+        # the pre-trained resnet50 model to get thei representations
         y = self.resnet50(x)
+
+        # if the `visual_l2norm` flag is set, then normalize
         if self.config.visual_l2norm:
             y = l2_norm(y, p=2, dim=1)
+
         return y
 
     @property

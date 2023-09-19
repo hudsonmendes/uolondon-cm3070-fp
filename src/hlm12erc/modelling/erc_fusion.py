@@ -102,9 +102,15 @@ class ERCConcatFusion(ERCFusion):
         :param x: List of tensors to be fused.
         :return: Tuple with fused tensor and attention weights.
         """
+        # adds the embeddings that are not None to a list
         x = [x_modal for x_modal in (x_text, x_visual, x_audio) if x_modal is not None]
+
+        # concatenate the embeddings
         y = torch.cat(x, dim=1)
+
+        # normalize the embeddings
         y = l2_norm(y, p=2, dim=1)
+
         return y, None
 
     @property
@@ -230,14 +236,19 @@ class ERCMultiheadedAttentionFusion(ERCFusion):
             x_all.append(self.fc_visual(x_visual))
         if self.fc_audio:
             x_all.append(self.fc_audio(x_audio))
+
         # concatenate the mapped embeddings
         x = torch.cat(x_all, dim=1)
+
         # perform the attention mechanism
         attn, _ = self.attn.forward(query=x, key=x, value=x)
+
         # residual connection
         y = x + attn
+
         # layer normalisation
         y = self.layer_norm(y)
+
         # output
         return y, attn
 

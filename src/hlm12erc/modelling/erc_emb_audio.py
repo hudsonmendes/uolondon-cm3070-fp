@@ -115,7 +115,10 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
         :return: matrix of tensors (batch_size, out_features)
         """
         # transform the raw audio into a lower dimensional representation
+        # going through the fully connected network composed of 3 layers,
+        # 3 x len(output) => 2 x len(output) => output
         y = self.ff(x)
+
         # if multi-headed attention is enabled, apply it to the output
         # and add the attention output to the original output (residual connection)
         # and normalize the output vector to have unit norm
@@ -123,9 +126,11 @@ class ERCRawAudioEmbeddings(ERCAudioEmbeddings):
             attn, _ = self.mha(y, y, y)
             y = y + attn
             y = self.layer_norm(y)
-        # normalize the output vector to have unit norm
+
+        # if the `audio_l2norm` flag is set, then normalize
         if self.config.audio_l2norm:
             y = l2_norm(y, p=2, dim=1)
+
         # return the embeddings
         return y
 
@@ -196,22 +201,29 @@ class ERCWave2Vec2Embeddings(ERCAudioEmbeddings):
         :return: matrix of tensors (batch_size, out_features)
         """
 
-        # concatenate the mean and max pooling of the hidden states
-        # to generate a fixed size vector that can be used as input
-        # to the classifier
+        # send-in the raw waveform data into the Wav2Vec2 model
+        # reponsible for performing the necessary tokenisation and
+        # deliverying back the states for each "token" (segment)
         h = self.wav2vec2(x)
+
+        # concatenate the mean and max pooling of the hidden states
+        # to generate a fixed size vector for the entire audio
         h = h.last_hidden_state
         h_mean = torch.mean(h, dim=1)
         h_max = torch.max(h, dim=1)[0]
         y = torch.cat((h_mean, h_max), dim=1)
 
-        # only projects if the output size is different from the hidden size
+        # if the `config.audio_out_features` are set to a specific
+        # dimensionality and different from the dimensionality of
+        # the output of the wav2vec2 model * 2, then apply a linear
+        # projection to the output vector
         if self.fc is not None and self.hidden_size != y.size(dim=1):
             y = self.fc(y)
 
-        # normalize the output vector to have unit norm
+        # if the `audio_l2norm` flag is set, then normalize
         if self.config.audio_l2norm:
             y = l2_norm(y, p=2, dim=1)
+
         # return the embeddings
         return y
 

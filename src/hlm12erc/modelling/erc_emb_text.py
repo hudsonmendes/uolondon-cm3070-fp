@@ -86,18 +86,44 @@ class ERCGloveTextEmbeddings(ERCTextEmbeddings):
         :param x: The input tensor of shape (batch_size,).
         :return: The output tensor of shape (batch_size, hidden_size).
         """
+        # tokenize every dialogue (`text`) passed as in the batch
         seqs = [self.tokenizer(text) for text in x]
+
+        # convert the tokens to indices recognised by the embeddings layer
         tidss = [[self.token_to_idx.get(token, -1) for token in seq] for seq in seqs]
+
+        # convert each integer index to a tensor index
         ttnss = [[torch.tensor(tid) for tid in tids if tid >= 0] for tids in tidss]
+
+        # collects the device of the `embeddings` layer so that the tensors of
+        # indices can be moved to the correct device
         device = self.cache_or_get_same_device_as(self.embeddings)
+
+        # move the tensors of indices to the correct device
         if device is not None:
             ttnss = [[ttn.to(device) for ttn in ttns] for ttns in ttnss]
+
+        # convert the tensors of indices to word vectors
         v = [[self.embeddings(ttn) for ttn in ttns] for ttns in ttnss]
+
+        # remove any sequences from which all vectors are composed of zeros
+        # (i.e. the sequence is composed of words that are not in the vocabulary)
         v = [[vii for vii in vi if torch.any(vii != 0)] for vi in v]
-        y = pad_sequence([torch.stack(seq).squeeze() for seq in v], batch_first=True)
+
+        # pad and stack the vectors into a single tensor of dimensionality
+        # (batch_size, max(len(seq)), hidden_size)
+        y = pad_sequence(
+            [torch.stack(seq).squeeze() for seq in v],
+            batch_first=True,
+        )
+
+        # take the mean of the vectors for each row of the tensor
         y = torch.mean(y, dim=1)
+
+        # if the `text_l2norm` flag is set, then normalize
         if self.config.text_l2norm:
             y = l2_norm(y, p=2, dim=1)
+
         return y
 
     @property
@@ -142,25 +168,33 @@ class ERCGpt2TextEmbeddings(ERCTextEmbeddings):
         """
         # pick the device
         device = self.cache_or_get_same_device_as(self)
-        # encode the input
+
+        # tokenize the batch of texts into tensor of indices and another
+        # tensor for the attention masks & ensures these in the correct device
         y = self.gpt2_tokenizer.batch_encode_plus(x, **self.tokenizer_opts)
         y["input_ids"] = y["input_ids"].to(device)
         attention_mask = y["attention_mask"] = y["attention_mask"].to(device)
 
-        # fix shape, if greater than max_length
+        # GPT2 only supports 1024 tokens as the input, so if the input is
+        # longer than that, then only take the last 1024 tokens as well as
+        # the corresponding attention mask
         if y["input_ids"].size(dim=1) > self.maxlength:
             start = self.maxlength
             y["input_ids"] = y["input_ids"][:, -start:]
             attention_mask = y["attention_mask"] = y["attention_mask"][:, -start:]
 
-        # extract the representation from the last token
+        # use the pre-trained GPT2 model to produce representations for
+        # each token_id output by the tokeniser, and then take the last
+        # hidden state for the last actual token (not padding) of each
+        # sequence, using the attention mask to find the last token
         y = self.gpt2_model(**y).last_hidden_state
         last_token_pos = attention_mask.sum(dim=1) - 1
         y = y[torch.arange(y.size(0), device=device), last_token_pos]
 
-        # normalize the representation
+        # if the `text_l2norm` flag is set, then normalize
         if self.config.text_l2norm:
             y = l2_norm(y, p=2, dim=1)
+
         return y
 
     @property

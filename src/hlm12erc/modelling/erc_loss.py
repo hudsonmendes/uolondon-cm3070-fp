@@ -108,17 +108,17 @@ class DiceCoefficientLoss(ERCLoss):
         :param y_true: True labels
         :return: Loss value
         """
-        # Compute TP, FP, and FN for each class
+        # Compute batch-wise TP, FP, and FN for each class
         assert y_true is not None
         TP = (y_pred * y_true).sum(dim=0)
         FP = (y_pred * (1 - y_true)).sum(dim=0)
         FN = ((1 - y_pred) * y_true).sum(dim=0)
 
         # Compute Dice coefficient for each class
-        dice_class = (2 * TP) / (2 * TP + FP + FN + self.epsilon)
+        dice_coef = (2 * TP) / (2 * TP + FP + FN + self.epsilon)
 
         # Average Dice coefficient across all classes and compute the loss
-        return 1 - dice_class.mean()
+        return 1 - dice_coef.mean()
 
 
 class FocalMutiClassLogLoss(ERCLoss):
@@ -161,6 +161,7 @@ class FocalMutiClassLogLoss(ERCLoss):
         # ensure forware pre-reqs
         assert y_true is not None
         self.alpha = self.alpha if self.alpha.device == y_pred.device else self.alpha.to(y_pred.device)
+
         # compute the loss
         probs = torch.sum(y_pred * y_true, dim=1)
         safe_probs = torch.clamp(probs, min=self.epsilon, max=1.0 - self.epsilon)
@@ -234,13 +235,24 @@ class ERCTripletLoss(torch.nn.Module):
         :param negative: Negative embeddings, used as a negative example for the anchor
         :return: Loss value
         """
+        # calculate the similarity (transformed Cosine Similarity)
+        # between the anchor and the positive and negative examples
         p = self._sim(anchor, positives)
         n = self._sim(anchor, negatives)
+
+        # divides the positive and negative similarities by the number of
+        # examples in each set, so that the sum of the weights is 1
         weighted_p = p / positives.shape[0]
         weighted_n = n / negatives.shape[0]
         weighted_all = torch.cat((weighted_p, weighted_n))
+
+        # calculate the ratio between positive similarity and the sum of
+        # the positive and negative similarities
         ratio = torch.sum(weighted_p) / (torch.sum(weighted_all) + self.epsilon)
+
+        # transforms the ratio into a loss value by applying -log
         loss = -torch.log(ratio)
+
         return loss
 
     def _sim(self, anchor: torch.Tensor, other: torch.Tensor) -> torch.Tensor:
