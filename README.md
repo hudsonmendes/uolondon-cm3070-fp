@@ -1,66 +1,98 @@
 # Package `hlm12erc`
 
-Hi, my name is Hudson Leonardo MENDES!
+# HLM12ERC, A High-Quality Open Source PyTorch-based Multimodal Emotion Classifier
 
-This python package contains all the software produced for my<br />
-CM3070 Final Computer Science Project by the Unviersity of London<br />
-for my BSc Computer Science specialised in Machine Learning & Data Science.
+HLM12ERC model, a multimodal emotion classifier capable of processing
+text, audio and video, based on a model ensemble architecture that
+combines powerful backbone embedding models and advanced feature
+fusion techniques to create rich representations used for emotion
+inference.
 
-This package has a command line interface (or "CLI") able to run<br />
-most if not all functionality required to run emotion recognition in<br />
-conversations, including (a) **Model Training**, (b) **ERC Inference**<br />
-and (c) **Model Evaluation**.
+The present model is the output of the project [HLM12ERC, a Multimodal Model for Emotion Recognition in Conversations: Final Report](dev/project.pdf) by Hudson Mendes (myself), a student of the University of London, United Kingdom, as part of the CM3070 Final Project module.
 
-## ML Workflow Recipe
+## Model Architecture
 
-This is a personal workflow that I follow to simplify ML development,
-which can often be extremely complex, specially depending on which
-ML infrastructure is being used.
+![HLM12ERC Model Architecture](assets/hml12erc-architecture.png)
 
-1. Setup your package to have the following subpackages: `modelling`, `training` and `serving`;
+### Components
 
-2. Create your first version of `yourpackage.training.your_dataset_record` trying to make your data as flat as possible and having either (a) `strings` or `tensors` as its attributes;
+The final model was implemented using the following components
 
-3. Create your first version of `yourpackage.training.your_dataset_record_reader` to transform and flatten out your data. Very important to unit test your transformations here and ensure data is precisely what you need it to be, including their ranges and scale;
+* **Text Encoder**: `ERCGpt2TextEmbeddings`
+* **Audio Encoder**: `ERCWave2Vec2Embeddings`
+* **Visual Encoder**: `ERCResNet50Embeddings`
+* **Fusion**: `ERCMultiHeadedAttention`
+* **Loss**: `DiceCoefficientLoss`
 
-4. Create your first version of `yourpackage.training.your_dataset` to hold the dataframe that will have pointers to your feature sources, but won't load everything in memory;
+### Interesting Bits
 
-5. Create your model building blocks, their simples possible implementation, and unit test them. Assert that all transformations and output shapes are exactly what they need to be;
+* The `ERCGpt2TextEmbeddings` encodes the entire dialogue using the GPT2 and a prompt engineered to include information about the Speaker's state, following findings resulting from the DialogRNN researchDialogRNN[Majumder et al, 2019]
 
-6. Wrap your building blocks int o `your_model` and unit-test it. Ensure that your model is able to choose between your building block implementation using a simple configuration dictionary, call it `my_config`;
+* Further research is required to make **Triplet Loss* work for the HLM12ERC model, but the `ERCDataSampler`, `ERCTripletLoss` and the `ERCTrainerTripletJob` classes are a good starting point if you want to explore the possibility, and they utilise the following loss equation:<br />
+![Triplet Loss Function Equation](assets/hlm12erc-triplet-loss.png)
 
-7. Write your metric calculation classes and unit test them. Make sure it works with the exact output of your model and the result of your label_encoder; **Important** use scikit-learn here, don't reinvent the wheel;
+## Final Evaluation
 
-8. Get your `mlflow`, `aim`, `wandb` setup and build your first `dev/local.ipynb`. Build your mlops pipeline there, as simple as you can, to ensure you _can_ train your model using Jupyter Notebook; **Important**: only train on a `sample.csv` of your data, not your entire training dataset, and ensure your metrics are showing in your monitoring tool correctly;
+### MELD Benchmark
 
-9. If you are serving your model as an api, time to wrap it up in your REST stack and start trying to serve it. **Important**: test it _as an API_, including load tests. This will give you an initial idea of trade-offs you will need to do in your model to make it work in production;
+![Eval on MELD Test Split](assets/hlm12erc-eval-meld.png)
 
-10. Ship your code to run in your GPU/TPU-accelerated infrastructure and run a full training on your dataset. Your monitoring should work perfectly, and you should have your baseline metrics to start getting your modelling work done.
+## Experimentation Detailed Results
 
-From this point ownwards, the amount of choices you're gonna have to make is far too large for a recipe, but the above should get you started.
+### MELD Dataset
 
-## Offline Tests
+![Eval on MELD Test Split](assets/hlm12erc-valid-meld.png)
+
+
+## Installation
+
+### Running on Colab
+
+You need to massage stuff a bit in your google drive, unfortunately, but here is a Jupyter Notebook to help.
+
+> `CM3070 FP, MLOps [R1].ipynb`<br />
+> Open [Google Colab Notebook](https://colab.research.google.com/drive/1UMP0B3Wj9HXWn4zTduMWZdyrRUxikUtx?usp=sharing)<br />
+
+### Running Locally
+
+If your objective is training, using or extending the model, you should install using the following commands.
+
+1. Clone the repository
+
+```
+source=git@github.com:hudsonmendes/uolondon-cm3070-fp.git
+git clone $source hlm12erc
+cd hlm12erc
+```
+
+2. Create & Activate the Virtual Environment
 
 ```bash
-export WANDB_MODE=offline
+virtualenv venv
+source venv/bin/activate
+```
 
-python -m hlm12erc erc  train --config ./configs/baseline.yml             --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
-python -m hlm12erc erc  train --config ./configs/baseline-a.yml           --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
-python -m hlm12erc erc  train --config ./configs/baseline-t.yml           --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
-python -m hlm12erc erc  train --config ./configs/baseline-v.yml           --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+3. Install the dependencies
 
-python -m hlm12erc erc  train --config ./configs/losses-dice.yml          --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
-python -m hlm12erc erc  train --config ./configs/losses-dice-lr-5e-3.yml  --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
-python -m hlm12erc erc  train --config ./configs/losses-dice-lr-5e-4.yml  --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+```bash
+pip install -e '.[dev,test,etl,modelling,training,serving]'
+```
 
-python -m hlm12erc erc  train --config ./configs/losses-focal.yml         --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
-python -m hlm12erc erc  train --config ./configs/losses-focal-lr-5e-3.yml --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
-python -m hlm12erc erc  train --config ./configs/losses-focal-lr-5e-4.yml --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+### EDA
 
-python -m hlm12erc erc  train --config ./configs/adv-text-gpt2.yml        --train_dataset ./data/sample.csv --valid_dataset ./data/sample.csv --n_epochs 1 --batch_size 4 --out ./target
+The dependencies used by the EDA are not compatible to the ones
+used during the model development. Therefore, you should install
+the dependencies for the EDA in a separated vitualenv.
+
+```bash
+virtualenv venv_eda
+source venv_eda/bin/activate
+pip install -e '.[eda]'
 ```
 
 ## ETL
+
+To save time consuming data from the MELD Dataset[1], you must run the ETL process to produce simplified and compatible data assets. You can do so by running the following command.
 
 ```bash
 python -m hlm12erc etl kaggle \
@@ -71,33 +103,70 @@ python -m hlm12erc etl kaggle \
     --force "False"
 ```
 
-## Training a new ERC Model
+Your data folder should look something like the following:
 
-```bash
-python -m hlm12erc erc train \
-    --train_dataset "./data/sample.csv" \
-    --valid_dataset "./data/sample.csv" \
-    --n_epochs 3 \
-    --batch_size 4 \
-    --config "./dev/configs/baseline.yml" \
-    --out ./target
+![Data Folder Appearance](assets/data-folder.png)
+
+## Architecture Components
+
+The current version of the model utilises the following configuration:
+```yml
+classifier_name: final
+classifier_loss_fn: dice
+classifier_learning_rate: 0.00005
+classifier_weight_decay: 0.1
+classifier_warmup_steps: 2000 # @ ~15% => 9989 (examples) / 8 (batch) = 1,249 (step) x 10 (epochs) = 12,490 steps
+classifier_metric_for_best_model: f1_weighted
+classifier_early_stopping_patience: 5
+classifier_classes:
+  - anger
+  - disgust
+  - fear
+  - joy
+  - neutral
+  - sadness
+  - surprise
+
+modules_text_encoder: gpt2
+modules_visual_encoder: resnet50
+modules_audio_encoder: wav2vec2
+modules_fusion: multi_headed_attn
+
+text_in_features: -1 # defined by tokenizer & padding
+text_out_features: -1 # defined by the encoder output hidden state
+
+audio_in_features: 250000 # truncates the waveform after 250K samples
+audio_out_features: -1 # defined by wav2vec2
+
+visual_in_features: [3, 256, 721] # input required for resnet50
+visual_out_features: -1 # defined automatically by resnet50
+
+fusion_out_features: 512
+fusion_attention_heads_degree: 3 # for 512, degree 3 = 4 heads
+
+feedforward_layers:
+  - out_features: 256
+    dropout: 0.2
+  - out_features: 128
+    dropout: 0.2
 ```
 
-## ERC Model Evaluation
+## Further Work
 
-```bash
-python -m hlm12erc erc evaluate \
-    --test_dataset "./data/test.csv" \
-    --out ./target
-```
+There are known areas of improvements for this model. If you're
+interested in developping it further, please reffer to the items
+below for inspiration.
 
-## Running ERC Inference
+> (1) The present project used the ResNet50 as its most basic Visual Feature Extraction mechanism, and it has done so to facilitate the interpretation of the results comparing using the entire scene to using only the faces detected by the ReTinaFace/ResNet-50[Yanjia et al, 2021]. However, in doing so, it did not explore the possibility of using smaller models that could potentially learn representations just as effectively, as well as learn to focus on particular areas of the image using mechanisms such as Attention[Vaswani et al, 2017] which is known to have a weighting effect on features, similar to what has been recently been popularised by Visual Transformers. Further work could explore this solution space further to possibly create a more efficient model.
+>
+> (2) Given the exceptional results achieved by M2FNet[Chudasama et al, 2022], SPCL-CL-ERC[Song et al, 2022] and the learnings delivered by the current project on the topic, the potential of Contrastive Learning still offers a great opportunity for further exploration. Different sampling strategies such as the one proposed by ERCDataSampler combined with adaptations of the Triplet Loss function devised by the ERCTripletLoss can be studied in more depth and potentially render significant results. However, sampling strategies that result in oversampling as well as the sheer computation costs of training multimodal models must be taken in consideration. Combined with the computational cost and complexity of the topic to be explored, research working on improving classification using Triplet Loss is advised to focus on this specific topic in isolation and go deeper rather than wider.
+>
+> (3) Finally, given that the HLM12ERC is a native PyTorch model, it could be engineered to be exported as a PreTrainedModel into the Huggingface repository, facilitating for users to download and embed the model to their systems through the transformers API.
 
-```bash
-python -m hlm12erc erc classify \
-    --audio "./utterance.wav" \
-    --visual "./scene.wav" \
-    --previous_dialog "./dialog_so_far.csv" \
-    --utterance "what up?" \
-    --out "./target/output/classifications.csv"
-```
+## References
+
+[1]MENDES, H. L., 2023. "HLM12ERC, a Multimodal Model for Emotion Recognition in Conversations: Final Report", University of London, United Kingdom.
+
+[2] S. Zahiri and J. D. Choi. Emotion Detection on TV Show Transcripts with Sequence-based Convolutional Neural Networks. In The AAAI Workshop on Affective Content Analysis, AFFCON'18, 2018.
+
+[3] S. Poria, D. Hazarika, N. Majumder, G. Naik, E. Cambria, R. Mihalcea. MELD: A Multimodal Multi-Party Dataset for Emotion Recognition in Conversation. ACL 2019.
