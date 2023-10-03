@@ -6,7 +6,11 @@ combines powerful backbone embedding models and advanced feature
 fusion techniques to create rich representations used for emotion
 inference.
 
-The present model is the output of the project [HLM12ERC, a Multimodal Model for Emotion Recognition in Conversations: Final Report](dev/project.pdf) by Hudson Mendes (myself), a student of the University of London, United Kingdom, as part of the CM3070 Final Project module.
+## Project Report
+
+For details on how this project has been carried out, check the **[HLM12ERC, a Multimodal Model for Emotion Recognition in
+Conversations:
+Final Report](dev/report.pdf)** for more information.
 
 ## Model Architecture
 
